@@ -3,16 +3,19 @@ import Alumnus from './Alumnus'
 function Alumni({alumni}) {
     return (
       <div>
-        <table>
-            <tr>
+        <table style ={{borderCollapse:'collapse'}}>
+            <thead>
                 <th>Name</th>
                 <th>Title</th>
                 <th>LinkedIn</th>
                 <th>Industry</th>
-            </tr>
+                <th>Job</th>
+            </thead>
+            <tbody>
             {alumni.map((alumnus, index) => (
                 <Alumnus key={index} alumnus={alumnus} />
             ))}
+            </tbody>
         </table>
       </div>
     );
