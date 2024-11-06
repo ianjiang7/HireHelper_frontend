@@ -9,6 +9,7 @@ function Alumni({alumni}) {
                 <th>Title</th>
                 <th>LinkedIn</th>
                 <th>Industry</th>
+                <th>Company</th>
             </tr>
             {alumni.map((alumnus, index) => (
                 <Alumnus key={index} alumnus={alumnus} />
