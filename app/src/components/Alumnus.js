@@ -11,6 +11,7 @@ function Alumnus({alumnus}) {
           </td>
           <td>{alumnus.industry}</td>
           <td>{alumnus.job}</td>
+          <td>{alumnus.company}</td>
 
     </tr>
       </div>
