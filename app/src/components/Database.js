@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useState, useEffect} from 'react'
 import Alumni from './Alumni'
 
 function Database({alumni}) {
@@ -7,13 +7,43 @@ function Database({alumni}) {
     const [job, setJob] = useState("");
     const [customJob, setCustomJob] = useState("");
 
-    function handleSearchChange(e) {
-        const query = e.target.value;
-        setSearchQuery(query)
-        setFilteredAlumni(alumni.filter((item) =>
-            item.industry.toLowerCase().includes(query.toLowerCase()))
-        )
+     // Function to apply filters and update the displayed list
+     function updateFilteredAlumni() {
+        let result = alumni;
+
+        // Filter by industry if searchQuery is not empty
+        if (searchQuery) {
+            result = result.filter((item) =>
+                item.industry.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        // Filter by job if job is selected
+        if (job && job !== "Other") {
+            result = result.filter((item) =>
+                item.job.toLowerCase().includes(job.toLowerCase())
+            );
+        }
+
+        // Filter by custom job if "Other" is selected and customJob is not empty
+        if (job === "Other" && customJob) {
+            result = result.filter((item) =>
+                item.job.toLowerCase().includes(customJob.toLowerCase())
+            );
+        }
+
+        setFilteredAlumni(result);
     }
+
+    // useEffect to reapply filters whenever searchQuery, job, or customJob changes
+    useEffect(() => {
+        updateFilteredAlumni();
+    }, [searchQuery, job, customJob]);
+
+    function handleSearchChange(e) {
+        setSearchQuery(e.target.value);
+    }
+
     function handleJobChange(e) {
         const selectedJob = e.target.value;
         setJob(selectedJob);
@@ -22,17 +52,12 @@ function Database({alumni}) {
         if (selectedJob !== "Other") {
             setCustomJob("");
         }
-        setFilteredAlumni(alumni.filter((item) =>
-            item.job.toLowerCase().includes(job.toLowerCase()))
-        )
     }
 
     function handleCustomJobChange(e) {
         setCustomJob(e.target.value);
-        setFilteredAlumni(alumni.filter((item) =>
-            item.job.toLowerCase().includes(customJob.toLowerCase()))
-        )
     }
+
 
     return (
         <div>
