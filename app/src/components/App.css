@@ -1,0 +1,26 @@
+/* index.css or App.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset and basic styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #ece2f7, #d4b2ef);
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.app {
+    width: 100%;
+    max-width: 1200px;
+}

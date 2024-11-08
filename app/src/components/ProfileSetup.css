@@ -1,0 +1,38 @@
+.profile-setup header {
+    background-color: #333;
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+.setup-container {
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+}
+
+.upload-resume, .search-criteria {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 45%;
+}
+
+.upload-box {
+    border: 2px dashed #ccc;
+    padding: 20px;
+    text-align: center;
+    color: #777;
+    margin-top: 10px;
+}
+
+.proceed-btn {
+    background-color: #7f7fd5;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 20px;
+}
