@@ -1,7 +1,7 @@
 import Alumnus from './Alumnus'
 
 function Alumni({industry, job, customJob, page}) {
-    const fetchData = async () => {
+    const alumni = async () => {
       try {
         const response = await fetch(
           "http://localhost:3000/person/search/"
