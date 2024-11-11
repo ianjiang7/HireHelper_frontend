@@ -1,5 +1,6 @@
 import React from "react";
-import { useNavigate , useState, useLocation} from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { useState } from "react";
 import Alumni from "./Alumni";
 function SearchResults() {
     const navigate = useNavigate();
