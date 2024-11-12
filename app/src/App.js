@@ -1,21 +1,24 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Home from "./Home";
-import ProfileSetup from "./ProfileSetup";
-import SearchResults from "./SearchResults";
-import './App.css';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./components/Home";
+import AccessCode from "./components/AccessCodeModal";
+import ProfileSetup from "./components/ProfileSetup";
+import { AccessProvider } from "./components/AccessContext";
+import "./App.css";
+import SearchResults from "./components/SearchResults";
 
 function App() {
     return (
-        <Router>
-            <div className="app">
+        <AccessProvider>
+            <Router>
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/access-code" element={<AccessCode />} />
                     <Route path="/profile-setup" element={<ProfileSetup />} />
-                    <Route path="/search-results" element={<SearchResults />} />
+                    <Route path="/search-results" element={<SearchResults/>} />
                 </Routes>
-            </div>
-        </Router>
+            </Router>
+        </AccessProvider>
     );
 }
 

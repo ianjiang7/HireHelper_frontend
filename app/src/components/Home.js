@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAccess } from "./AccessContext";
 import "./Home.css"; // Import the CSS file
 
 function Home() {
     const navigate = useNavigate();
+    const { hasAccess, setHasAccess } = useAccess();
 
     return (
         <div className="home-container">
@@ -12,6 +14,7 @@ function Home() {
                 <div className="navbar-links">
                     <button onClick={() => navigate("/")} className="navbar-link">Home</button>
                     <button onClick={() => navigate("/profile-setup")} className="navbar-link">Profile Setup</button>
+                    <button onClick = {() => hasAccess && navigate("/searchresults")} className="navbar-link">Results</button>
                 </div>
             </nav>
             
@@ -26,7 +29,7 @@ function Home() {
                 <p className="home-text">Unlock a whole new network of exclusive connections</p>
             </main>
             <footer className="footer">
-                        <p>AlumniReach LLC</p>
+                        <p>AlumniReach for NYU</p>
             </footer>
         </div>
     );
