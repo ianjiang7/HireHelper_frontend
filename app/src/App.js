@@ -1,11 +1,11 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./Home";
-import AccessCode from "./AccessCodeModal";
-import ProfileSetup from "./ProfileSetup";
-import { AccessProvider } from "./AccessContext";
+import Home from "./components/Home";
+import AccessCode from "./components/AccessCodeModal";
+import ProfileSetup from "./components/ProfileSetup";
+import { AccessProvider } from "./components/AccessContext";
 import "./App.css";
-import SearchResults from "./SearchResults";
+import SearchResults from "./components/SearchResults";
 
 function App() {
     return (
