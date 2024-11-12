@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import AccessCodeModal from "./AccessCodeModal";
 import "./ProfileSetup.css"; // Import the CSS file
 
 function ProfileSetup() {
@@ -11,6 +12,8 @@ function ProfileSetup() {
     const [industrySearch, setIndustrySearch] = useState("");
     const [resumeName, setResumeName] = useState("Upload your resume"); // Placeholder name
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showModal, setShowModal] = useState(false); // State to control modal visibility
+    const [hasAccess, setHasAccess] = useState(false); // State to track access code entry
 
     const industries = [
         "Investment Banking", "Quantitative Trading", "Tax", "Finance",
@@ -24,12 +27,43 @@ function ProfileSetup() {
         "Information Technology", "Government & Public Service", "Product Management", "Other"
     ];
 
+    // Function to handle successful access code entry
+    const handleAccessGranted = () => {
+        setHasAccess(true); // Set access to true
+        setShowModal(false); // Close the modal
+        navigate("/search-results", {state: {industry, role, customJob, jobSearch}}); // Navigate to ProfileSetup
+    };
+
+    const handleProceed = () => {
+        // If access is already granted, navigate directly
+        if (hasAccess) {
+            navigate("/search-results", {state: {industry, role, customJob, jobSearch}});
+        } else {
+            // Otherwise, show the access code modal
+            setShowModal(true);
+        }
+    };
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
             setResumeName(file.name);
+            /*
+            const formData = new FormData();
+            formData.append("resume", file);
+
+            try {
+                const response = await fetch("/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+                const result = await response.json();
+                console.log("File uploaded successfully:", result);
+            } catch (error) {
+            console.error("Error uploading file:", error);
+        }*/
+    }
         }
-    };
+    
 
     return (
         <div className="profile-setup-container">
@@ -39,6 +73,7 @@ function ProfileSetup() {
                 <div className="navbar-links">
                     <button onClick={() => navigate("/")} className="navbar-link">Home</button>
                     <button onClick={() => navigate("/profile-setup")} className="navbar-link">Profile Setup</button>
+                    <button onClick = {() => hasAccess && navigate("/searchresults")} className = "navbar-link">Results</button>
                 </div>
             </nav>
 
@@ -131,7 +166,7 @@ function ProfileSetup() {
                             </div>
                             <button 
                                 type="button" 
-                                onClick={() => navigate("/search-results", {state: {industry, role, customJob, jobSearch}})}
+                                onClick={handleProceed}
                                 className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white py-2 px-6 rounded-lg font-medium shadow-lg hover:bg-blue-600 transform hover:scale-105 transition-transform"
                             >
                                 Browse
@@ -140,6 +175,8 @@ function ProfileSetup() {
                     </div>
                 </div>
             </main>
+             {/* Show AccessCodeModal only if showModal is true */}
+             {showModal && <AccessCodeModal onClose={() => setShowModal(false)} onAccessGranted={handleAccessGranted} />}
             <footer className="footer">
                     <p>AlumniReach LLC</p>
             </footer>
@@ -148,3 +185,4 @@ function ProfileSetup() {
 }
 
 export default ProfileSetup;
+                                 
