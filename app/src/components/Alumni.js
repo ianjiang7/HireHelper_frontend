@@ -1,10 +1,13 @@
 import Alumnus from './Alumnus'
 
-function Alumni({industry, job, customJob, page}) {
+function Alumni({industry, job, customJob, page, jobSearch, company}) {
+    if(job!=="Other") {
+      customJob = job
+    }
     const alumni = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3000/person/search/"
+          `http://localhost:3000/person/search/?industry=${industry}&job=${customJob}&page=${page}&title=${jobSearch}&company=${company}`,
         );
         if (!response.ok) {
           throw new Error("Network response was not ok");

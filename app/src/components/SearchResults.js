@@ -6,7 +6,7 @@ function SearchResults() {
     const navigate = useNavigate();
     const {state} = useLocation();
     const [page, setPage] = useState(1);
-    const {industry, job, customJob} = state;
+    const {industry, job, customJob, jobSearch, company} = state;
     function handlePrevious() {
         if (page !== 1) {
             setPage(page - 1)
@@ -29,7 +29,7 @@ function SearchResults() {
                         className="border border-gray-300 rounded-md p-2"
                     />
                 </div>
-                <Alumni industry={industry} job={job} customJob={customJob} page={page}/>
+                <Alumni industry={industry} job={job} customJob={customJob} page={page} jobSearch={jobSearch} company={company}/>
                 <div className="flex justify-center space-x-4 mt-4">
                     <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={handlePrevious}>Previous</button>
                     <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={handleNext}>Next</button>

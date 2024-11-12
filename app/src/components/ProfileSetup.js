@@ -9,6 +9,7 @@ function ProfileSetup() {
     const [customJob, setCustomJob] = useState("");
     const [jobSearch, setJobSearch] = useState("");
     const [industrySearch, setIndustrySearch] = useState("");
+    const [company, setCompany] = useState("")
     const [resumeName, setResumeName] = useState("Upload your resume"); // Placeholder name
     const [showDropdown, setShowDropdown] = useState(false);
 
@@ -127,11 +128,11 @@ function ProfileSetup() {
                             </div>
                             <div>
                                 <label htmlFor="company" className="block text-gray-600">Company</label>
-                                <input type="text" id="company" name="company" defaultValue="JP Morgan" className="w-full border border-gray-300 rounded-md p-2 mt-1" />
+                                <input type="text" id="company" name="company" value={company} onChange={(e)=>setJobSearch(e.target.value)}className="w-full border border-gray-300 rounded-md p-2 mt-1" />
                             </div>
                             <button 
                                 type="button" 
-                                onClick={() => navigate("/search-results", {state: {industry, role, customJob, jobSearch}})}
+                                onClick={() => navigate("/search-results", {state: {industry, role, customJob, jobSearch, company}})}
                                 className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white py-2 px-6 rounded-lg font-medium shadow-lg hover:bg-blue-600 transform hover:scale-105 transition-transform"
                             >
                                 Browse
