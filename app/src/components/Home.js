@@ -1,24 +1,33 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import "./Home.css"; // Import the CSS file
 
 function Home() {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-100 to-purple-300 text-center">
-            <header className="bg-gray-800 text-white w-full py-4 text-lg font-semibold">
-                NYU Alumni Connect
-            </header>
-            <main className="flex flex-col items-center space-y-6 mt-10">
-                <h2 className="text-4xl font-bold text-gray-900">Connect with NYU Alumnus</h2>
+        <div className="home-container">
+            <nav className="navbar">
+                <h1 className="navbar-title" onClick={() => navigate("/")}>AlumniReach for NYU</h1>
+                <div className="navbar-links">
+                    <button onClick={() => navigate("/")} className="navbar-link">Home</button>
+                    <button onClick={() => navigate("/profile-setup")} className="navbar-link">Profile Setup</button>
+                </div>
+            </nav>
+            
+            <main className="home-main">
+                <h2 className="home-heading">Connect with NYU Alumnus</h2>
                 <button 
                     onClick={() => navigate("/profile-setup")} 
-                    className="bg-gradient-to-r from-purple-600 to-blue-500 text-white py-2 px-6 rounded-lg text-lg font-medium shadow-lg transform hover:scale-105 transition-transform"
+                    className="home-button"
                 >
                     Start Now
                 </button>
-                <p className="text-lg text-gray-600">Unlock a whole new network of exclusive connections</p>
+                <p className="home-text">Unlock a whole new network of exclusive connections</p>
             </main>
+            <footer className="footer">
+                        <p>AlumniReach LLC</p>
+            </footer>
         </div>
     );
 }
