@@ -8,6 +8,7 @@ import Signup from "./components/Signup";
 import MyConnections from "./components/MyConnections";
 import MyJobPostings from "./components/MyJobPostings";
 import "./App.css"
+import SearchResults from "./components/SearchResults";
 
 function App() {
     /*
@@ -32,6 +33,8 @@ function App() {
                 <Route path="/profile-setup" element={<ProfileSetup />} />
                 <Route path="/my-connections" element={<MyConnections />} />
                 <Route path="/my-job-postings" element={<MyJobPostings />} />
+                <Route path="/search-results" element={<SearchResults />} />
+
             </Routes>
         </Router>
     );

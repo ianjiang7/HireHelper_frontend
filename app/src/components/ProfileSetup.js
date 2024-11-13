@@ -163,7 +163,7 @@ function ProfileSetup() {
                             </div>
                             <div>
                                 <label htmlFor="company" className="block text-gray-600">Company</label>
-                                <input type="text" id="company" name="company" value={company} onChange={(e)=>setJobSearch(e.target.value)}className="w-full border border-gray-300 rounded-md p-2 mt-1" />
+                                <input type="text" id="company" name="company" value={company} onChange={(e)=>setCompany(e.target.value)}className="w-full border border-gray-300 rounded-md p-2 mt-1" />
                             </div>
                             <button 
                                 type="button" 

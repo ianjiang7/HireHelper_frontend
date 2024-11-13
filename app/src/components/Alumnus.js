@@ -10,7 +10,7 @@ function Alumnus({alumnus}) {
           </td>
           <td class="p3">{alumnus.industry}</td>
           <td class="p3">{alumnus.company}</td>
-          <td class="p3">{alumnus.job}</td>
+          <td class="p3">{alumnus.role}</td>
     </tr>
     );
 }
