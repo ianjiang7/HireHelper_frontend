@@ -1,0 +1,107 @@
+{
+  "providers": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-hirehelperbackend-dev-74831-authRole",
+      "UnauthRoleArn": "arn:aws:iam::677276120566:role/amplify-hirehelperbackend-dev-74831-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::677276120566:role/amplify-hirehelperbackend-dev-74831-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-hirehelperbackend-dev-74831-deployment",
+      "UnauthRoleName": "amplify-hirehelperbackend-dev-74831-unauthRole",
+      "StackName": "amplify-hirehelperbackend-dev-74831",
+      "StackId": "arn:aws:cloudformation:us-east-1:677276120566:stack/amplify-hirehelperbackend-dev-74831/eed789f0-a249-11ef-924a-0ec2c1338955",
+      "AmplifyAppId": "d2qc486pg5m8nc"
+    }
+  },
+  "auth": {
+    "hirehelperbackendbbba6b7e": {
+      "service": "Cognito",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "customAuth": false,
+      "frontendAuthConfig": {
+        "socialProviders": [],
+        "usernameAttributes": [
+          "EMAIL"
+        ],
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyMinLength": 8,
+          "passwordPolicyCharacters": []
+        },
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "verificationMechanisms": [
+          "EMAIL"
+        ]
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-hirehelperbackend-dev-74831-deployment/amplify-cfn-templates/auth/hirehelperbackendbbba6b7e-cloudformation-template.json",
+        "logicalId": "authhirehelperbackendbbba6b7e"
+      },
+      "lastPushTimeStamp": "2024-11-14T05:49:21.674Z",
+      "output": {
+        "UserPoolId": "us-east-1_OkORNwlvO",
+        "AppClientIDWeb": "6io2fq1o3r26n60vrmbhlcmsu4",
+        "AppClientID": "6mci93al26ti28r67grrvakkq5",
+        "IdentityPoolId": "us-east-1:1454f2e6-dac6-4b48-a2e7-1055946646b3",
+        "UserPoolArn": "arn:aws:cognito-idp:us-east-1:677276120566:userpool/us-east-1_OkORNwlvO",
+        "IdentityPoolName": "hirehelperbackendbbba6b7e_identitypool_bbba6b7e__dev",
+        "UserPoolName": "hirehelperbackendbbba6b7e_userpool_bbba6b7e"
+      },
+      "lastPushDirHash": "o4AW0rezgEbYt5UPZGECwy1xXYM="
+    }
+  },
+  "api": {
+    "hirehelperbackend": {
+      "service": "AppSync",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "output": {
+        "authConfig": {
+          "defaultAuthentication": {
+            "authenticationType": "API_KEY",
+            "apiKeyConfig": {
+              "apiKeyExpirationDays": 7
+            }
+          },
+          "additionalAuthenticationProviders": []
+        },
+        "GraphQLAPIIdOutput": "meixqct2ezdodcgu2dgmnzpo4e",
+        "GraphQLAPIEndpointOutput": "https://vkmpnhxbivbbdbyvq5djdmdhwe.appsync-api.us-east-1.amazonaws.com/graphql",
+        "GraphQLAPIKeyOutput": "da2-2tnfraii4jah3mg2nhaowfn3de"
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-hirehelperbackend-dev-74831-deployment/amplify-cfn-templates/api/cloudformation-template.json",
+        "logicalId": "apihirehelperbackend"
+      },
+      "lastPushTimeStamp": "2024-11-14T05:49:21.674Z",
+      "lastPushDirHash": "dObuQzZ9jnGxrM4chnSZMu6HJdo="
+    }
+  },
+  "storage": {
+    "dynamotypetype": {
+      "service": "DynamoDB",
+      "providerPlugin": "awscloudformation",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-hirehelperbackend-dev-74831-deployment/amplify-cfn-templates/storage/dynamotypetype-cloudformation-template.json",
+        "logicalId": "storagedynamotypetype"
+      },
+      "lastPushTimeStamp": "2024-11-14T05:49:21.674Z",
+      "output": {
+        "PartitionKeyName": "userId",
+        "SortKeyName": "email",
+        "SortKeyType": "S",
+        "Region": "us-east-1",
+        "Arn": "arn:aws:dynamodb:us-east-1:677276120566:table/users-dev",
+        "StreamArn": "arn:aws:dynamodb:us-east-1:677276120566:table/users-dev/stream/2024-11-14T05:47:56.128",
+        "PartitionKeyType": "S",
+        "Name": "users-dev"
+      },
+      "lastPushDirHash": "53WJ+/SaI3/9k+mEyCDFDp2Vhcg="
+    }
+  }
+}
