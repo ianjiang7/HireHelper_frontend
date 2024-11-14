@@ -1,0 +1,14 @@
+{
+  "resourceName": "dynamotypetype",
+  "tableName": "users",
+  "partitionKey": {
+    "fieldName": "userId",
+    "fieldType": "string"
+  },
+  "sortKey": {
+    "fieldName": "email",
+    "fieldType": "string"
+  },
+  "gsi": [],
+  "triggerFunctions": []
+}

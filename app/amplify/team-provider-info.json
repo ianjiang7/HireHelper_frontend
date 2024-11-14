@@ -1,0 +1,23 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-hirehelperbackend-dev-74831-authRole",
+      "UnauthRoleArn": "arn:aws:iam::677276120566:role/amplify-hirehelperbackend-dev-74831-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::677276120566:role/amplify-hirehelperbackend-dev-74831-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-hirehelperbackend-dev-74831-deployment",
+      "UnauthRoleName": "amplify-hirehelperbackend-dev-74831-unauthRole",
+      "StackName": "amplify-hirehelperbackend-dev-74831",
+      "StackId": "arn:aws:cloudformation:us-east-1:677276120566:stack/amplify-hirehelperbackend-dev-74831/eed789f0-a249-11ef-924a-0ec2c1338955",
+      "AmplifyAppId": "d2qc486pg5m8nc"
+    },
+    "categories": {
+      "auth": {
+        "hirehelperbackendbbba6b7e": {}
+      },
+      "storage": {
+        "dynamotypetype": {}
+      }
+    }
+  }
+}
