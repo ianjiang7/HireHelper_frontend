@@ -5,16 +5,8 @@ import Alumni from "./Alumni";
 function SearchResults() {
     const navigate = useNavigate();
     const {state} = useLocation();
-    const [page, setPage] = useState(1);
     const {industry, role, customJob, jobSearch, company} = state;
-    function handlePrevious() {
-        if (page !== 1) {
-            setPage(page - 1)
-        }
-    }
-    function handleNext() {
-        setPage(page + 1)
-    }
+    
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 to-purple-300 text-gray-900">
             <header className="bg-gray-800 text-white w-full py-4 text-lg font-semibold text-center">
@@ -29,11 +21,8 @@ function SearchResults() {
                         className="border border-gray-300 rounded-md p-2"
                     />
                 </div>
-                <Alumni industry={industry} job={role} customJob={customJob} page={page} jobSearch={jobSearch} company={company}/>
-                <div className="flex justify-center space-x-4 mt-4">
-                    <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={handlePrevious}>Previous</button>
-                    <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={handleNext}>Next</button>
-                </div>
+                <Alumni industry={industry} job={role} customJob={customJob} jobSearch={jobSearch} company={company}/>
+                
                 <button onClick={() => navigate("/")} className="mt-6 block mx-auto bg-gray-800 text-white px-4 py-2 rounded-lg">
                     Back
                 </button>

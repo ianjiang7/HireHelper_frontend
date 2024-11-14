@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
 import Alumnus from './Alumnus';
 
-function Alumni({ industry, job, customJob, page, jobSearch, company }) {
-    const [alumni, setAlumni] = useState([]);
-
+function Alumni({ industry, job, customJob, jobSearch, company }) {
+  const [alumni, setAlumni] = useState([]);
+  const [page, setPage] = useState(1);
+  function handlePrevious() {
+    if (page !== 1) {
+        setPage(page - 1)
+    }
+  }
+  function handleNext() {
+      setPage(page + 1)
+  }
     // Set customJob to job if job is not "Other"
     if (job !== "Other") {
         customJob = job;
@@ -56,6 +64,10 @@ function Alumni({ industry, job, customJob, page, jobSearch, company }) {
                     )}
                 </tbody>
             </table>
+            <div className="flex justify-center space-x-4 mt-4">
+                    <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={handlePrevious}>Previous</button>
+                    {alumni.length > 0 && <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={handleNext}>Next</button>}
+                </div>
         </div>
     );
 }
