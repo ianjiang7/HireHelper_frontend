@@ -31,6 +31,7 @@ To run this project locally, follow these steps:
 
 ### Prerequisites
 Ensure you have **Node.js** and **npm** installed on your machine.
+Comment out aws amplify folders/files, working on moving to aws to keep our deployment-frontend/backend all in the same place. 
 
 ### Steps
 1. Clone the repository:
