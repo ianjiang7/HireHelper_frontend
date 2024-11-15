@@ -14,17 +14,17 @@ import awsExports from './aws-exports';
 Amplify.configure(awsExports);
 
 function App() {
-    /*
+
     const navigate = useNavigate();
 
     useEffect(() => {
-        const userRole = localStorage.getItem("userRole");
+        const userRole = localStorage.getItem("role");
         if (userRole === "student") {
             navigate("/profile-setup");
         } else if (userRole === "alumni") {
             navigate("/my-connections");
         }
-    }, [navigate]);*/
+    }, [navigate]);
 
     return (
         <Router>
