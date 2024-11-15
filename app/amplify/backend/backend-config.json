@@ -1,15 +1,23 @@
 {
   "api": {
     "hirehelperbackend": {
-      "dependsOn": [],
+      "dependsOn": [
+        {
+          "attributes": [
+            "UserPoolId"
+          ],
+          "category": "auth",
+          "resourceName": "hirehelperbackende8ae7630"
+        }
+      ],
       "output": {
         "authConfig": {
           "additionalAuthenticationProviders": [],
           "defaultAuthentication": {
-            "apiKeyConfig": {
-              "apiKeyExpirationDays": 7
-            },
-            "authenticationType": "API_KEY"
+            "authenticationType": "AMAZON_COGNITO_USER_POOLS",
+            "userPoolConfig": {
+              "userPoolId": "authhirehelperbackende8ae7630"
+            }
           }
         }
       },
@@ -18,7 +26,7 @@
     }
   },
   "auth": {
-    "hirehelperbackendbbba6b7e": {
+    "hirehelperbackende8ae7630": {
       "customAuth": false,
       "dependsOn": [],
       "frontendAuthConfig": {
@@ -45,10 +53,5 @@
       "service": "Cognito"
     }
   },
-  "storage": {
-    "dynamotypetype": {
-      "providerPlugin": "awscloudformation",
-      "service": "DynamoDB"
-    }
-  }
+  "storage": {}
 }
