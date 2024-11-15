@@ -9,9 +9,9 @@ import MyConnections from "./components/MyConnections";
 import MyJobPostings from "./components/MyJobPostings";
 import "./App.css"
 import SearchResults from "./components/SearchResults";
-// import { Amplify } from 'aws-amplify';
-// import awsExports from './aws-exports';
-// Amplify.configure(awsExports);
+import { Amplify } from 'aws-amplify';
+import awsExports from './aws-exports';
+Amplify.configure(awsExports);
 
 function App() {
     /*
