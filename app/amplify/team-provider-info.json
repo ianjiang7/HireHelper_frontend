@@ -13,10 +13,10 @@
     },
     "categories": {
       "auth": {
-        "hirehelperbackendbbba6b7e": {}
+        "hirehelperbackende8ae7630": {}
       },
-      "storage": {
-        "dynamotypetype": {}
+      "api": {
+        "hirehelperbackend": {}
       }
     }
   }
