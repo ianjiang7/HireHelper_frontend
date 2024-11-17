@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import "./SlideshowModal.css";
 
-function SlideshowModal({ onClose }) {
+function SlideshowModal({ onClose, onRequestClose }) {
     const [slideIndex, setSlideIndex] = useState(0);
     const slides = [
         { 
@@ -43,6 +43,9 @@ function SlideshowModal({ onClose }) {
     return (
         <div className="modal-overlay">
             <div className="modal-content">
+                <button className="close-button" onClick={onRequestClose}>
+                    &#x2715; {/* Close icon */}
+                </button>
                 <h2 className="title">{slides[slideIndex].title}</h2>
                 {slides[slideIndex].text && <p>{slides[slideIndex].text}</p>}
                 
@@ -53,8 +56,8 @@ function SlideshowModal({ onClose }) {
                     </div>
                 ) : (
                     <>
-                        <button onClick={previousSlide} className="arrow-button non-blue-arrow left-arrow">&#10094;</button>
-                        <button onClick={nextSlide} className="arrow-button blue-arrow right-arrow">&#10095;</button>
+                        <button onClick={previousSlide} className="arrow-button left-arrow">&#10094;</button>
+                        <button onClick={nextSlide} className="arrow-button right-arrow">&#10095;</button>
                     </>
                 )}
             </div>

@@ -1,37 +1,83 @@
 /* Signup.css */
 
+/* Scoped styles to prevent interference */
 .signup-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: white;
-}
-
-h2 {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-    color: #333;
-}
-
-input, select {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+    padding: 40px 30px;
     width: 100%;
-    padding: 8px;
-    margin: 8px 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    max-width: 450px;
+    text-align: center;
+    margin: auto;
+    font-family: 'Arial', sans-serif;
 }
 
-button {
-    padding: 10px 20px;
-    background-color: #4a4a4a;
-    color: white;
+.signup-container h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #1e90ff;
+}
+
+.signup-container input[type="email"],
+.signup-container input[type="text"],
+.signup-container input[type="password"],
+.signup-container select {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.signup-container input:focus,
+.signup-container select:focus {
+    border-color: #1e90ff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(30, 144, 255, 0.5);
+}
+
+.signup-container select {
+    background-color: #f9f9f9;
+}
+
+.signup-container button {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 15px 0;
+    background: #1e90ff;
     border: none;
     border-radius: 5px;
+    color: #fff;
+    font-size: 1rem;
     cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.signup-container button:hover {
+    background: #005ecb;
+}
+
+.signup-container button:disabled {
+    background: #a9d6ff;
+    cursor: not-allowed;
+}
+
+.signup-container .error {
+    color: #e74c3c;
+    font-size: 0.9rem;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.signup-container input::placeholder {
+    color: #aaa;
+}
+
+.signup-container .optional {
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-bottom: 10px;
+    display: inline-block;
 }

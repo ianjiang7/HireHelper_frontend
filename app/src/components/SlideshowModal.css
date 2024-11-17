@@ -138,3 +138,21 @@
         font-size: 1.1rem;
     }
 }
+
+/* Close button */
+.close-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 1.5rem;
+    color: #007bff;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s;
+    z-index: 10;
+}
+
+.close-button:hover {
+    color: #0056b3; /* Darker blue on hover */
+}
