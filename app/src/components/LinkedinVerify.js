@@ -20,7 +20,6 @@ const LinkedInPopup = ({ isOpen, onClose, onVerificationComplete }) => {
     const interval = setInterval(() => {
       try {
         // Check if the popup's URL has been redirected to your domain
-        if (authWindow.location.href.includes("alumnireach.org")) {
           console.log("Redirected")
           const params = new URLSearchParams(authWindow.location.search);
           console.log(params)
@@ -32,7 +31,6 @@ const LinkedInPopup = ({ isOpen, onClose, onVerificationComplete }) => {
             setVerificationComplete(true); // Mark verification as complete
             onVerificationComplete(authCode); // Pass the auth code back to the parent
           }
-        }
       } catch (err) {
         // Cross-origin errors are expected until the popup redirects to your domain
       }
