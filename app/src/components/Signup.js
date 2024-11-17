@@ -117,8 +117,6 @@ function Signup() {
         setError("Could not retrieve session details. Please try again.");
         return;
       }
-      console.log(idToken)
-
       // Get userId
       const { userId } = await getCurrentUser();
       

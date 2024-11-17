@@ -20,7 +20,7 @@ const LinkedInPopup = ({ isOpen, onClose, onVerificationComplete }) => {
     const interval = setInterval(() => {
       try {
         // Check if the popup's URL has been redirected to your domain
-        if (authWindow.location.href.includes(redirectUri)) {
+        if (authWindow.location.href.includes("alumnireach.org")) {
           console.log("Redirected")
           const params = new URLSearchParams(authWindow.location.search);
           console.log(params)
