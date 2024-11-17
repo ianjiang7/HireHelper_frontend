@@ -51,7 +51,7 @@ function SearchResults() {
           />
         </div>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/profile-setup")}
           className="back-button"
         >
           Back

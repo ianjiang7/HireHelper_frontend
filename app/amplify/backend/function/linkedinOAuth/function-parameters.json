@@ -1,0 +1,18 @@
+{
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "redirectUri",
+      "environmentVariableName": "REDIRECT_URI"
+    },
+    {
+      "cloudFormationParameterName": "linkedinClientId",
+      "environmentVariableName": "LINKEDIN_CLIENT_ID"
+    },
+    {
+      "cloudFormationParameterName": "linkedinClientSecret",
+      "environmentVariableName": "LINKEDIN_CLIENT_SECRET"
+    }
+  ]
+  
+}

@@ -134,7 +134,7 @@ function Home() {
                         </button>
                     </>
                 ) : (
-                    <p>You are currently not signed in.</p>
+                    <p>You are currently signed out.</p>
                 )}
             </div>
         </div>

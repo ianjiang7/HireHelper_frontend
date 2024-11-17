@@ -53,5 +53,55 @@
       "service": "Cognito"
     }
   },
+  "function": {
+    "linkedinOAuth": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_function_linkedinOAuth_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "linkedinOAuth"
+        }
+      ]
+    },
+    "AMPLIFY_function_linkedinOAuth_linkedinClientId": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "linkedinOAuth"
+        }
+      ]
+    },
+    "AMPLIFY_function_linkedinOAuth_linkedinClientSecret": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "linkedinOAuth"
+        }
+      ]
+    },
+    "AMPLIFY_function_linkedinOAuth_redirectUri": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "linkedinOAuth"
+        }
+      ]
+    },
+    "AMPLIFY_function_linkedinOAuth_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "linkedinOAuth"
+        }
+      ]
+    }
+  },
   "storage": {}
 }
