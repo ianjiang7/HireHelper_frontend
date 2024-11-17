@@ -43,6 +43,8 @@ function ProfileSetup() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: authCode }),
           });
+
+          console.log(response)
       
           if (!response.ok) {
             throw new Error('Failed to fetch LinkedIn details');
@@ -50,7 +52,7 @@ function ProfileSetup() {
       
           const data = await response.json();
           const storedName = signupData.name; // Replace with the variable holding the expected full name
-      
+          console.log('Name:', data.user.fullName)
           if (data.user.fullName === storedName) {
             setIsVerified(true); // Update verification state
             alert('Verification successful!');

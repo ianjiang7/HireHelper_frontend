@@ -1,56 +1,70 @@
-import React, { useState, useEffect } from "react";
-import "./LinkedinVerify.css";
+import React, { useState } from "react";
+import "./LinkedinVerify.css"; // Import the CSS file
 
 const LinkedInPopup = ({ isOpen, onClose, onVerificationComplete }) => {
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.origin !== window.location.origin) return; // Ensure the message is from the same origin
-      if (event.data?.type === "authCode") {
-        const authCode = event.data.authCode;
-        if (authCode) {
-          onVerificationComplete(authCode); // Pass the auth code to the parent
-        }
-      }
-    };
-
-    // Listen for the postMessage event
-    window.addEventListener("message", handleMessage);
-
-    return () => {
-      // Clean up the event listener
-      window.removeEventListener("message", handleMessage);
-    };
-  }, [onVerificationComplete]);
+  const [verificationComplete, setVerificationComplete] = useState(false); // State to track if verification is done
 
   const handleLinkedInAuth = () => {
     setIsLoading(true);
 
     const clientId = "86hcrtio8qosdf"; // Replace with your LinkedIn Client ID
-    const redirectUri = "https://alumnireach.org/redirect"; // Redirect to same-origin page
+    const redirectUri = "https://alumnireach.org"; // Redirect back to your main app domain
     const scope = "openid profile email";
     const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
 
     // Open LinkedIn OAuth in a popup
-    window.open(authUrl, "_blank", "width=500,height=600");
-    setIsLoading(false);
+    const authWindow = window.open(authUrl, "_blank", "width=500,height=600");
+
+    // Poll the popup for the authorization code
+    const interval = setInterval(() => {
+      try {
+        // Check if the popup's URL has been redirected to your domain
+        if (authWindow.location.href.includes(redirectUri)) {
+          console.log("Redirected")
+          const params = new URLSearchParams(authWindow.location.search);
+          console.log(params)
+          const authCode = params.get("code");
+          console.log(authCode)
+
+          if (authCode) {
+            clearInterval(interval);
+            setVerificationComplete(true); // Mark verification as complete
+            onVerificationComplete(authCode); // Pass the auth code back to the parent
+          }
+        }
+      } catch (err) {
+        // Cross-origin errors are expected until the popup redirects to your domain
+      }
+
+      // Detect if the popup is manually closed by the user
+      if (authWindow.closed) {
+        clearInterval(interval);
+        setIsLoading(false);
+      }
+    }, 1000);
   };
 
-  if (!isOpen) return null; // Don't render the popup if it's not open
+  if (!isOpen) return null; // Don't render anything if the popup is not open
 
   return (
     <div className="popup-overlay">
       <div className="popup-content">
         <h3>Verify Your LinkedIn Profile</h3>
         <p>Connect your LinkedIn profile to verify your identity.</p>
-        <button onClick={handleLinkedInAuth} disabled={isLoading}>
-          {isLoading ? "Redirecting..." : "Sign in with LinkedIn"}
+        <button onClick={handleLinkedInAuth} disabled={isLoading || verificationComplete}>
+          {isLoading ? "Redirecting..." : verificationComplete ? "Verification Complete" : "Sign in with LinkedIn"}
         </button>
         <button onClick={onClose}>Cancel</button>
+        {verificationComplete && (
+          <p className="success-message">
+            Verification complete! Please close this popup window to continue.
+          </p>
+        )}
       </div>
     </div>
   );
 };
 
 export default LinkedInPopup;
+
