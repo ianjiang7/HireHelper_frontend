@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Alumni from "./Alumni";
+import "./SearchResults.css";
 
 function SearchResults() {
   const navigate = useNavigate();
@@ -10,58 +11,48 @@ function SearchResults() {
   return (
     <div>
       {/* Navbar */}
-      <nav className="bg-gray-800 text-white py-4 px-6">
-        <div className="flex justify-between items-center">
-          <h1
-            className="text-xl font-bold cursor-pointer"
-            onClick={() => navigate("/")}
-          >
-            AlumniReach for NYU
-          </h1>
-          <div className="space-x-4">
-            <button
-              onClick={() => navigate("/")}
-              className="text-sm hover:underline"
-            >
-              Home
-            </button>
-            <button
-              onClick={() => navigate("/profile-setup")}
-              className="text-sm hover:underline"
-            >
-              Profile Setup
-            </button>
-            <button
-              onClick={() => navigate("/searchresults")}
-              className="text-sm hover:underline"
-            >
-              Results
-            </button>
-          </div>
+      <nav className="navbar">
+        <h1 className="navbar-title" onClick={() => navigate("/")}>
+          AlumniReach for NYU
+        </h1>
+        <div className="navbar-links">
+          <button onClick={() => navigate("/")} className="navbar-link">
+            Home
+          </button>
+          <button onClick={() => navigate("/profile-setup")} className="navbar-link">
+            Profile Setup
+          </button>
+          <button onClick={() => navigate("/searchresults")} className="navbar-link">
+            Results
+          </button>
         </div>
       </nav>
-      <main className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <p className="text-lg font-medium">
-            Showing Results for <span className="font-bold">{role}</span> in{" "}
-            <span className="font-bold">{industry}</span>
+
+      {/* Main Content */}
+      <main className="content">
+        <div className="search-header">
+          <p className="search-text">
+            Showing Results for <span className="highlight">{role}</span> in{" "}
+            <span className="highlight">{industry}</span>
           </p>
           <input
             type="text"
             placeholder="Search..."
-            className="border px-4 py-2 rounded-md"
+            className="search-input"
           />
         </div>
-        <Alumni
+        <div className="results-container">
+          <Alumni
           industry={industry}
           job={role}
           customJob={customJob}
           jobSearch={jobSearch}
           company={company}
-        />
+          />
+        </div>
         <button
           onClick={() => navigate("/")}
-          className="mt-6 bg-gray-500 text-white px-4 py-2 rounded-md"
+          className="back-button"
         >
           Back
         </button>

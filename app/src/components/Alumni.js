@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Alumnus from "./Alumnus";
+import "./Alumni.css";
 
 function Alumni({ industry, job, customJob, jobSearch, company }) {
   const [alumni, setAlumni] = useState([]);
   const [page, setPage] = useState(1);
+  const [resultsPerPage] = useState(50); // Set results per page
 
-  // Adjust customJob if the job is not "Other"
   if (job !== "Other") {
     customJob = job;
   }
@@ -20,8 +21,7 @@ function Alumni({ industry, job, customJob, jobSearch, company }) {
           throw new Error("Network response was not ok");
         }
         const data = await response.json();
-        const alumniArray = Object.values(data);
-        setAlumni(alumniArray);
+        setAlumni(Object.values(data));
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -30,22 +30,28 @@ function Alumni({ industry, job, customJob, jobSearch, company }) {
     getAlumni();
   }, [industry, customJob, page, jobSearch, company]);
 
+  const startIndex = (page - 1) * resultsPerPage;
+  const endIndex = startIndex + resultsPerPage;
+  const paginatedAlumni = alumni.slice(startIndex, endIndex);
+
   return (
-    <div>
-      <table className="w-full bg-white shadow-lg rounded-md">
-        <thead className="bg-gray-200 text-gray-700">
+    <div className="alumni-container">
+      <table className="alumni-table">
+        <thead>
           <tr>
-            <th className="py-3 px-4 text-left">Name</th>
-            <th className="py-3 px-4 text-left">Title</th>
-            <th className="py-3 px-4 text-left">LinkedIn</th>
-            <th className="py-3 px-4 text-left">Industry</th>
-            <th className="py-3 px-4 text-left">Company</th>
-            <th className="py-3 px-4 text-left">Role</th>
+            <th>Name</th>
+            <th>Title</th>
+            <th>LinkedIn</th>
+            <th>Industry</th>
+            <th>Company</th>
+            <th>Role</th>
           </tr>
         </thead>
         <tbody>
-          {alumni.length > 0 ? (
-            alumni.map((alumnus, index) => <Alumnus key={index} alumnus={alumnus} />)
+          {paginatedAlumni.length > 0 ? (
+            paginatedAlumni.map((alumnus, index) => (
+              <Alumnus key={index} alumnus={alumnus} />
+            ))
           ) : (
             <tr>
               <td colSpan="6" className="text-center py-4 text-gray-500">
@@ -57,15 +63,15 @@ function Alumni({ industry, job, customJob, jobSearch, company }) {
       </table>
       <div className="flex justify-center mt-4 space-x-4">
         <button
-          className="bg-gray-500 text-white px-4 py-2 rounded-md disabled:opacity-50"
+          className="pagination-button"
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
           disabled={page === 1}
         >
           Previous
         </button>
-        {alumni.length > 0 && (
+        {endIndex < alumni.length && (
           <button
-            className="bg-purple-600 text-white px-4 py-2 rounded-md"
+            className="pagination-button"
             onClick={() => setPage((prev) => prev + 1)}
           >
             Next
