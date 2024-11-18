@@ -51,6 +51,7 @@ Comment out aws amplify folders/files, working on moving to aws to keep our depl
    npm start
    ```
 5. Open your web browser and go to [http://localhost:3000](http://localhost:3000) to view the application.
+6. If you want the searchresults page to work, open a new terminal in the same folder, create a venv, install msql-connector-python and fastapi and run api.py with the command fastapi dev api.py located in /app/src. 
 
 ## Deployment
 To deploy the frontend application, you can use services like **Vercel** or **Netlify**. Make sure to build the app first:
