@@ -24,7 +24,7 @@
           "linkedinClientId": "86hcrtio8qosdf",
           "linkedinClientSecret": "WPL_AP1.mz9gnUie2DI9hsSH.HnmVGw==",
           "deploymentBucketName": "amplify-hirehelperbackend-dev-74831-deployment",
-          "s3Key": "amplify-builds/linkedinOAuth-4c5a4858374753736c65-build.zip"
+          "s3Key": "amplify-builds/linkedinOAuth-684b2b7934533444317a-build.zip"
         }
       }
     }

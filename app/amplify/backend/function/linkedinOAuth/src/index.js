@@ -44,6 +44,11 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*", // Or restrict to your domain
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST,OPTIONS",
+      },
       body: JSON.stringify({
         message: "User details fetched successfully",
         user: {
@@ -58,6 +63,11 @@ exports.handler = async (event) => {
     console.error("Error:", error.message);
     return {
       statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*", // Or restrict to your domain
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST,OPTIONS",
+      },
       body: JSON.stringify({ message: error.message }),
     };
   }
