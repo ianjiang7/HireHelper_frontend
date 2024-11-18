@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import bcrypt from "bcryptjs";
-import "./Signup.css";
+import "../cssfiles/Signup.css";
 import { signUp, confirmSignUp, fetchAuthSession,signIn, signOut, getCurrentUser } from "aws-amplify/auth";
-import awsmobile from "../aws-exports";
+import awsmobile from "../../aws-exports";
 
 // GraphQL mutation to create a user profile
 const createUserMutation = `

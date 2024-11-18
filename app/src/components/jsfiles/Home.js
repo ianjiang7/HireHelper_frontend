@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SlideshowModal from "./SlideshowModal";
 import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
-import awsmobile from "../aws-exports";
-import "./Home.css";
+import awsmobile from "../../aws-exports";
+import "../cssfiles/Home.css";
 
 const getUserProfileQuery = `
 query GetUserProfile($userId: ID!) {

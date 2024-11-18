@@ -1,5 +1,5 @@
 import React from "react";
-import "./MyConnections.css";
+import "../cssfiles/MyConnections.css";
 
 function MyConnections() {
     const connections = [

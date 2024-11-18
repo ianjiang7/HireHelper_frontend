@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./AccessCodeModal.css"; // Import CSS for styling the modal
+import "../cssfiles/AccessCodeModal.css"; // Import CSS for styling the modal
 
 function AccessCodeModal({ onClose, onAccessGranted }) {
     const [code, setCode] = useState("");

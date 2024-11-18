@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import "./SlideshowModal.css";
+import "../cssfiles/SlideshowModal.css";
 
 function SlideshowModal({ onClose, onRequestClose }) {
     const [slideIndex, setSlideIndex] = useState(0);

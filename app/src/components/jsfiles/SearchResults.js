@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Alumni from "./Alumni";
-import "./SearchResults.css";
+import "../cssfiles/SearchResults.css";
 
 function SearchResults() {
   const navigate = useNavigate();

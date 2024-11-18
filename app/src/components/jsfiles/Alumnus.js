@@ -17,7 +17,6 @@ function Alumnus({ alumnus }) {
       </td>
       <td className="py-3 px-4">{alumnus.industry}</td>
       <td className="py-3 px-4">{alumnus.company}</td>
-      <td className="py-3 px-4">{alumnus.role}</td>
     </tr>
   );
 }

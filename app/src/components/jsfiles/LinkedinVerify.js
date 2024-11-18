@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./LinkedinVerify.css"; // Import the CSS file
+import "../cssfiles/LinkedinVerify.css"; // Import the CSS file
 
 const LinkedInPopup = ({ isOpen, onClose, onVerificationComplete }) => {
   const [isLoading, setIsLoading] = useState(false);

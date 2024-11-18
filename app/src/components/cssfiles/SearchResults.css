@@ -20,8 +20,8 @@ body, html {
     left: 0;
     width: 100%;
     height: 60px;
-    background-color: #8a2be2; /* Purple */
-    color: white;
+    background-color: white; /* Purple */
+    color: #8a2be2;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -44,7 +44,7 @@ body, html {
 .navbar-link {
     background: none;
     border: none;
-    color: white;
+    color: #8a2be2;
     font-size: 1.2rem;
     cursor: pointer;
     font-weight: 500;

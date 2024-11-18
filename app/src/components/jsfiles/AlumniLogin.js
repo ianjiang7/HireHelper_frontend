@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Login.css";
+import "../cssfiles/Login.css";
 import {
   signIn,
   fetchAuthSession,
@@ -8,7 +8,7 @@ import {
   signOut,
   getCurrentUser
 } from "aws-amplify/auth";
-import awsmobile from "../aws-exports"; // Ensure correct path to aws-exports.js
+import awsmobile from "../../aws-exports"; // Ensure correct path to aws-exports.js
 
 function AlumniLogin() {
   const navigate = useNavigate();

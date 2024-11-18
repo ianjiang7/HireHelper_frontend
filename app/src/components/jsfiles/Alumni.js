@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Alumnus from "./Alumnus";
-import "./Alumni.css";
+import "../cssfiles/Alumni.css";
 
 function Alumni({ industry, job, customJob, jobSearch, company, searchTerm }) {
   const [alumni, setAlumni] = useState([]);
@@ -55,7 +55,6 @@ function Alumni({ industry, job, customJob, jobSearch, company, searchTerm }) {
               <th>LinkedIn</th>
               <th>Industry</th>
               <th>Company</th>
-              <th>Role</th>
             </tr>
           </thead>
           <tbody>
