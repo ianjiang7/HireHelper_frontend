@@ -98,3 +98,16 @@
     background-color: #e8d8f9;
     margin-top: auto; /* Adjust this value to increase space */
 }
+
+.verify-container button {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 15px 0;
+    background: #1e90ff;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}

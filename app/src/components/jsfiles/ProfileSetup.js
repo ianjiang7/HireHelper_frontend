@@ -119,7 +119,7 @@ function ProfileSetup() {
             {/* Main content */}
             <main className="profile-setup-main">
                 <h2 className="section-title">Welcome!</h2>
-                <p className="text-gray-700 text-center mb-6">Please tell us more about yourself</p>
+                <p className="text-gray-700 text-center mb-6"></p>
                 
                 <div className="flex flex-col lg:flex-row w-full space-y-6 lg:space-y-0 lg:space-x-8">
                     {/* Attach Resume Section */}
@@ -217,9 +217,13 @@ function ProfileSetup() {
              {/* Show AccessCodeModal only if showModal is true */}
              {showModal && <AccessCodeModal onClose={() => setShowModal(false)} onAccessGranted={handleAccessGranted} />}
             
-             <div>
+             <div className="verify-container">
                 {!isVerified ? (
-                    <button onClick={() => toggleLinkedInPopup(true)}>Verify Now</button>
+                    <>
+                    <button onClick={() => toggleLinkedInPopup(true)}>Verify</button> 
+                    <p>to access all results</p>
+                    </>
+                    
                 ) : (
                     <p>Your LinkedIn profile is verified!</p>
                 )}
