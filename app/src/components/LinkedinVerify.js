@@ -32,7 +32,7 @@ const LinkedInPopup = ({ isOpen, onClose, onVerificationComplete }) => {
 
     const clientId = "86hcrtio8qosdf"; // Replace with your LinkedIn Client ID
     const redirectUri = "https://www.alumnireach.org"; // Ensure this matches LinkedIn's Redirect URI
-    const scope = "openid name email";
+    const scope = "openid profile email";
     const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
 
     // Open LinkedIn OAuth in a popup
