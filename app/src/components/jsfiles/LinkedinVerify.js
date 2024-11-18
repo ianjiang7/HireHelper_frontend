@@ -31,7 +31,7 @@ const LinkedInPopup = ({ isOpen, onClose, onVerificationComplete }) => {
     setIsLoading(true);
 
     const clientId = "86hcrtio8qosdf"; // Replace with your LinkedIn Client ID
-    const redirectUri = "https://www.alumnireach.org"; // Ensure this matches LinkedIn's Redirect URI
+    const redirectUri = "https://alumnireach.org"; // Ensure this matches LinkedIn's Redirect URI
     const scope = "openid profile email";
     const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
 

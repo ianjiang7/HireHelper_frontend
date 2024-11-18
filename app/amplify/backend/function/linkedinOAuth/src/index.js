@@ -13,7 +13,7 @@ exports.handler = async (event) => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'authorization_code',
-        code,
+        code: code,
         redirect_uri: redirectUri,
         client_id: clientId,
         client_secret: clientSecret,
@@ -22,9 +22,9 @@ exports.handler = async (event) => {
 
     if (!tokenResponse.ok) {
       const errorBody = await tokenResponse.text();
-      console.error("Token Exchange Error:", errorBody);
-      throw new Error("Failed to fetch access token");
-    }
+      console.error("Token Exchange Error Response:", errorBody); // Log full error
+      throw new Error(`Failed to fetch access token: ${errorBody}`);
+    }    
 
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
