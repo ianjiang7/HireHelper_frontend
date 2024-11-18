@@ -45,7 +45,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: {
-        "Access-Control-Allow-Origin": "*", // Or restrict to your domain
+        "Access-Control-Allow-Origin": "https://www.alumnireach.org", // Or restrict to your domain
         "Access-Control-Allow-Headers": "Content-Type",
         "Access-Control-Allow-Methods": "POST,OPTIONS",
       },
@@ -64,7 +64,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       headers: {
-        "Access-Control-Allow-Origin": "*", // Or restrict to your domain
+        "Access-Control-Allow-Origin": "https://www.alumnireach.org", // Or restrict to your domain
         "Access-Control-Allow-Headers": "Content-Type",
         "Access-Control-Allow-Methods": "POST,OPTIONS",
       },

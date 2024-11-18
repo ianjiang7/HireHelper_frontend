@@ -35,10 +35,20 @@ function ProfileSetup() {
         "Information Technology", "Government & Public Service", "Product Management", "Other"
     ];
 
+    function hasMatchingWords(string1, string2) {
+        // Split strings into arrays of words
+        const words1 = string1.toLowerCase().split(/\s+/); // Split by whitespace
+        const words2 = string2.toLowerCase().split(/\s+/); // Split by whitespace
+    
+        // Check if any word in words1 exists in words2
+        return words1.some(word => words2.includes(word));
+    }
+    
+
     const handleVerificationComplete = async (authCode) => {
         try {
           // Replace '/api/verify-linkedin' with your Lambda function's API Gateway endpoint
-          const response = await fetch('https://1pg39hypyh.execute-api.us-east-1.amazonaws.com/linkedinOAuth-dev', {
+          const response = await fetch('https://1pg39hypyh.execute-api.us-east-1.amazonaws.com/default', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: authCode }),
@@ -53,7 +63,7 @@ function ProfileSetup() {
           const data = await response.json();
           const storedName = signupData.name; // Replace with the variable holding the expected full name
           console.log('Name:', data.name)
-          if (data.name === storedName) {
+          if (hasMatchingWords(data.name, storedName)) {
             setIsVerified(true); // Update verification state
             alert('Verification successful!');
           } else {
