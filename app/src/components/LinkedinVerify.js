@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./LinkedinVerify.css"; // Import the CSS file
 
 const LinkedInPopup = ({ isOpen, onClose, onVerificationComplete }) => {
