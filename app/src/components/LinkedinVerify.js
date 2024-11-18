@@ -19,7 +19,8 @@ const LinkedInPopup = ({ isOpen, onClose, onVerificationComplete }) => {
     // Poll the popup for the authorization code
     const interval = setInterval(() => {
       try {
-        // Check if the popup's URL has been redirected to your domain
+          console.log(authWindow)
+          // Check if the popup's URL has been redirected to your domain
           console.log("Redirected")
           const params = new URLSearchParams(authWindow.location.search);
           console.log(params)
