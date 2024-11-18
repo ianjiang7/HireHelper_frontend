@@ -218,7 +218,6 @@ function ProfileSetup() {
              {showModal && <AccessCodeModal onClose={() => setShowModal(false)} onAccessGranted={handleAccessGranted} />}
             
              <div>
-                <h2>Profile Setup</h2>
                 {!isVerified ? (
                     <button onClick={() => toggleLinkedInPopup(true)}>Verify Now</button>
                 ) : (

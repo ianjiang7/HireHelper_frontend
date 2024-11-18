@@ -134,7 +134,11 @@ function Home() {
                         </button>
                     </>
                 ) : (
+                    <>
                     <p>You are currently signed out.</p>
+                    <button onClick={handleSlideClose} className="sign-out-button">
+                            Log In
+                    </button></>
                 )}
             </div>
         </div>
