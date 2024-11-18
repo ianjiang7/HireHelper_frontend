@@ -217,9 +217,6 @@ function Signup() {
             value={form.phone_number}
             onChange={handleChange}
           />
-          <button onClick={handleSignOut} disabled={loading}>
-            {loading ? "Logging Out..." : "Log Out"}
-          </button>
           <button onClick={handleSignup} disabled={loading}>
             {loading ? "Signing Up..." : "Sign Up"}
           </button>
