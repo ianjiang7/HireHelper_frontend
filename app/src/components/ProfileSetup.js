@@ -38,7 +38,7 @@ function ProfileSetup() {
     const handleVerificationComplete = async (authCode) => {
         try {
           // Replace '/api/verify-linkedin' with your Lambda function's API Gateway endpoint
-          const response = await fetch('https://1pg39hypyh.execute-api.us-east-1.amazonaws.com/default', {
+          const response = await fetch('https://1pg39hypyh.execute-api.us-east-1.amazonaws.com/linkedinOAuth-dev', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: authCode }),
