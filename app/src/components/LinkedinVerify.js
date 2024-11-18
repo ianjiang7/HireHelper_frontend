@@ -33,6 +33,7 @@ const LinkedInPopup = ({ isOpen, onClose, onVerificationComplete }) => {
             onVerificationComplete(authCode); // Pass the auth code back to the parent
           }
       } catch (err) {
+        console.error("Cross-origin or security error", err.message)
         // Cross-origin errors are expected until the popup redirects to your domain
       }
 
