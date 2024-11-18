@@ -43,38 +43,6 @@ function ProfileSetup() {
         // Check if any word in words1 exists in words2
         return words1.some(word => words2.includes(word));
     }
-    
-
-    const handleVerificationComplete = async (authCode) => {
-        try {
-          // Replace '/api/verify-linkedin' with your Lambda function's API Gateway endpoint
-          const response = await fetch('https://1pg39hypyh.execute-api.us-east-1.amazonaws.com/default/linkedinOAuth-dev', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code: authCode }),
-          });
-
-          console.log(response)
-      
-          if (!response.ok) {
-            throw new Error('Failed to fetch LinkedIn details');
-          }
-      
-          const data = await response.json();
-          const storedName = signupData.name; // Replace with the variable holding the expected full name
-          console.log('Name:', data.name)
-          if (hasMatchingWords(data.name, storedName)) {
-            setIsVerified(true); // Update verification state
-            alert('Verification successful!');
-          } else {
-            alert('Verification failed: Names do not match.');
-          }
-        } catch (error) {
-          console.error('Verification Error:', error);
-          alert('Verification failed: Unable to fetch LinkedIn details.');
-        }
-      };
-      
 
     // Function to handle successful access code entry
     const handleAccessGranted = () => {
@@ -85,7 +53,7 @@ function ProfileSetup() {
 
     const handleProceed = () => {
         // If access is already granted, navigate directly
-        if (hasAccess || isVerified) {
+        if (hasAccess) {
             navigate("/search-results", {state: {industry, role, customJob, jobSearch, company}});
         } else {
             // Otherwise, show the access code modal
@@ -226,23 +194,7 @@ function ProfileSetup() {
             </main>
              {/* Show AccessCodeModal only if showModal is true */}
              {showModal && <AccessCodeModal onClose={() => setShowModal(false)} onAccessGranted={handleAccessGranted} />}
-            
-             <div className="verify-container">
-                {!isVerified ? (
-                    <>
-                    <button onClick={() => toggleLinkedInPopup(true)}>Verify</button> 
-                    <p>to access all results</p>
-                    </>
-                    
-                ) : (
-                    <p>Your LinkedIn profile is verified!</p>
-                )}
-            <LinkedInPopup
-                isOpen={isPopupOpen}
-                onClose={() => toggleLinkedInPopup(false)}
-                onVerificationComplete={handleVerificationComplete}
-            />
-            </div>
+
             <footer className="footer">
                     <p>AlumniReach LLC</p>
             </footer>

@@ -34,6 +34,8 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState("signup");
+  const [signupData, setsignupData] = useState("")
+  const [isVerified, setIsVerified] = useState()
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -83,13 +85,43 @@ function Signup() {
         "signupData",
         JSON.stringify({ userId, email, name, company, hashpassword, role })
       );
-
+      setsignupData(JSON.parse(localStorage.getItem("signupData")));
       setStep("confirm");
     } catch (err) {
       console.error("Signup error:", err);
       setError(err.message || "An error occurred during signup.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerificationComplete = async (authCode) => {
+    try {
+      // Replace '/api/verify-linkedin' with your Lambda function's API Gateway endpoint
+      const response = await fetch('https://1pg39hypyh.execute-api.us-east-1.amazonaws.com/default/linkedinOAuth-dev', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: authCode }),
+      });
+
+      console.log(response)
+  
+      if (!response.ok) {
+        throw new Error('Failed to fetch LinkedIn details');
+      }
+  
+      const data = await response.json();
+      const storedName = signupData.name; // Replace with the variable holding the expected full name
+      console.log('Name:', data.fullName)
+      if (hasMatchingWords(data.Name, storedName)) {
+        setIsVerified(true); // Update verification state
+        alert('Verification successful!');
+      } else {
+        alert('Verification failed: Names do not match.');
+      }
+    } catch (error) {
+      console.error('Verification Error:', error);
+      alert('Verification failed: Unable to fetch LinkedIn details.');
     }
   };
 
@@ -105,7 +137,6 @@ function Signup() {
       // Authenticate the user with Cognito
       await signIn({username : email, password: password});
       // Retrieve signup data
-      const signupData = JSON.parse(localStorage.getItem("signupData"));
       if (!signupData) {
         setError("Signup data is missing. Please try signing up again.");
         return;
@@ -217,9 +248,26 @@ function Signup() {
             value={form.phone_number}
             onChange={handleChange}
           />
-          <button onClick={handleSignup} disabled={loading}>
-            {loading ? "Signing Up..." : "Sign Up"}
-          </button>
+          <div className="signup-container">
+                {!isVerified ? (
+                    <>
+                    <button onClick={() => toggleLinkedInPopup(true)}>Verify with LinkedIn</button> 
+                    </>
+                    
+                ) : (
+                    <p>Your LinkedIn profile is verified!</p>
+                )}
+            <LinkedInPopup
+                isOpen={isPopupOpen}
+                onClose={() => toggleLinkedInPopup(false)}
+                onVerificationComplete={handleVerificationComplete}
+            />
+          </div>
+          <div className="signup-container">
+            {isVerified && <button onClick={handleSignup} disabled={loading}>
+              {loading ? "Signing Up..." : "Sign Up"}
+            </button>}
+          </div>
         </>
       )}
 
