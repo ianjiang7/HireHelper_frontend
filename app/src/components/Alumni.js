@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import Alumnus from "./Alumnus";
 import "./Alumni.css";
 
-function Alumni({ industry, job, customJob, jobSearch, company }) {
+function Alumni({ industry, job, customJob, jobSearch, company, searchTerm }) {
   const [alumni, setAlumni] = useState([]);
   const [page, setPage] = useState(1);
-  const [resultsPerPage] = useState(50); // Set results per page
+  const [resultsPerPage] = useState(25); // Set results per page
+  const [loading, setLoading] = useState(true);
 
   if (job !== "Other") {
     customJob = job;
@@ -13,6 +14,7 @@ function Alumni({ industry, job, customJob, jobSearch, company }) {
 
   useEffect(() => {
     const getAlumni = async () => {
+      setLoading(true);
       try {
         const response = await fetch(
           `/person/search/?industry=${industry}&job=${customJob}&page=${page}&title=${jobSearch}&company=${company}`
@@ -24,55 +26,72 @@ function Alumni({ industry, job, customJob, jobSearch, company }) {
         setAlumni(Object.values(data));
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     getAlumni();
   }, [industry, customJob, page, jobSearch, company]);
 
+  const filteredAlumni = alumni.filter((alumnus) =>
+    Object.values(alumnus).some((value) =>
+      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
   const startIndex = (page - 1) * resultsPerPage;
   const endIndex = startIndex + resultsPerPage;
-  const paginatedAlumni = alumni.slice(startIndex, endIndex);
+  const paginatedAlumni = filteredAlumni.slice(startIndex, endIndex);
 
   return (
     <div className="alumni-container">
-      <table className="alumni-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Title</th>
-            <th>LinkedIn</th>
-            <th>Industry</th>
-            <th>Company</th>
-            <th>Role</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedAlumni.length > 0 ? (
-            paginatedAlumni.map((alumnus, index) => (
-              <Alumnus key={index} alumnus={alumnus} />
-            ))
-          ) : (
+      <div className="table-wrapper">
+        <table className="alumni-table">
+          <thead>
             <tr>
-              <td colSpan="6" className="text-center py-4 text-gray-500">
-                No data available
-              </td>
+              <th>Name</th>
+              <th>Title</th>
+              <th>LinkedIn</th>
+              <th>Industry</th>
+              <th>Company</th>
+              <th>Role</th>
             </tr>
-          )}
-        </tbody>
-      </table>
-      <div className="flex justify-center mt-4 space-x-4">
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="6" className="text-center py-4">
+                  Loading...
+                </td>
+              </tr>
+            ) : paginatedAlumni.length > 0 ? (
+              paginatedAlumni.map((alumnus, index) => (
+                <Alumnus key={index} alumnus={alumnus} />
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="text-center py-4 text-gray-500">
+                  No data available
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div className="pagination-container">
         <button
           className="pagination-button"
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-          disabled={page === 1}
+          disabled={page === 1 || loading}
         >
           Previous
         </button>
-        {endIndex < alumni.length && (
+        {endIndex < filteredAlumni.length && (
           <button
             className="pagination-button"
             onClick={() => setPage((prev) => prev + 1)}
+            disabled={loading}
           >
             Next
           </button>

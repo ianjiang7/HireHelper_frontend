@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Alumni from "./Alumni";
 import "./SearchResults.css";
@@ -7,10 +7,10 @@ function SearchResults() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { industry, role, customJob, jobSearch, company } = state;
+  const [searchTerm, setSearchTerm] = useState("");
 
   return (
-    <div>
-      {/* Navbar */}
+    <div className="search-results-page">
       <nav className="navbar">
         <h1 className="navbar-title" onClick={() => navigate("/")}>
           AlumniReach for NYU
@@ -22,14 +22,10 @@ function SearchResults() {
           <button onClick={() => navigate("/profile-setup")} className="navbar-link">
             Profile Setup
           </button>
-          <button onClick={() => navigate("/searchresults")} className="navbar-link">
-            Results
-          </button>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="content">
+      <main className="search-content-results-container">
         <div className="search-header">
           <p className="search-text">
             Showing Results for <span className="highlight">{role}</span> in{" "}
@@ -39,23 +35,20 @@ function SearchResults() {
             type="text"
             placeholder="Search..."
             className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="results-container">
           <Alumni
-          industry={industry}
-          job={role}
-          customJob={customJob}
-          jobSearch={jobSearch}
-          company={company}
+            industry={industry}
+            job={role}
+            customJob={customJob}
+            jobSearch={jobSearch}
+            company={company}
+            searchTerm={searchTerm}
           />
         </div>
-        <button
-          onClick={() => navigate("/profile-setup")}
-          className="back-button"
-        >
-          Back
-        </button>
       </main>
     </div>
   );
