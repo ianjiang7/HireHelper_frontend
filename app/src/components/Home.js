@@ -99,6 +99,10 @@ function Home() {
         }
     };
 
+    const handleLogIn = async () => {
+        navigate("/alumni-login")
+    }
+
     const handleCloseModal = () => {
         setShowSlideshow(false); // Close the modal when the close button is clicked
     };
@@ -136,7 +140,7 @@ function Home() {
                 ) : (
                     <>
                     <p>You are currently signed out.</p>
-                    <button onClick={handleSlideClose} className="sign-out-button">
+                    <button onClick={handleLogIn} className="sign-out-button">
                             Log In
                     </button></>
                 )}
