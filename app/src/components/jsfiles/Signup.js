@@ -113,6 +113,7 @@ function Signup() {
       console.log('Name:', data.user.fullName)
       if (hasMatchingWords(data.user.fullName, storedName)) {
         setIsVerified(true); // Update verification state
+        toggleLinkedInPopup(false);
         alert('Verification successful!');
       } else {
         alert('Verification failed: Names do not match.');
@@ -185,7 +186,7 @@ function Signup() {
       localStorage.setItem("userRole", signupData.role);
 
       // Navigate to appropriate page
-      navigate(signupData.role === "student" ? "/profile-setup" : "/my-connections");
+      navigate(signupData.role === "student" ? "/" : "/my-connections");
     } catch (err) {
       console.error("Confirmation error:", err);
       setError(err.message || "An error occurred during confirmation.");
@@ -264,7 +265,7 @@ function Signup() {
           </div>
           <div>
             {isVerified && <button onClick={handleSignup} disabled={loading}>
-              {loading ? "Signing Up..." : "Sign Up"}
+              {loading ? "Signing Up..." : "Complete Sign Up"}
             </button>}
           </div>
         </>

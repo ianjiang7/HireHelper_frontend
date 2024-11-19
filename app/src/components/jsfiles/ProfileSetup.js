@@ -17,15 +17,25 @@ function ProfileSetup() {
     const [showModal, setShowModal] = useState(false); // State to control modal visibility
     const [hasAccess, setHasAccess] = useState(false); // State to track access code entry
     const [isSignedIn, setIsSignedIn] = useState(false);
-    const [userName, setUserName] = useState(null);
+    const [signupData, setsignupData] = useState("");
     
     useEffect(() => {
         async function checkUserName() {
-            setUserName(localStorage.getItem("name"));
-            if (userName) {setIsSignedIn(true)};
-
+            try {
+                const fullName = await JSON.parse(localStorage.getItem("FullName"));
+                console.log(fullName)
+                const usersName = fullName?.UsersName
+                if (usersName) {
+                    setIsSignedIn(true);
+                    setsignupData(usersName)
+                };
+            } catch (err) {
+                console.error("Error fetching user data:", err);
+                setIsSignedIn(false);
+            }
+        }
         checkUserName();
-    }}, []);
+    }, []);
 
     const industries = [
         "Investment Banking", "Quantitative Trading", "Tax", "Finance",
@@ -43,7 +53,7 @@ function ProfileSetup() {
         try {
             await signOut();
             setIsSignedIn(false);
-            setUserName(null);
+            setsignupData(null);
             navigate("/"); // Redirect to the home page after sign-out
         } catch (err) {
             console.error("Error signing out:", err);
@@ -211,7 +221,7 @@ function ProfileSetup() {
             <div className="user-status">
                 {isSignedIn ? (
                     <>
-                        <p>Hi {userName}!</p>
+                        <p>Hi {signupData}!</p>
                         <button onClick={handleSignOut} className="sign-out-button">
                             Sign Out
                         </button>

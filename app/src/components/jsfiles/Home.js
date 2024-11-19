@@ -62,6 +62,11 @@ function Home() {
 
                 if (userProfile) {
                     setUserName(userProfile.fullname);
+                    const UsersName = userProfile.fullname;
+                    localStorage.setItem(
+                        "FullName",
+                        JSON.stringify({ UsersName })
+                    );
                     setIsSignedIn(true);
                 }
             } catch (err) {

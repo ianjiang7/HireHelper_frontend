@@ -26,7 +26,7 @@ function AlumniLogin() {
         if (session.tokens?.idToken) {
             console.log("User already signed in. Redirecting...");
             const userRole = localStorage.getItem("userRole");
-            navigate(userRole === "student" ? "/profile-setup" : "/my-connections");
+            navigate(userRole === "student" ? "/" : "/my-connections");
             return;
         }
     } catch {
@@ -48,20 +48,6 @@ function AlumniLogin() {
       }
     }
   `;
-
-  const handleSignOut = async () => {
-    try {
-      setLoading(true);
-      await signOut(); // Signs out the current session
-      localStorage.removeItem("userRole"); // Clear user-related local data
-      console.log("User signed out.");
-      navigate("/alumni-login"); // Redirect to login page
-    } catch (err) {
-      console.error("Error during sign-out:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogin = async () => {
     setLoading(true);
@@ -110,7 +96,7 @@ function AlumniLogin() {
       localStorage.setItem("userRole", userRole);
 
       // Navigate to appropriate page based on role
-      navigate(userRole === "student" ? "/profile-setup" : "/my-connections");
+      navigate(userRole === "student" ? "/" : "/my-connections");
     } catch (err) {
       console.error("Login error:", err);
 

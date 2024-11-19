@@ -13,7 +13,6 @@ import awsExports from './aws-exports';
 import ProtectedRoute from "./components/jsfiles/ProtectedRoute";
 import { AuthProvider } from './components/jsfiles/AuthContext'
 
-console.log('Amplify Configuration', awsExports)
 Amplify.configure(awsExports);
 
 function App() {
