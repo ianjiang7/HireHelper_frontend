@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AccessCodeModal from "./AccessCodeModal";
+import { signOut } from "aws-amplify/auth";
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
-
 
 function ProfileSetup() {
     const navigate = useNavigate();
@@ -16,6 +16,16 @@ function ProfileSetup() {
     const [showDropdown, setShowDropdown] = useState(false);
     const [showModal, setShowModal] = useState(false); // State to control modal visibility
     const [hasAccess, setHasAccess] = useState(false); // State to track access code entry
+    const [isSignedIn, setIsSignedIn] = useState(false);
+    const [userName, setUserName] = useState(null);
+    
+    useEffect(() => {
+        async function checkUserName() {
+            setUserName(localStorage.getItem("name"));
+            if (userName) {setIsSignedIn(true)};
+
+        checkUserName();
+    }}, []);
 
     const industries = [
         "Investment Banking", "Quantitative Trading", "Tax", "Finance",
@@ -29,13 +39,19 @@ function ProfileSetup() {
         "Information Technology", "Government & Public Service", "Product Management", "Other"
     ];
 
-    function hasMatchingWords(string1, string2) {
-        // Split strings into arrays of words
-        const words1 = string1.toLowerCase().split(/\s+/); // Split by whitespace
-        const words2 = string2.toLowerCase().split(/\s+/); // Split by whitespace
-    
-        // Check if any word in words1 exists in words2
-        return words1.some(word => words2.includes(word));
+    const handleSignOut = async () => {
+        try {
+            await signOut();
+            setIsSignedIn(false);
+            setUserName(null);
+            navigate("/"); // Redirect to the home page after sign-out
+        } catch (err) {
+            console.error("Error signing out:", err);
+        }
+    };
+
+    const handleLogIn = async () => {
+        navigate("/alumni-login")
     }
 
     // Function to handle successful access code entry
@@ -84,7 +100,7 @@ function ProfileSetup() {
                 <div className="navbar-links">
                     <button onClick={() => navigate("/")} className="navbar-link">Home</button>
                     <button onClick={() => navigate("/profile-setup")} className="navbar-link">Profile Setup</button>
-                    <button onClick = {() => hasAccess && navigate("/searchresults")} className = "navbar-link">Results</button>
+                    <button onClick = {() => hasAccess && navigate("/search-results")} className = "navbar-link">Results</button>
                 </div>
             </nav>
 
@@ -192,6 +208,22 @@ function ProfileSetup() {
             <footer className="footer">
                     <p>AlumniReach LLC</p>
             </footer>
+            <div className="user-status">
+                {isSignedIn ? (
+                    <>
+                        <p>Hi {userName}!</p>
+                        <button onClick={handleSignOut} className="sign-out-button">
+                            Sign Out
+                        </button>
+                    </>
+                ) : (
+                    <>
+                    <p>You are currently signed out.</p>
+                    <button onClick={handleLogIn} className="sign-out-button">
+                            Log In
+                    </button></>
+                )}
+            </div>
         </div>
     );
 }

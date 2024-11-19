@@ -8,28 +8,29 @@ import MyConnections from "./components/jsfiles/MyConnections";
 import MyJobPostings from "./components/jsfiles/MyJobPostings";
 import SearchResults from "./components/jsfiles/SearchResults";
 import "./App.css";
-import RoleBasedRedirect from "./components/jsfiles/RoleBasedRedirect"; // Import the component
 import { Amplify } from 'aws-amplify';
 import awsExports from './aws-exports';
+import ProtectedRoute from "./components/jsfiles/ProtectedRoute";
+import { AuthProvider } from './components/jsfiles/AuthContext'
 
 console.log('Amplify Configuration', awsExports)
 Amplify.configure(awsExports);
 
 function App() {
     return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/alumni-login" element={<AlumniLogin />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/profile-setup" element={<ProfileSetup />} />
-                <Route path="/my-connections" element={<MyConnections />} />
-                <Route path="/my-job-postings" element={<MyJobPostings />} />
-                <Route path="/search-results" element={<SearchResults />} />
-                {/* Redirect for authenticated users */}
-                <Route path="*" element={<RoleBasedRedirect />} />
-            </Routes>
-        </Router>
+        <AuthProvider>
+            <Router>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/alumni-login" element={<AlumniLogin />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/profile-setup" element={<ProfileSetup />} />
+                    <Route path="/my-connections" element={<ProtectedRoute><MyConnections /></ProtectedRoute>} />
+                    <Route path="/my-job-postings" element={<ProtectedRoute><MyJobPostings /></ProtectedRoute>} />
+                    <Route path="/search-results" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
+                </Routes>
+            </Router>
+        </AuthProvider>
     );
 }
 

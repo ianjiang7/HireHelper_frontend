@@ -114,15 +114,21 @@ function Home() {
             <nav className="navbar">
                 <h1 className="navbar-title" onClick={() => navigate("/")}>AlumniReach for NYU</h1>
                 <div className="navbar-links">
-                    <button onClick={() => navigate("/alumni-login")} className="navbar-link">Students</button>
-                    <button onClick={() => navigate("/my-connections")} className="navbar-link" disabled = {!isAlumni}>Alumni</button>
+                    <button onClick={() => navigate("/profile-setup")} className="navbar-link">Students</button>
+                    <button onClick={() => navigate("/my-connections")} className="navbar-link" disabled = {!isAlumni} style={!isAlumni ? { opacity: 0.5, cursor: "not-allowed" } : {}}>Alumni</button>
                     <button
                         onClick={() => navigate("/profile-setup")}
+                        className="navbar-link" // Optional styling for disabled button
+                    >
+                        Profile Setup
+                    </button>
+                    <button
+                        onClick={() => navigate("/search-results")}
                         className="navbar-link"
                         disabled={!isSignedIn} // Disable button if not signed in
                         style={!isSignedIn ? { opacity: 0.5, cursor: "not-allowed" } : {}} // Optional styling for disabled button
                     >
-                        Profile Setup
+                        Search Results
                     </button>
                 </div>
             </nav>

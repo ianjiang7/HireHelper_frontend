@@ -73,7 +73,6 @@ function AlumniLogin() {
 
       // Get userId
       const { userId } = await getCurrentUser();
-      console.log(userId)
 
       // Fetch the authentication session
       const session = await fetchAuthSession();
