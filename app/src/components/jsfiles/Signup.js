@@ -123,6 +123,7 @@ function Signup() {
       }
   
       const data = await response.json();
+      console.log(data)
       const storedName = signupData.name; // Replace with the variable holding the expected full name
       console.log('Name:', data.fullName)
       if (hasMatchingWords(data.fullName, storedName)) {
