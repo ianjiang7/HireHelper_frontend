@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import "../cssfiles/Signup.css";
 import { signUp, confirmSignUp, fetchAuthSession,signIn, signOut, getCurrentUser } from "aws-amplify/auth";
 import awsmobile from "../../aws-exports";
+import LinkedInPopup from "./LinkedinVerify";
 
 // GraphQL mutation to create a user profile
 const createUserMutation = `

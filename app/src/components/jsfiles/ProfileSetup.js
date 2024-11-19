@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AccessCodeModal from "./AccessCodeModal";
-import LinkedInPopup from "./LinkedinVerify";
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
 
 
