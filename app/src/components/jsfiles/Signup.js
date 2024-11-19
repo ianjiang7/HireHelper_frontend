@@ -125,7 +125,7 @@ function Signup() {
       const data = await response.json();
       const storedName = signupData.name; // Replace with the variable holding the expected full name
       console.log('Name:', data.fullName)
-      if (hasMatchingWords(data.Name, storedName)) {
+      if (hasMatchingWords(data.fullName, storedName)) {
         setIsVerified(true); // Update verification state
         alert('Verification successful!');
       } else {
@@ -213,25 +213,26 @@ function Signup() {
       {step === "signup" && (
         <>
           <h2>Sign Up</h2>
+          <p> Please fill all fields to the best of your ability </p>
           {error && <p className="error">{error}</p>}
           <input
             type="email"
             name="email"
-            placeholder="Email"
+            placeholder="Email*"
             value={form.email}
             onChange={handleChange}
           />
           <input
             type="text"
             name="name"
-            placeholder="Full Name"
+            placeholder="Full Name*"
             value={form.name}
             onChange={handleChange}
           />
           <input
             type="text"
             name="company"
-            placeholder="Company"
+            placeholder="Company*"
             value={form.company}
             onChange={handleChange}
           />
@@ -242,14 +243,14 @@ function Signup() {
           <input
             type="password"
             name="password"
-            placeholder="Password"
+            placeholder="Password*"
             value={form.password}
             onChange={handleChange}
           />
           <input
             type="password"
             name="confirmPassword"
-            placeholder="Confirm Password"
+            placeholder="Confirm Password*"
             value={form.confirmPassword}
             onChange={handleChange}
           />
@@ -260,7 +261,7 @@ function Signup() {
             value={form.phone_number}
             onChange={handleChange}
           />
-          <div className="signup-container">
+          <div>
                 {!isVerified ? (
                     <>
                     <button onClick={() => toggleLinkedInPopup(true)}>Verify with LinkedIn</button> 
@@ -275,7 +276,7 @@ function Signup() {
                 onVerificationComplete={handleVerificationComplete}
             />
           </div>
-          <div className="signup-container">
+          <div>
             {isVerified && <button onClick={handleSignup} disabled={loading}>
               {loading ? "Signing Up..." : "Sign Up"}
             </button>}
