@@ -53,20 +53,6 @@ function Signup() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSignOut = async () => {
-    try {
-      setLoading(true);
-      await signOut(); // Signs out the current session
-      localStorage.removeItem("userRole"); // Clear user-related local data
-      console.log("User signed out.");
-      navigate("/alumni-login"); // Redirect to login page
-    } catch (err) {
-      console.error("Error during sign-out:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSignup = async () => {
     const { email, password, confirmPassword, name, company, role, phone_number } = form;
 
@@ -123,10 +109,9 @@ function Signup() {
       }
   
       const data = await response.json();
-      console.log(data)
-      const storedName = signupData.name; // Replace with the variable holding the expected full name
-      console.log('Name:', data.fullName)
-      if (hasMatchingWords(data.fullName, storedName)) {
+      const storedName = form["name"]; // Replace with the variable holding the expected full name
+      console.log('Name:', data.user.fullName)
+      if (hasMatchingWords(data.user.fullName, storedName)) {
         setIsVerified(true); // Update verification state
         alert('Verification successful!');
       } else {
