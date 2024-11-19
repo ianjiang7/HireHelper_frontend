@@ -37,6 +37,17 @@ function Signup() {
   const [step, setStep] = useState("signup");
   const [signupData, setsignupData] = useState("")
   const [isVerified, setIsVerified] = useState()
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const toggleLinkedInPopup = (state) => setIsPopupOpen(state);
+
+  function hasMatchingWords(string1, string2) {
+    // Split strings into arrays of words
+    const words1 = string1.toLowerCase().split(/\s+/); // Split by whitespace
+    const words2 = string2.toLowerCase().split(/\s+/); // Split by whitespace
+
+    // Check if any word in words1 exists in words2
+    return words1.some(word => words2.includes(word));
+  }
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });

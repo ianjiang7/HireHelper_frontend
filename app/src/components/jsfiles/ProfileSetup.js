@@ -16,11 +16,6 @@ function ProfileSetup() {
     const [showDropdown, setShowDropdown] = useState(false);
     const [showModal, setShowModal] = useState(false); // State to control modal visibility
     const [hasAccess, setHasAccess] = useState(false); // State to track access code entry
-    const [isPopupOpen, setIsPopupOpen] = useState(false);
-    const [isVerified, setIsVerified] = useState(false);
-    const signupData = JSON.parse(localStorage.getItem("signupData"));
-
-    const toggleLinkedInPopup = (state) => setIsPopupOpen(state);
 
     const industries = [
         "Investment Banking", "Quantitative Trading", "Tax", "Finance",
