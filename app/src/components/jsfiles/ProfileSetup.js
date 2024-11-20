@@ -213,7 +213,7 @@ function ProfileSetup() {
                 </div>
             </main>
              {/* Show AccessCodeModal only if showModal is true */}
-             {showModal && <AccessCodeModal onClose={() => setShowModal(false)} onAccessGranted={handleAccessGranted} />}
+             {/*showModal && <AccessCodeModal onClose={() => setShowModal(false)} onAccessGranted={handleAccessGranted} />*/}
 
             <footer className="footer">
                     <p>AlumniReach LLC</p>
