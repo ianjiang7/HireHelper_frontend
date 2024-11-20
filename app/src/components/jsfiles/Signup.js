@@ -38,6 +38,7 @@ function Signup() {
   const [signupData, setsignupData] = useState("")
   const [isVerified, setIsVerified] = useState()
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isStudent, setIsStudent] = useState(false);
   const toggleLinkedInPopup = (state) => setIsPopupOpen(state);
 
   function hasMatchingWords(string1, string2) {
@@ -55,6 +56,11 @@ function Signup() {
 
   const handleSignup = async () => {
     const { email, password, confirmPassword, name, company, role, phone_number } = form;
+
+    if (role == "student" || email.toLowerCase().includes("nyu")) {
+      setIsStudent(true)
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match!");
@@ -248,6 +254,7 @@ function Signup() {
             value={form.phone_number}
             onChange={handleChange}
           />
+          {!isStudent ? (
           <div>
                 {!isVerified ? (
                     <>
@@ -262,9 +269,9 @@ function Signup() {
                 onClose={() => toggleLinkedInPopup(false)}
                 onVerificationComplete={handleVerificationComplete}
             />
-          </div>
+          </div> ) : null}
           <div>
-            {isVerified && <button onClick={handleSignup} disabled={loading}>
+            {isVerified || isStudent && <button onClick={handleSignup} disabled={loading}>
               {loading ? "Signing Up..." : "Complete Sign Up"}
             </button>}
           </div>
