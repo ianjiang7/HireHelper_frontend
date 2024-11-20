@@ -45,14 +45,13 @@ function Signup() {
     async function checkStudentStatus() {
           const email = form.email
           const role = form.role
-          if (role == "student" && email.toLowerCase().includes("nyu")) {
-            setIsStudent(true)
-            return;
+          if (role === "student" && email.toLowerCase().includes("nyu")) {
+            setIsStudent(true);
           }
     }
     checkStudentStatus();
 
-  }, []);
+  }, [form]);
         
 
 
