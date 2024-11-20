@@ -17,7 +17,7 @@ function Alumni({ industry, job, customJob, jobSearch, company, searchTerm }) {
       setLoading(true);
       try {
         const response = await fetch(
-          `http://184.72.144.183/person/search/?industry=${industry}&job=${customJob}&page=${page}&title=${jobSearch}&company=${company}&role-${job}`
+          `https://api.alumnireach.org/person/search/?industry=${industry}&job=${customJob}&page=${page}&title=${jobSearch}&company=${company}&role-${job}`
         );
         if (!response.ok) {
           throw new Error("Network response was not ok");
