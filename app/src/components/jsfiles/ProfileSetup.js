@@ -15,7 +15,7 @@ function ProfileSetup() {
     const [resumeName, setResumeName] = useState("Upload your resume"); // Placeholder name
     const [showDropdown, setShowDropdown] = useState(false);
     const [showModal, setShowModal] = useState(false); // State to control modal visibility
-    const [hasAccess, setHasAccess] = useState(false); // State to track access code entry
+    const [hasAccess, setHasAccess] = useState(true); // State to track access code entry
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [signupData, setsignupData] = useState("");
     
