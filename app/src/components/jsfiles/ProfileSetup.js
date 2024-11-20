@@ -130,8 +130,9 @@ function ProfileSetup() {
                         </div>
                         <div className="mt-4 text-gray-700">{resumeName}</div>
                     </div>
-
+                    
                     {/* Search Criteria Section */}
+                    {/*
                     <div className="bg-white rounded-lg p-6 shadow-md flex-grow">
                         <h3 className="text-xl font-semibold mb-4">Who are you looking for?</h3>
                         <form className="space-y-4">
@@ -209,7 +210,7 @@ function ProfileSetup() {
                                 Browse
                             </button>
                         </form>
-                    </div>
+                    </div> */}
                 </div>
             </main>
              {/* Show AccessCodeModal only if showModal is true */}

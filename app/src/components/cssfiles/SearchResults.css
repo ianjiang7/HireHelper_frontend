@@ -4,13 +4,13 @@ body, html {
     padding: 0;
     font-family: Arial, sans-serif;
     height: 100%;
-    overflow: hidden;
 }
 
 .search-results-page {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    background-color:rgba(248, 248, 255, 0.8) !important;
 }
 
 /* Navbar styles */
@@ -55,14 +55,31 @@ body, html {
     color: #e6e6fa; /* Light Lavender */
 }
 
+.parent-container {
+    position: relative;
+    width: 100%; /* Full width of the parent container */
+    height: 100vh; /* Full height of the viewport */
+}
+
+.search-query-container {
+    background-color: rgba(248, 248, 255, 0.8); /* Example background color */
+    padding: 32px;
+    position: absolute; /* Stick the container during scrolling */
+    top: 100px; /* Adjust position relative to the viewport */
+    left: -800px;
+    width: 300px;
+    height: auto;
+}
+
 /* Main content styles */
 .search-content-results-container {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 80px 32px 32px; /* Increased top padding to account for navbar */
-    background-color: #f8f8ff; /* Ghost White */
-    overflow: hidden;
+    position: absolute;
+    top: 100px;
+    left: -500px;
+    right: -500px;
+    height: auto;
+    width: auto;
+    background-color: rgba(248, 248, 255, 0.8); /* Ghost White */
 }
 
 .search-header {

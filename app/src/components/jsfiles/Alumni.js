@@ -32,7 +32,7 @@ function Alumni({ industry, job, customJob, jobSearch, company, searchTerm }) {
     };
 
     getAlumni();
-  }, [industry, customJob, page, jobSearch, company]);
+  }, [customJob, page, jobSearch, company]);
 
   const filteredAlumni = alumni.filter((alumnus) =>
     Object.values(alumnus).some((value) =>
@@ -53,7 +53,6 @@ function Alumni({ industry, job, customJob, jobSearch, company, searchTerm }) {
               <th>Name</th>
               <th>Title</th>
               <th>LinkedIn</th>
-              <th>Industry</th>
               <th>Company</th>
             </tr>
           </thead>
