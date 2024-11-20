@@ -98,7 +98,7 @@ function Home() {
     const handleSlideClose = (userType) => {
         setShowSlideshow(false);
         if (userType === "student") {
-            navigate("/alumni-login");
+            navigate("/profile-setup");
         } else if (userType === "alumni") {
             navigate("/alumni-login");
         }

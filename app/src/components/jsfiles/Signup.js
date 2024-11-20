@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import bcrypt from "bcryptjs";
 import "../cssfiles/Signup.css";
@@ -41,6 +41,21 @@ function Signup() {
   const [isStudent, setIsStudent] = useState(false);
   const toggleLinkedInPopup = (state) => setIsPopupOpen(state);
 
+  useEffect(() => {
+    async function checkStudentStatus() {
+          const email = form.email
+          const role = form.role
+          if (role == "student" && email.toLowerCase().includes("nyu")) {
+            setIsStudent(true)
+            return;
+          }
+    }
+    checkStudentStatus();
+
+  }, []);
+        
+
+
   function hasMatchingWords(string1, string2) {
     // Split strings into arrays of words
     const words1 = string1.toLowerCase().split(/\s+/); // Split by whitespace
@@ -56,11 +71,6 @@ function Signup() {
 
   const handleSignup = async () => {
     const { email, password, confirmPassword, name, company, role, phone_number } = form;
-
-    if (role == "student" || email.toLowerCase().includes("nyu")) {
-      setIsStudent(true)
-      return;
-    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match!");
@@ -271,7 +281,7 @@ function Signup() {
             />
           </div> ) : null}
           <div>
-            {isVerified || isStudent && <button onClick={handleSignup} disabled={loading}>
+            {(isVerified || isStudent) && <button onClick={handleSignup} disabled={loading}>
               {loading ? "Signing Up..." : "Complete Sign Up"}
             </button>}
           </div>
