@@ -71,8 +71,8 @@ body, html {
 
 .search-query-container {
     background-color: #e8d8f9;
-    padding-top: 168px;
     padding-left: 32px;
+    padding-top: 117px;
     flex: 0 0 300px; /* Fixed width of 300px */
     height: auto; /* Adjust height dynamically */
 }
@@ -81,7 +81,7 @@ body, html {
     background-color: #e8d8f9;
     flex-grow:1;
     padding: 32px;
-    padding-top: 100px;
+    padding-top: 50px;
     padding-bottom: 50px;
     display: flex;
     flex-direction: column;

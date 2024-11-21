@@ -133,7 +133,7 @@ function Home() {
                         onMouseOver={(e) => (e.target.style.transform = "scale(1.1)")}
                         onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
                     >
-                        I am a Student
+                        Students
                     </button>
                     <button
                         onClick={() => navigate("/alumni-login")}
@@ -150,7 +150,7 @@ function Home() {
                         onMouseOver={(e) => (e.target.style.transform = "scale(1.1)")}
                         onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
                     >
-                        I am an Alumni
+                        Alumni
                     </button>
                 </div>
             </div>

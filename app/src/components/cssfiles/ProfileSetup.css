@@ -111,3 +111,35 @@
     cursor: pointer;
     transition: background 0.3s ease;
 }
+
+.user-status {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 1rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between text and button */
+}
+
+.sign-out-button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    background-color: #1e90ff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.sign-out-button:hover {
+    background-color: #005ecb;
+}

@@ -9,7 +9,7 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                 alignItems: "center",
                 width: "100vw",
                 padding: "1rem 3rem",
-                background: "rgba(255, 255, 255, 0.2)",
+                background: "white",
                 backdropFilter: "blur(10px)",
                 borderRadius: "10px",
                 boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
@@ -26,7 +26,7 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                     fontSize: "1.75rem",
                     fontWeight: "bold",
                     cursor: "pointer",
-                    color: "#003366", // Dark blue text color
+                    color: "#8a2be2", // Dark blue text color
                 }}
                 onClick={() => navigate("/")}
             >
@@ -72,7 +72,7 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                         cursor: "pointer",
                     }}
                 >
-                    Profile Setup
+                    Profile
                 </button>
                 <button
                     onClick={() => navigate("/my-connections")}

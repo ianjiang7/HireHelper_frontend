@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Alumni from "./Alumni";
 import { signOut, getCurrentUser } from "aws-amplify/auth";
+import Header from "./Header"
 import "../cssfiles/SearchResults.css";
 
 function SearchResults() {
   const navigate = useNavigate();
   // const { state } = useLocation();
   // const { industry, role, customJob, jobSearch, company } = state;
+  const [isAlumni, setIsAlumni] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [industry, setIndustry] = useState("");
   const [role, setRole] = useState("");
@@ -88,22 +90,11 @@ function SearchResults() {
 
   return (
     <div className="search-results-page">
-      <nav className="navbar">
-        <h1 className="navbar-title" onClick={() => navigate("/")}>
-          AlumniReach for NYU
-        </h1>
-        <div className="navbar-links">
-          <button onClick={() => navigate("/")} className="navbar-link">
-            Home
-          </button>
-          <button onClick={() => navigate("/search-results")} className="navbar-link" style={{opacity: 0.5, cursor: "not-allowed"}}>
-            Results
-          </button>
-          <button onClick={() => navigate("/profile-setup")} className="navbar-link">
-            Profile Setup
-          </button>
-        </div>
-      </nav>
+        <Header
+                navigate={navigate}
+                isAlumni={isAlumni}
+                isSignedIn={isSignedIn}
+        />
       <div className="parent-container">
         <div className="search-query-container">
           <div className="bg-white rounded-lg p-6 shadow-md flex-grow">
@@ -213,8 +204,7 @@ function SearchResults() {
             /> 
           </div> 
         </main> 
-      </div>
-      <div className="user-status">
+        <div className="user-status">
                 {isSignedIn ? (
                     <>
                         <p>Hi {signupData}!</p>
@@ -230,6 +220,7 @@ function SearchResults() {
                     </button></>
                 )}
         </div>
+      </div>
     </div>
   );
 }

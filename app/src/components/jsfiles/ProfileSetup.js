@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AccessCodeModal from "./AccessCodeModal";
 import { signOut, getCurrentUser } from "aws-amplify/auth";
+import Header from "./Header"
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
 
 function ProfileSetup() {
@@ -18,6 +19,7 @@ function ProfileSetup() {
     const [hasAccess, setHasAccess] = useState(true); // State to track access code entry
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [signupData, setsignupData] = useState("");
+    const [isAlumni, setIsAlumni] = useState(false);
     
     useEffect(() => {
         async function checkUserName() {
@@ -104,19 +106,16 @@ function ProfileSetup() {
     
 
     return (
-        <div className="profile-setup-container">
-            {/* Navbar */}
-            <nav className="navbar">
-                <h1 className="navbar-title" onClick={() => navigate("/")}>AlumniReach for NYU</h1>
-                <div className="navbar-links">
-                    <button onClick={() => navigate("/")} className="navbar-link">Home</button>
-                    <button onClick = {() => hasAccess && navigate("/search-results")} className = "navbar-link" >Results</button>
-                    <button onClick={() => navigate("/profile-setup")} className="navbar-link" style={{opacity: 0.5, cursor: "not-allowed"}}>Profile Setup</button>
-                </div>
-            </nav>
+        <div>
+            <Header
+                navigate={navigate}
+                isAlumni={isAlumni}
+                isSignedIn={isSignedIn}
+            />
+            
 
             {/* Main content */}
-            <main className="profile-setup-main">
+            <main className="profile-setup-container">
                 <h2 className="section-title">Welcome!</h2>
                 <p className="text-gray-700 text-center mb-6"></p>
                 
