@@ -47,6 +47,21 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                     Home
                 </button>
                 <button
+                    onClick={() => navigate("/search-results")}
+                    disabled={!isSignedIn}
+                    style={{
+                        fontSize: "1rem",
+                        fontWeight: 500,
+                        color: "purple",
+                        cursor: isSignedIn ? "pointer" : "not-allowed",
+                        opacity: isSignedIn ? 1 : 0.5,
+                        background: "none",
+                        border: "none",
+                    }}
+                >
+                    Search
+                </button>
+                <button
                     onClick={() => navigate("/profile-setup")}
                     style={{
                         fontSize: "1rem",
@@ -73,21 +88,6 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                     }}
                 >
                     Alumni
-                </button>
-                <button
-                    onClick={() => navigate("/search-results")}
-                    disabled={!isSignedIn}
-                    style={{
-                        fontSize: "1rem",
-                        fontWeight: 500,
-                        color: "purple",
-                        cursor: isSignedIn ? "pointer" : "not-allowed",
-                        opacity: isSignedIn ? 1 : 0.5,
-                        background: "none",
-                        border: "none",
-                    }}
-                >
-                    Search Results
                 </button>
             </div>
         </nav>
