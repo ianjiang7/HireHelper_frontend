@@ -1,35 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SlideshowModal from "./SlideshowModal";
 import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
 import awsmobile from "../../aws-exports";
-import "../cssfiles/Home.css";
-
-const getUserProfileQuery = `
-query GetUserProfile($userId: ID!) {
-  getUserProfile(userId: $userId) {
-    fullname
-    email
-    role
-  }
-}
-`;
+import Header from "./Header"; // Import Header component
 
 function Home() {
     const navigate = useNavigate();
-    const [showSlideshow, setShowSlideshow] = useState(true);
     const [userName, setUserName] = useState(null);
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [isAlumni, setIsAlumni] = useState(false);
-    const userRole = localStorage.getItem("userRole");
 
     useEffect(() => {
         async function fetchUserData() {
             try {
-                // Get current user info
                 const { userId } = await getCurrentUser();
-
-                // Fetch the authentication session
                 const session = await fetchAuthSession();
                 const { idToken } = session.tokens ?? {};
 
@@ -37,7 +21,6 @@ function Home() {
                     throw new Error("No ID token found.");
                 }
 
-                // Call GraphQL API to fetch user profile
                 const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
                     method: "POST",
                     headers: {
@@ -45,7 +28,12 @@ function Home() {
                         Authorization: `Bearer ${idToken}`,
                     },
                     body: JSON.stringify({
-                        query: getUserProfileQuery,
+                        query: `
+                        query GetUserProfile($userId: ID!) {
+                            getUserProfile(userId: $userId) {
+                                fullname
+                            }
+                        }`,
                         variables: { userId },
                     }),
                 });
@@ -59,14 +47,8 @@ function Home() {
                 }
 
                 const userProfile = responseData.data?.getUserProfile;
-
                 if (userProfile) {
                     setUserName(userProfile.fullname);
-                    const UsersName = userProfile.fullname;
-                    localStorage.setItem(
-                        "FullName",
-                        JSON.stringify({ UsersName })
-                    );
                     setIsSignedIn(true);
                 }
             } catch (err) {
@@ -74,14 +56,8 @@ function Home() {
                 setIsSignedIn(false);
             }
         }
-        async function handleRole() {
-            if (userRole === "student") {
-                setIsAlumni(false)
-            }
-        }
 
         fetchUserData();
-        handleRole();
     }, []);
 
     const handleSignOut = async () => {
@@ -89,71 +65,159 @@ function Home() {
             await signOut();
             setIsSignedIn(false);
             setUserName(null);
-            navigate("/"); // Redirect to the home page after sign-out
+            navigate("/");
         } catch (err) {
             console.error("Error signing out:", err);
         }
     };
 
-    const handleSlideClose = (userType) => {
-        setShowSlideshow(false);
-        if (userType === "student") {
-            navigate("/profile-setup");
-        } else if (userType === "alumni") {
-            navigate("/alumni-login");
-        }
+    const handleLogIn = () => {
+        navigate("/alumni-login");
     };
-
-    const handleLogIn = async () => {
-        navigate("/alumni-login")
-    }
-
-    const handleCloseModal = () => {
-        setShowSlideshow(false); // Close the modal when the close button is clicked
-    };
-
 
     return (
-        <div className="home-container">
-            {showSlideshow && <SlideshowModal onClose={handleSlideClose} onRequestClose={handleCloseModal} />}
-            <nav className="navbar">
-                <h1 className="navbar-title" onClick={() => navigate("/")}>AlumniReach for NYU</h1>
-                <div className="navbar-links">
-                    <button onClick={() => navigate("/")} className="navbar-link" style={{opacity: 0.5, cursor: "not-allowed"}}>Home</button>
-                    <button
-                        onClick={() => navigate("/search-results")}
-                        className="navbar-link"
-                    >
-                        Results
-                    </button>
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                alignItems: "center",
+                minHeight: "100vh",
+                width: "100%",
+                margin: "0",
+                padding: "0",
+                color: "white",
+                fontFamily: "'Poppins', sans-serif",
+                overflow: "hidden",
+            }}
+        >
+            <Header
+                navigate={navigate}
+                isAlumni={isAlumni}
+                isSignedIn={isSignedIn}
+            />
+
+            {/* Main Content */}
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    textAlign: "center",
+                    flexGrow: 1,
+                    padding: "2rem",
+                    width: "100%",
+                }}
+            >
+                <h1 style={{ fontSize: "4rem", fontWeight: "bold", marginBottom: "1rem" }}>
+                    Welcome to AlumniReach
+                </h1>
+                <p style={{ fontSize: "1.5rem", marginBottom: "3rem", maxWidth: "700px" }}>
+                    Building meaningful connections between students and alumni to empower
+                    collaboration and career growth.
+                </p>
+                <div style={{ display: "flex", gap: "2rem" }}>
                     <button
                         onClick={() => navigate("/profile-setup")}
-                        className="navbar-link" // Optional styling for disabled button
+                        style={{
+                            padding: "1rem 3rem",
+                            fontSize: "1.25rem",
+                            backgroundColor: "#2575fc",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "50px",
+                            cursor: "pointer",
+                            transition: "transform 0.3s ease",
+                        }}
+                        onMouseOver={(e) => (e.target.style.transform = "scale(1.1)")}
+                        onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
                     >
-                        Profile Setup
+                        I am a Student
                     </button>
-                    <button onClick={() => navigate("/my-connections")} className="navbar-link" disabled = {!isAlumni} style={!isAlumni ? { opacity: 0.5, cursor: "not-allowed" } : {}}>Alumni (coming soon)</button>
+                    <button
+                        onClick={() => navigate("/alumni-login")}
+                        style={{
+                            padding: "1rem 3rem",
+                            fontSize: "1.25rem",
+                            backgroundColor: "#6a11cb",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "50px",
+                            cursor: "pointer",
+                            transition: "transform 0.3s ease",
+                        }}
+                        onMouseOver={(e) => (e.target.style.transform = "scale(1.1)")}
+                        onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
+                    >
+                        I am an Alumni
+                    </button>
                 </div>
-            </nav>
-            <footer className="footer">
-                <p>AlumniReach for NYU</p>
-            </footer>
-            <div className="user-status">
+            </div>
+
+            {/* User Status */}
+            <div
+                style={{
+                    position: "fixed",
+                    bottom: "10px",
+                    right: "10px",
+                    background: "rgba(255, 255, 255, 0.8)",
+                    color: "#333",
+                    border: "1px solid #ddd",
+                    borderRadius: "10px",
+                    padding: "1rem",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+                }}
+            >
                 {isSignedIn ? (
                     <>
                         <p>Hi {userName}!</p>
-                        <button onClick={handleSignOut} className="sign-out-button">
+                        <button
+                            onClick={handleSignOut}
+                            style={{
+                                padding: "0.5rem 1rem",
+                                background: "#2575fc",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "8px",
+                                cursor: "pointer",
+                            }}
+                        >
                             Sign Out
                         </button>
                     </>
                 ) : (
                     <>
-                    <p>You are currently signed out.</p>
-                    <button onClick={handleLogIn} className="sign-out-button">
+                        <p>You are signed out.</p>
+                        <button
+                            onClick={handleLogIn}
+                            style={{
+                                padding: "0.5rem 1rem",
+                                background: "#2575fc",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "8px",
+                                cursor: "pointer",
+                            }}
+                        >
                             Log In
-                    </button></>
+                        </button>
+                    </>
                 )}
             </div>
+
+            {/* Footer */}
+            <footer
+                style={{
+                    textAlign: "center",
+                    padding: "1rem",
+                    backgroundColor: "rgba(0, 0, 0, 0.6)",
+                    color: "white",
+                    width: "100%",
+                }}
+            >
+                <p>&copy; 2024 AlumniReach for NYU. All rights reserved.</p>
+            </footer>
         </div>
     );
 }

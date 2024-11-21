@@ -12,8 +12,7 @@
 }
 
 body {
-    background: #e8d8f9;
-    color: #333;
+    color: #000000;
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -22,5 +21,5 @@ body {
 
 .app {
     width: 100%;
-    max-width: 1200px;
 }
+
