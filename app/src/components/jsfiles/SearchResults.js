@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Alumni from "./Alumni";
-import { signOut } from "aws-amplify/auth";
+import { signOut, getCurrentUser } from "aws-amplify/auth";
 import "../cssfiles/SearchResults.css";
 
 function SearchResults() {
@@ -48,7 +48,8 @@ function SearchResults() {
           const fullName = await JSON.parse(localStorage.getItem("FullName"));
           console.log(fullName)
           const usersName = fullName?.UsersName
-          if (usersName) {
+          const currentUser = await getCurrentUser();
+          if (usersName && currentUser) {
               setIsSignedIn(true);
               setsignupData(usersName)
           };
@@ -94,6 +95,9 @@ function SearchResults() {
         <div className="navbar-links">
           <button onClick={() => navigate("/")} className="navbar-link">
             Home
+          </button>
+          <button onClick={() => navigate("/search-results")} className="navbar-link" style={{opacity: 0.5, cursor: "not-allowed"}}>
+            Results
           </button>
           <button onClick={() => navigate("/profile-setup")} className="navbar-link">
             Profile Setup

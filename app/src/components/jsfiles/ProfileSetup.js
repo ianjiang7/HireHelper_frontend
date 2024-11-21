@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AccessCodeModal from "./AccessCodeModal";
-import { signOut } from "aws-amplify/auth";
+import { signOut, getCurrentUser } from "aws-amplify/auth";
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
 
 function ProfileSetup() {
@@ -25,7 +25,8 @@ function ProfileSetup() {
                 const fullName = await JSON.parse(localStorage.getItem("FullName"));
                 console.log(fullName)
                 const usersName = fullName?.UsersName
-                if (usersName) {
+                const currentUser = await getCurrentUser();
+                if (usersName && currentUser) {
                     setIsSignedIn(true);
                     setsignupData(usersName)
                 };
@@ -109,8 +110,8 @@ function ProfileSetup() {
                 <h1 className="navbar-title" onClick={() => navigate("/")}>AlumniReach for NYU</h1>
                 <div className="navbar-links">
                     <button onClick={() => navigate("/")} className="navbar-link">Home</button>
-                    <button onClick={() => navigate("/profile-setup")} className="navbar-link">Profile Setup</button>
-                    <button onClick = {() => hasAccess && navigate("/search-results")} className = "navbar-link">Results</button>
+                    <button onClick = {() => hasAccess && navigate("/search-results")} className = "navbar-link" >Results</button>
+                    <button onClick={() => navigate("/profile-setup")} className="navbar-link" style={{opacity: 0.5, cursor: "not-allowed"}}>Profile Setup</button>
                 </div>
             </nav>
 

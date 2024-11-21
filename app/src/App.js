@@ -26,7 +26,7 @@ function App() {
                     <Route path="/profile-setup" element={<ProfileSetup />} />
                     <Route path="/my-connections" element={<ProtectedRoute><MyConnections /></ProtectedRoute>} />
                     <Route path="/my-job-postings" element={<ProtectedRoute><MyJobPostings /></ProtectedRoute>} />
-                    <Route path="/search-results" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
+                    <Route path="/search-results" element={<SearchResults />} />
                 </Routes>
             </Router>
         </AuthProvider>
