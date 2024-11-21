@@ -54,7 +54,7 @@ function Alumni({ industry, job, customJob, jobSearch, company, searchTerm }) {
               <th>Title</th>
               <th>LinkedIn</th>
               <th>Company</th>
-              <th>Contact</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
