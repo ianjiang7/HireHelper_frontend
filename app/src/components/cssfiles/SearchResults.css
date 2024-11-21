@@ -78,9 +78,10 @@ body, html {
 
 .search-content-results-container {
     background-color: #e8d8f9;
-    flex: 1; /* Take the remaining space */
+    flex-grow:1;
     padding: 32px;
-    padding-top: 200px;
+    padding-top: 100px;
+    padding-bottom: 50px;
     display: flex;
     flex-direction: column;
     overflow: hidden; /* Add scrolling if content overflows */
