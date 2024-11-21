@@ -119,7 +119,7 @@ function Home() {
                 </p>
                 <div style={{ display: "flex", gap: "2rem" }}>
                     <button
-                        onClick={() => navigate("/profile-setup")}
+                        onClick={() => navigate("/search-results")}
                         style={{
                             padding: "1rem 3rem",
                             fontSize: "1.25rem",
@@ -149,6 +149,7 @@ function Home() {
                         }}
                         onMouseOver={(e) => (e.target.style.transform = "scale(1.1)")}
                         onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
+                        disabled = {!isAlumni}
                     >
                         Alumni
                     </button>

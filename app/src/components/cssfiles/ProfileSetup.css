@@ -10,6 +10,8 @@
     background-color: #e8d8f9;
     color: #333;
     padding-top: 50px; /* Add padding for navbar */
+    padding-left: 30px;
+    padding-right: 30px;
 }
 
 /* Navbar styles */
@@ -52,21 +54,11 @@
     color: #ddd;
 }
 
-/* Profile setup main content */
-.profile-setup-main {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    align-items: center;
-    width: 90%;
-    max-width: 1024px;
-    margin-top: 500px;
-}
-
 .section-title {
     font-size: 1.75rem;
     font-weight: 600;
     color: #333;
+    padding-top: 100px;
 }
 
 /* Input styles */

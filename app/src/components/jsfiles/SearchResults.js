@@ -204,22 +204,55 @@ function SearchResults() {
             /> 
           </div> 
         </main> 
-        <div className="user-status">
+        <div
+                style={{
+                    position: "fixed",
+                    bottom: "10px",
+                    right: "10px",
+                    background: "rgba(255, 255, 255, 0.8)",
+                    color: "#333",
+                    border: "1px solid #ddd",
+                    borderRadius: "10px",
+                    padding: "1rem",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+                }}
+            >
                 {isSignedIn ? (
                     <>
                         <p>Hi {signupData}!</p>
-                        <button onClick={handleSignOut} className="sign-out-button">
+                        <button
+                            onClick={handleSignOut}
+                            style={{
+                                padding: "0.5rem 1rem",
+                                background: "#2575fc",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "8px",
+                                cursor: "pointer",
+                            }}
+                        >
                             Sign Out
                         </button>
                     </>
                 ) : (
                     <>
-                    <p>Please sign in to access results.</p>
-                    <button onClick={handleLogIn} className="sign-out-button">
+                        <p>You are signed out.</p>
+                        <button
+                            onClick={handleLogIn}
+                            style={{
+                                padding: "0.5rem 1rem",
+                                background: "#2575fc",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "8px",
+                                cursor: "pointer",
+                            }}
+                        >
                             Log In
-                    </button></>
+                        </button>
+                    </>
                 )}
-        </div>
+          </div>
       </div>
     </div>
   );

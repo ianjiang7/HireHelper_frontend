@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import AccessCodeModal from "./AccessCodeModal";
 import { signOut, getCurrentUser } from "aws-amplify/auth";
 import Header from "./Header"
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
@@ -39,18 +38,6 @@ function ProfileSetup() {
         }
         checkUserName();
     }, []);
-
-    const industries = [
-        "Investment Banking", "Quantitative Trading", "Tax", "Finance",
-        "Private Equity", "Asset Management", "Data Science", "Venture Capital",
-        "Fund Management", "Software Development", "Teaching", "Healthcare & Medical",
-        "Marketing", "Sales", "Engineering & Manufacturing", "Legal & Compliance",
-        "Human Resources (HR)", "Customer Service", "Consulting & Advisory",
-        "Operations & Logistics", "Real Estate", "Arts & Entertainment",
-        "Nonprofit & Social Services", "Hospitality & Tourism", "Retail & E-commerce",
-        "Research & Development (R&D)", "Media & Communications", "Student",
-        "Information Technology", "Government & Public Service", "Product Management", "Other"
-    ];
 
     const handleSignOut = async () => {
         try {
@@ -116,9 +103,7 @@ function ProfileSetup() {
 
             {/* Main content */}
             <main className="profile-setup-container">
-                <h2 className="section-title">Welcome!</h2>
-                <p className="text-gray-700 text-center mb-6"></p>
-                
+                <h2 className="section-title">My Profile</h2>
                 <div className="flex flex-col lg:flex-row w-full space-y-6 lg:space-y-0 lg:space-x-8">
                     {/* Attach Resume Section */}
                     <div className="bg-white rounded-lg p-6 shadow-md flex-grow">
@@ -130,87 +115,11 @@ function ProfileSetup() {
                         </div>
                         <div className="mt-4 text-gray-700">{resumeName}</div>
                     </div>
-                    
-                    {/* Search Criteria Section */}
-                    {/*
                     <div className="bg-white rounded-lg p-6 shadow-md flex-grow">
-                        <h3 className="text-xl font-semibold mb-4">Who are you looking for?</h3>
-                        <form className="space-y-4">
-                            <div className="relative">
-                                <label htmlFor="industrySearch" className="block text-gray-600">Industry*</label>
-                                <input
-                                    type="text"
-                                    id="industrySearch"
-                                    name="industrySearch"
-                                    value={industrySearch}
-                                    onChange={(e) => setIndustrySearch(e.target.value)}
-                                    placeholder="Search industry"
-                                    className="w-full border border-gray-300 rounded-md p-2 mt-1"
-                                    onFocus={() => setShowDropdown(true)}
-                                />
-                                {showDropdown && (
-                                    <div className="dropdown">
-                                        {industries.filter(ind => ind.toLowerCase().includes(industrySearch.toLowerCase())).map((item) => (
-                                            <div
-                                                key={item}
-                                                onClick={() => {
-                                                    setIndustry(item);
-                                                    setIndustrySearch(item);
-                                                    setShowDropdown(false);
-                                                }}
-                                                className="p-2 cursor-pointer hover:bg-gray-100"
-                                            >
-                                                {item}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <div>
-                                <label htmlFor="role" className="block text-gray-600">Select Role*</label>
-                                <select value={role} onChange={(e) => setRole(e.target.value)} required className="w-full border border-gray-300 rounded-md p-2 mt-1">
-                                    <option value="">Select Role</option>
-                                    <option value="Student">Student</option>
-                                    <option value="Employee">Employee</option>
-                                    <option value="Director">Director</option>
-                                    <option value="Manager">Manager</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                {role === 'Other' && (
-                                    <input
-                                        type="text"
-                                        placeholder="Enter custom role"
-                                        value={customJob}
-                                        onChange={(e) => setCustomJob(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-md p-2 mt-1"
-                                    />
-                                )}
-                            </div>
-                            <div>
-                                <label htmlFor="jobSearch" className="block text-gray-600">Job</label>
-                                <input
-                                    type="text"
-                                    id="jobSearch"
-                                    name="jobSearch"
-                                    value={jobSearch}
-                                    onChange={(e) => setJobSearch(e.target.value)}
-                                    placeholder="Search job"
-                                    className="w-full border border-gray-300 rounded-md p-2 mt-1"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="company" className="block text-gray-600">Company</label>
-                                <input type="text" id="company" name="company" value={company} onChange={(e)=>setCompany(e.target.value)}className="w-full border border-gray-300 rounded-md p-2 mt-1" />
-                            </div>
-                            <button 
-                                type="button" 
-                                onClick={handleProceed}
-                                className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white py-2 px-6 rounded-lg font-medium shadow-lg hover:bg-blue-600 transform hover:scale-105 transition-transform"
-                            >
-                                Browse
-                            </button>
-                        </form>
-                    </div> */}
+                        <label>
+                            Analytics Coming Soon!
+                        </label>
+                    </div>
                 </div>
             </main>
              {/* Show AccessCodeModal only if showModal is true */}
@@ -219,20 +128,53 @@ function ProfileSetup() {
             <footer className="footer">
                     <p>AlumniReach LLC</p>
             </footer>
-            <div className="user-status">
+            <div
+                style={{
+                    position: "fixed",
+                    bottom: "10px",
+                    right: "10px",
+                    background: "rgba(255, 255, 255, 0.8)",
+                    color: "#333",
+                    border: "1px solid #ddd",
+                    borderRadius: "10px",
+                    padding: "1rem",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+                }}
+            >
                 {isSignedIn ? (
                     <>
                         <p>Hi {signupData}!</p>
-                        <button onClick={handleSignOut} className="sign-out-button">
+                        <button
+                            onClick={handleSignOut}
+                            style={{
+                                padding: "0.5rem 1rem",
+                                background: "#2575fc",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "8px",
+                                cursor: "pointer",
+                            }}
+                        >
                             Sign Out
                         </button>
                     </>
                 ) : (
                     <>
-                    <p>You are currently signed out.</p>
-                    <button onClick={handleLogIn} className="sign-out-button">
+                        <p>You are signed out.</p>
+                        <button
+                            onClick={handleLogIn}
+                            style={{
+                                padding: "0.5rem 1rem",
+                                background: "#2575fc",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "8px",
+                                cursor: "pointer",
+                            }}
+                        >
                             Log In
-                    </button></>
+                        </button>
+                    </>
                 )}
             </div>
         </div>

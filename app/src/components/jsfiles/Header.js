@@ -48,7 +48,6 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                 </button>
                 <button
                     onClick={() => navigate("/search-results")}
-                    disabled={!isSignedIn}
                     style={{
                         fontSize: "1rem",
                         fontWeight: 500,
