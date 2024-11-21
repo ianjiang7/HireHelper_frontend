@@ -15,7 +15,6 @@ function Alumnus({ alumnus }) {
           <Linkedin className="w-5 h-5" />
         </a>
       </td>
-      <td className="py-3 px-4">{alumnus.industry}</td>
       <td className="py-3 px-4">{alumnus.company}</td>
     </tr>
   );

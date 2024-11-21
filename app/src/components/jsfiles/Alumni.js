@@ -32,7 +32,7 @@ function Alumni({ industry, job, customJob, jobSearch, company, searchTerm }) {
     };
 
     getAlumni();
-  }, [customJob, page, jobSearch, company]);
+  }, [industry, customJob, page, jobSearch, company]);
 
   const filteredAlumni = alumni.filter((alumnus) =>
     Object.values(alumnus).some((value) =>

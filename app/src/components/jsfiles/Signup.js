@@ -40,6 +40,7 @@ function Signup() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
   const toggleLinkedInPopup = (state) => setIsPopupOpen(state);
+  
 
   useEffect(() => {
     async function checkStudentStatus() {
