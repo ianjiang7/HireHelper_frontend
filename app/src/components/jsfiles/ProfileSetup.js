@@ -54,7 +54,7 @@ function ProfileSetup() {
             await signOut();
             setIsSignedIn(false);
             setsignupData(null);
-            navigate("/"); // Redirect to the home page after sign-out
+            navigate("/search-results"); // Redirect to the home page after sign-out
         } catch (err) {
             console.error("Error signing out:", err);
         }
