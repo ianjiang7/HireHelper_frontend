@@ -236,7 +236,7 @@ function SearchResults() {
                     </>
                 ) : (
                     <>
-                        <p>You are signed out.</p>
+                        <p>Sign in to access results.</p>
                         <button
                             onClick={handleLogIn}
                             style={{
