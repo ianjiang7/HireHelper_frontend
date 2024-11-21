@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Alumni from "./Alumni";
+import { signOut } from "aws-amplify/auth";
 import "../cssfiles/SearchResults.css";
 
 function SearchResults() {
@@ -41,16 +42,48 @@ function SearchResults() {
     "Information Technology", "Government & Public Service", "Product Management", "Other"
  ];
 
- const handleBrowseClick = () => {
-  setSearchInfo({
-    Industry: industry,
-    Role: role,
-    Company: company,
-    Job: jobSearch,
-    CustomJob: customJob
-  });
+ useEffect(() => {
+  async function checkUserName() {
+      try {
+          const fullName = await JSON.parse(localStorage.getItem("FullName"));
+          console.log(fullName)
+          const usersName = fullName?.UsersName
+          if (usersName) {
+              setIsSignedIn(true);
+              setsignupData(usersName)
+          };
+      } catch (err) {
+          console.error("Error fetching user data:", err);
+          setIsSignedIn(false);
+      }
+  }
+  checkUserName();
+  }, []);
 
- }
+  const handleLogIn = async () => {
+    navigate("/alumni-login")
+  } 
+
+  const handleSignOut = async () => {
+    try {
+        await signOut();
+        setIsSignedIn(false);
+        setsignupData(null);
+        navigate("/"); // Redirect to the home page after sign-out
+    } catch (err) {
+        console.error("Error signing out:", err);
+    }
+  };
+
+  const handleBrowseClick = () => {
+    setSearchInfo({
+      Industry: industry,
+      Role: role,
+      Company: company,
+      Job: jobSearch,
+      CustomJob: customJob
+    });
+  }
 
   return (
     <div className="search-results-page">
@@ -143,6 +176,7 @@ function SearchResults() {
                                 type="button" 
                                 onClick={handleBrowseClick}
                                 className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white py-2 px-6 rounded-lg font-medium shadow-lg hover:bg-blue-600 transform hover:scale-105 transition-transform"
+                                disabled={!isSignedIn}
                             >
                                 Search
                             </button>
@@ -176,6 +210,22 @@ function SearchResults() {
           </div> 
         </main> 
       </div>
+      <div className="user-status">
+                {isSignedIn ? (
+                    <>
+                        <p>Hi {signupData}!</p>
+                        <button onClick={handleSignOut} className="sign-out-button">
+                            Sign Out
+                        </button>
+                    </>
+                ) : (
+                    <>
+                    <p>Please sign in to access results.</p>
+                    <button onClick={handleLogIn} className="sign-out-button">
+                            Log In
+                    </button></>
+                )}
+        </div>
     </div>
   );
 }

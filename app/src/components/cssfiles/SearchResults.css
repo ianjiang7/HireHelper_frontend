@@ -65,12 +65,13 @@ body, html {
     width: 100%; /* Full width of the viewport */
     height: 100vh; /* Full height of the viewport */
     background-color: #e8d8f9;
+    overflow: hidden;
 
 }
 
 .search-query-container {
     background-color: #e8d8f9;
-    padding-top: 200px;
+    padding-top: 168px;
     padding-left: 32px;
     flex: 0 0 300px; /* Fixed width of 300px */
     height: auto; /* Adjust height dynamically */
@@ -84,6 +85,7 @@ body, html {
     padding-bottom: 50px;
     display: flex;
     flex-direction: column;
+    height: 100%;
     overflow: hidden; /* Add scrolling if content overflows */
 }
 
@@ -117,7 +119,9 @@ body, html {
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(138, 43, 226, 0.2); /* Purple shadow */
-    overflow: hidden; /* Ensures the border-radius is applied to the table */
+    overflow-y: auto; /* Ensures the border-radius is applied to the table */
+    max-height:100%;
+
 }
 
 /* Responsive design */
