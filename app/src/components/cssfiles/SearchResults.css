@@ -12,7 +12,6 @@ body, html {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background-color:rgba(248, 248, 255, 0.8) !important;
 }
 
 /* Navbar styles */
@@ -65,16 +64,14 @@ body, html {
     position: relative;
     width: 100%; /* Full width of the viewport */
     height: 100vh; /* Full height of the viewport */
-    overflow: hidden; /* Prevent overflow issues */
     background-color: #e8d8f9;
 
 }
 
 .search-query-container {
     background-color: #e8d8f9;
-    padding: 32px;
     padding-top: 200px;
-    padding-left: -900px;
+    padding-left: 32px;
     flex: 0 0 300px; /* Fixed width of 300px */
     height: auto; /* Adjust height dynamically */
 }
@@ -84,8 +81,9 @@ body, html {
     flex: 1; /* Take the remaining space */
     padding: 32px;
     padding-top: 200px;
-    height: auto; /* Adjust height dynamically */
-    overflow-y: auto; /* Add scrolling if content overflows */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Add scrolling if content overflows */
 }
 
 .search-header {

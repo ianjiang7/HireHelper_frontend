@@ -21,6 +21,14 @@ function SearchResults() {
   //const [hasAccess, setHasAccess] = useState(true); // State to track access code entry
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [signupData, setsignupData] = useState("");
+  const [isBrowsing, setIsBrowsing] = useState(false);
+  const [searchInfo, setSearchInfo] = useState({
+    Industry: "",
+    Role: "",
+    Company: "",
+    Job: "",
+    CustomJob:""
+  });
   const industries = [
     "Investment Banking", "Quantitative Trading", "Tax", "Finance",
     "Private Equity", "Asset Management", "Data Science", "Venture Capital",
@@ -32,6 +40,17 @@ function SearchResults() {
     "Research & Development (R&D)", "Media & Communications", "Student",
     "Information Technology", "Government & Public Service", "Product Management", "Other"
  ];
+
+ const handleBrowseClick = () => {
+  setSearchInfo({
+    Industry: industry,
+    Role: role,
+    Company: company,
+    Job: jobSearch,
+    CustomJob: customJob
+  });
+
+ }
 
   return (
     <div className="search-results-page">
@@ -60,7 +79,7 @@ function SearchResults() {
                                     id="industrySearch"
                                     name="industrySearch"
                                     value={industrySearch}
-                                    onChange={(e) => setIndustrySearch(e.target.value)}
+                                    onChange={(e) => {setIndustrySearch(e.target.value);setIsBrowsing(true);}}
                                     placeholder="Search industry"
                                     className="w-full border border-gray-300 rounded-md p-2 mt-1"
                                     onFocus={() => setShowDropdown(true)}
@@ -73,6 +92,7 @@ function SearchResults() {
                                                 onClick={() => {
                                                     setIndustry(item);
                                                     setIndustrySearch(item);
+                                                    setIsBrowsing(true);
                                                     setShowDropdown(false);
                                                 }}
                                                 className="p-2 cursor-pointer hover:bg-gray-100"
@@ -85,7 +105,7 @@ function SearchResults() {
                             </div>
                             <div>
                                 <label htmlFor="role" className="block text-gray-600">Select Role*</label>
-                                <select value={role} onChange={(e) => setRole(e.target.value)} required className="w-full border border-gray-300 rounded-md p-2 mt-1">
+                                <select value={role} onChange={(e) => {setRole(e.target.value);setIsBrowsing(true)}} required className="w-full border border-gray-300 rounded-md p-2 mt-1">
                                     <option value="">Select Role</option>
                                     <option value="Student">Student</option>
                                     <option value="Employee">Employee</option>
@@ -98,7 +118,7 @@ function SearchResults() {
                                         type="text"
                                         placeholder="Enter custom role"
                                         value={customJob}
-                                        onChange={(e) => setCustomJob(e.target.value)}
+                                        onChange={(e) => {setCustomJob(e.target.value); setIsBrowsing(true)}}
                                         className="w-full border border-gray-300 rounded-md p-2 mt-1"
                                     />
                                 )}
@@ -110,32 +130,30 @@ function SearchResults() {
                                     id="jobSearch"
                                     name="jobSearch"
                                     value={jobSearch}
-                                    onChange={(e) => setJobSearch(e.target.value)}
+                                    onChange={(e) => {setJobSearch(e.target.value); setIsBrowsing(true)}}
                                     placeholder="Search job"
                                     className="w-full border border-gray-300 rounded-md p-2 mt-1"
                                 />
                             </div>
                             <div>
                                 <label htmlFor="company" className="block text-gray-600">Company</label>
-                                <input type="text" id="company" name="company" value={company} onChange={(e)=>setCompany(e.target.value)}className="w-full border border-gray-300 rounded-md p-2 mt-1" />
+                                <input type="text" id="company" name="company" value={company} onChange={(e)=>{setCompany(e.target.value);setIsBrowsing(true)}}className="w-full border border-gray-300 rounded-md p-2 mt-1" />
                             </div>
                             <button 
                                 type="button" 
-                                onClick={() => setShowResults(true)}
+                                onClick={handleBrowseClick}
                                 className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white py-2 px-6 rounded-lg font-medium shadow-lg hover:bg-blue-600 transform hover:scale-105 transition-transform"
                             >
-                                Browse
+                                Search
                             </button>
                         </form>
               </div>
         </div>
         <main className="search-content-results-container">
-          { showResults &&
-          <>
           <div className="search-header">
             <p className="search-text">
-              Showing Results for <span className="highlight">{role}</span> in{" "}
-              <span className="highlight">{industry}</span>
+              Showing Results for <span className="highlight">{searchInfo.Role}</span> in{" "}
+              <span className="highlight">{searchInfo.Industry}</span>
             </p>
             <input
               type="text"
@@ -145,16 +163,17 @@ function SearchResults() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
           <div className="results-container">
             <Alumni
-              industry={industry}
-              job={role}
-              customJob={customJob}
-              jobSearch={jobSearch}
-              company={company}
+              industry={searchInfo.Industry}
+              job={searchInfo.Role}
+              customJob={searchInfo.CustomJob}
+              jobSearch={searchInfo.Job}
+              company={searchInfo.Company}
               searchTerm={searchTerm}
-            />
-          </div></> } 
+            /> 
+          </div> 
         </main> 
       </div>
     </div>
