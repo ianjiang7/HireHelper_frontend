@@ -52,8 +52,6 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                         fontSize: "1rem",
                         fontWeight: 500,
                         color: "purple",
-                        cursor: isSignedIn ? "pointer" : "not-allowed",
-                        opacity: isSignedIn ? 1 : 0.5,
                         background: "none",
                         border: "none",
                     }}
