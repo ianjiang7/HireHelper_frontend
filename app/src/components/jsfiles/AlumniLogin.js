@@ -151,7 +151,7 @@ function AlumniLogin() {
       <button
         onClick={handleGoogleSignIn}
         className="google-login"
-        disabled={loading}
+        disabled
       >
         {loading ? "Signing In with Google..." : "Sign In with Google"}
       </button>
