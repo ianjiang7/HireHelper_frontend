@@ -47,7 +47,7 @@ function Home() {
                 }
 
                 const userProfile = responseData.data?.getUserProfile;
-                localStorage.setItem("FullName",userProfile.fullname));
+                localStorage.setItem("FullName",userProfile.fullname);
                 if (userProfile) {
                     setUserName(userProfile.fullname);
                     setIsSignedIn(true);
