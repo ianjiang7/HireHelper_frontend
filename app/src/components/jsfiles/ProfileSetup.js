@@ -23,13 +23,11 @@ function ProfileSetup() {
     useEffect(() => {
         async function checkUserName() {
             try {
-                const fullName = await JSON.parse(localStorage.getItem("FullName"));
-                console.log(fullName)
-                const usersName = fullName?.UsersName
+                const fullName = localStorage.getItem("FullName");
                 const currentUser = await getCurrentUser();
-                if (usersName && currentUser) {
+                if (fullName && currentUser) {
                     setIsSignedIn(true);
-                    setsignupData(usersName)
+                    setsignupData(fullName)
                 };
             } catch (err) {
                 console.error("Error fetching user data:", err);
