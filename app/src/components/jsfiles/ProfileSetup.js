@@ -62,7 +62,6 @@ function ProfileSetup() {
     }
 
     const handleFileUpload = async(event) => {
-        console.log(authSession.credentials);
         
         const file = event.target.files[0];
         const s3Client = new S3Client({
