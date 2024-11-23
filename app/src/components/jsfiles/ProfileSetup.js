@@ -73,7 +73,7 @@ function ProfileSetup() {
                     path: s3Key,
                     data: file,
                     options: {
-                        bucket: 'alumnireach-resume-storage',
+                        bucket: 'alumnireach-resume-storage74831-dev',
                         region: 'us-east-1'
                     }
             }).result;
