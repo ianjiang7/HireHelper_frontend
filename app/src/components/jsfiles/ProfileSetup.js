@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { signOut, getCurrentUser } from "aws-amplify/auth";
-import { uploadData } from 'aws-amplify/storage'
+import { signOut, getCurrentUser, fetchAuthSession} from "aws-amplify/auth";
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import Header from "./Header"
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
 
@@ -21,6 +21,8 @@ function ProfileSetup() {
     const [signupData, setsignupData] = useState("");
     const [isAlumni, setIsAlumni] = useState(false);
     const [userSub, setUserSub] = useState("");
+    const [identityID, setIdentityID] = useState("");
+    const [authSession, setAuthSession] = useState();
     
     useEffect(() => {
         async function checkUserName() {
@@ -28,10 +30,13 @@ function ProfileSetup() {
                 const fullName = localStorage.getItem("FullName");
                 const userID = localStorage.getItem("USERID");
                 const currentUser = await getCurrentUser();
+                const session = await fetchAuthSession();
                 if (fullName && currentUser) {
                     setIsSignedIn(true);
                     setsignupData(fullName);
-                    setUserSub(userID)
+                    setUserSub(userID);
+                    setIdentityID(session.identityId);
+                    setAuthSession(session);
                 };
             } catch (err) {
                 console.error("Error fetching user data:", err);
@@ -57,15 +62,37 @@ function ProfileSetup() {
     }
 
     const handleFileUpload = async(event) => {
+        console.log(authSession.credentials);
+        
         const file = event.target.files[0];
+        const s3Client = new S3Client({
+            region: "us-east-1",
+            credentials: authSession.credentials
+        })
         if (file) {
             setResumeName(file.name);
         }
         
-        const s3Key = `${userSub}/${file.name}`; // Path with the user's sub
+        
+        const s3Key = `private/${identityID}/${file.name}`; // Path with the user's sub
         console.log(s3Key);
 
-        
+        const params = {
+            Bucket: "alumnireachresumestorage75831-dev",
+            Key: s3Key,
+            Body: file,
+            ContentType: file.type
+        };
+
+        try {
+            const data = await s3Client.send(new PutObjectCommand(params));
+            console.log("Upload succeeded:", data);
+          } catch (err) {
+            console.error("Upload failed:", err);
+          }
+        };
+
+        /*
         try {
             const result = await uploadData(
                 {
@@ -73,7 +100,7 @@ function ProfileSetup() {
                     path: s3Key,
                     data: file,
                     options: {
-                        bucket: 'alumnireach-resume-storage74831-dev',
+                        bucket: 'alumnireachresumestorage74831-dev',
                         region: 'us-east-1'
                     }
             }).result;
@@ -82,7 +109,6 @@ function ProfileSetup() {
         console.error('Error uploading file:', error);
         }
         
-            /*
             const formData = new FormData();
             formData.append("resume", file);
 
@@ -96,7 +122,7 @@ function ProfileSetup() {
             } catch (error) {
             console.error("Error uploading file:", error);
         }*/
-    }
+    
     
 
     return (

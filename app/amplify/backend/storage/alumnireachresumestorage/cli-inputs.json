@@ -1,0 +1,12 @@
+{
+  "resourceName": "alumnireachresumestorage",
+  "policyUUID": "8ecf9362",
+  "bucketName": "alumnireachresumestorage",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE"
+  ],
+  "triggerFunction": "S3Trigger645f5abd",
+  "groupAccess": {}
+}
