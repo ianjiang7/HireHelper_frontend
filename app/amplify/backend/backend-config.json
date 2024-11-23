@@ -54,6 +54,11 @@
     }
   },
   "function": {
+    "S3Trigger2b5111f3": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "linkedinOAuth": {
       "build": true,
       "dependsOn": [],
@@ -62,6 +67,22 @@
     }
   },
   "parameters": {
+    "AMPLIFY_function_S3Trigger2b5111f3_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "S3Trigger2b5111f3"
+        }
+      ]
+    },
+    "AMPLIFY_function_S3Trigger2b5111f3_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "S3Trigger2b5111f3"
+        }
+      ]
+    },
     "AMPLIFY_function_linkedinOAuth_deploymentBucketName": {
       "usedBy": [
         {
@@ -103,5 +124,21 @@
       ]
     }
   },
-  "storage": {}
+  "storage": {
+    "studentresume": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn",
+            "LambdaExecutionRole"
+          ],
+          "category": "function",
+          "resourceName": "S3Trigger2b5111f3"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "S3"
+    }
+  }
 }

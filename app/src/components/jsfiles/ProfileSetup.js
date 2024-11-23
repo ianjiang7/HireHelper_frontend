@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser } from "aws-amplify/auth";
+import { uploadData } from 'aws-amplify/storage'
 import Header from "./Header"
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
 
@@ -19,15 +20,18 @@ function ProfileSetup() {
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [signupData, setsignupData] = useState("");
     const [isAlumni, setIsAlumni] = useState(false);
+    const [userSub, setUserSub] = useState("");
     
     useEffect(() => {
         async function checkUserName() {
             try {
                 const fullName = localStorage.getItem("FullName");
+                const userID = localStorage.getItem("USERID");
                 const currentUser = await getCurrentUser();
                 if (fullName && currentUser) {
                     setIsSignedIn(true);
-                    setsignupData(fullName)
+                    setsignupData(fullName);
+                    setUserSub(userID)
                 };
             } catch (err) {
                 console.error("Error fetching user data:", err);
@@ -52,26 +56,32 @@ function ProfileSetup() {
         navigate("/alumni-login")
     }
 
-    // Function to handle successful access code entry
-    const handleAccessGranted = () => {
-        setHasAccess(true); // Set access to true
-        setShowModal(false); // Close the modal
-        navigate("/search-results", {state: {industry, role, customJob, jobSearch, company}}); // Navigate to ProfileSetup
-    };
-
-    const handleProceed = () => {
-        // If access is already granted, navigate directly
-        if (hasAccess) {
-            navigate("/search-results", {state: {industry, role, customJob, jobSearch, company}});
-        } else {
-            // Otherwise, show the access code modal
-            setShowModal(true);
-        }
-    };
-    const handleFileUpload = (event) => {
+    const handleFileUpload = async(event) => {
         const file = event.target.files[0];
         if (file) {
             setResumeName(file.name);
+        }
+        
+        const s3Key = `${userSub}/${file.name}`; // Path with the user's sub
+        console.log(s3Key);
+
+        
+        try {
+            const result = await uploadData(
+                {
+                    
+                    path: s3Key,
+                    data: file,
+                    options: {
+                        bucket: 'alumnireach-resume-storage',
+                        region: 'us-east-1'
+                    }
+            }).result;
+            console.log("Succeeded: ", result);
+        } catch (error) {
+        console.error('Error uploading file:', error);
+        }
+        
             /*
             const formData = new FormData();
             formData.append("resume", file);
@@ -87,7 +97,6 @@ function ProfileSetup() {
             console.error("Error uploading file:", error);
         }*/
     }
-        }
     
 
     return (
@@ -109,7 +118,7 @@ function ProfileSetup() {
                         <p className="text-gray-600 mb-4">Please upload your resume for more targeted results</p>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                             <label htmlFor="resume-upload" className="text-gray-500 cursor-pointer">Drag & drop files or <span className="text-blue-500">Browse</span></label>
-                            <input type="file" id="resume-upload" name="resume" className="hidden" onChange={handleFileUpload} />
+                            {isSignedIn && (<input type="file" id="resume-upload" name="resume" className="hidden" onChange={handleFileUpload} />)}
                         </div>
                         <div className="mt-4 text-gray-700">{resumeName}</div>
                     </div>

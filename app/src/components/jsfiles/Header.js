@@ -1,4 +1,6 @@
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHouse, faUser, faUsersLine, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 
 function Header({ navigate, isAlumni, isSignedIn }) {
     return (
@@ -44,7 +46,7 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                         cursor: "pointer",
                     }}
                 >
-                    Home
+                   <FontAwesomeIcon icon={faHouse} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
                 </button>
                 <button
                     onClick={() => navigate("/search-results")}
@@ -56,7 +58,7 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                         border: "none",
                     }}
                 >
-                    Search
+                    <FontAwesomeIcon icon={faMagnifyingGlass} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
                 </button>
                 <button
                     onClick={() => navigate("/profile-setup")}
@@ -69,7 +71,7 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                         cursor: "pointer",
                     }}
                 >
-                    Profile
+                    <FontAwesomeIcon icon={faUser} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
                 </button>
                 <button
                     onClick={() => navigate("/my-connections")}
@@ -84,7 +86,7 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                         border: "none",
                     }}
                 >
-                    Alumni
+                    <FontAwesomeIcon icon={faUsersLine} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
                 </button>
             </div>
         </nav>

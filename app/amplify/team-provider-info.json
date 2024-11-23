@@ -24,8 +24,15 @@
           "linkedinClientId": "86hcrtio8qosdf",
           "linkedinClientSecret": "WPL_AP1.mz9gnUie2DI9hsSH.HnmVGw==",
           "deploymentBucketName": "amplify-hirehelperbackend-dev-74831-deployment",
-          "s3Key": "amplify-builds/linkedinOAuth-4c6d4977794b356b2b6f-build.zip"
+          "s3Key": "amplify-builds/linkedinOAuth-58754a314f4f77377a49-build.zip"
+        },
+        "S3Trigger2b5111f3": {
+          "deploymentBucketName": "amplify-hirehelperbackend-dev-74831-deployment",
+          "s3Key": "amplify-builds/S3Trigger2b5111f3-6e36646b3539734f6f41-build.zip"
         }
+      },
+      "storage": {
+        "studentresume": {}
       }
     }
   }

@@ -10,6 +10,8 @@ const awsmobile = {
     "aws_cognito_region": "us-east-1",
     "aws_user_pools_id": "us-east-1_UZPmLBQjE",
     "aws_user_pools_web_client_id": "3jsdteqcg64dkn297hr7ppe8t3",
+    "aws_storage_bucket_name": "alumnireach-resume-storage",
+    "aws_storage_region": "us-east-1", 
     "oauth": {
         "domain": "auth.alumnireach.org",
         "scope": ["email", "openid"],
@@ -34,7 +36,7 @@ const awsmobile = {
     },
     "aws_cognito_verification_mechanisms": [
         "EMAIL"
-    ]
+    ],
 };
 
 

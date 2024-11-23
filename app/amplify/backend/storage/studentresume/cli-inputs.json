@@ -1,0 +1,12 @@
+{
+  "resourceName": "studentresume",
+  "policyUUID": "d2e3649d",
+  "bucketName": "alumnireach-resume-storage",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE"
+  ],
+  "triggerFunction": "S3Trigger2b5111f3",
+  "groupAccess": {}
+}
