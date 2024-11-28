@@ -62,67 +62,47 @@ function ProfileSetup() {
     }
 
     const handleFileUpload = async(event) => {
-        
-        const file = event.target.files[0];
-        const s3Client = new S3Client({
-            region: "us-east-1",
-            credentials: authSession.credentials
-        })
-        if (file) {
-            setResumeName(file.name);
-        }
-        
-        
-        const s3Key = `private/${identityID}/${file.name}`; // Path with the user's sub
-        console.log(s3Key);
-
-        const params = {
-            Bucket: "alumnireachresumestorage75831-dev",
-            Key: s3Key,
-            Body: file,
-            ContentType: file.type
-        };
-
         try {
+            const file = event.target.files[0];
+            if (!file) {
+                console.error("No file selected");
+                return;
+            }
+
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: authSession.credentials,
+                forcePathStyle: true,
+                signatureVersion: 'v4'
+            });
+
+            setResumeName(file.name);
+            
+            const s3Key = `private/${identityID}/${file.name}`; // Path with the user's sub
+            console.log("Uploading to:", s3Key);
+
+            const params = {
+                Bucket: "alumnireachresumestorage75831-dev",
+                Key: s3Key,
+                Body: file,
+                ContentType: file.type,
+                ACL: 'private'
+            };
+
+            console.log("Starting upload with params:", {
+                Bucket: params.Bucket,
+                Key: params.Key,
+                ContentType: params.ContentType
+            });
+
             const data = await s3Client.send(new PutObjectCommand(params));
             console.log("Upload succeeded:", data);
-          } catch (err) {
+            alert("Resume uploaded successfully!");
+        } catch (err) {
             console.error("Upload failed:", err);
-          }
-        };
-
-        /*
-        try {
-            const result = await uploadData(
-                {
-                    
-                    path: s3Key,
-                    data: file,
-                    options: {
-                        bucket: 'alumnireachresumestorage74831-dev',
-                        region: 'us-east-1'
-                    }
-            }).result;
-            console.log("Succeeded: ", result);
-        } catch (error) {
-        console.error('Error uploading file:', error);
+            alert("Failed to upload resume. Please try again.");
         }
-        
-            const formData = new FormData();
-            formData.append("resume", file);
-
-            try {
-                const response = await fetch("/upload", {
-                    method: "POST",
-                    body: formData,
-                });
-                const result = await response.json();
-                console.log("File uploaded successfully:", result);
-            } catch (error) {
-            console.error("Error uploading file:", error);
-        }*/
-    
-    
+    };
 
     return (
         <div>
@@ -131,7 +111,7 @@ function ProfileSetup() {
                 isAlumni={isAlumni}
                 isSignedIn={isSignedIn}
             />
-            
+
 
             {/* Main content */}
             <main className="profile-setup-container">
@@ -214,4 +194,3 @@ function ProfileSetup() {
 }
 
 export default ProfileSetup;
-                                 

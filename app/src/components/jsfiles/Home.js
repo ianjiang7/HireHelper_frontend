@@ -138,7 +138,7 @@ function Home() {
                         Students
                     </button>
                     <button
-                        onClick={() => navigate("/alumni-login")}
+                        onClick={() => navigate("/search-results")}
                         style={{
                             padding: "1rem 3rem",
                             fontSize: "1.25rem",
