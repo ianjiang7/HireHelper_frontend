@@ -92,21 +92,37 @@ function ProfileSetup() {
             const command = new PutObjectCommand(params);
             const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
             
-            console.log("Got signed URL:", signedUrl);
+            console.log("Got signed URL");
 
-            // Upload using the pre-signed URL
-            const uploadResponse = await fetch(signedUrl, {
-                method: 'PUT',
-                body: file,
-                headers: {
-                    'Content-Type': file.type
-                }
+            // Create a new promise for XMLHttpRequest
+            const uploadPromise = new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('PUT', signedUrl, true);
+                xhr.setRequestHeader('Content-Type', file.type);
+                
+                xhr.onload = function() {
+                    if (this.status === 200) {
+                        resolve(this.response);
+                    } else {
+                        reject(new Error(`Upload failed with status: ${this.status}`));
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    reject(new Error('XMLHttpRequest failed'));
+                };
+                
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        console.log(`Upload progress: ${percentComplete}%`);
+                    }
+                };
+                
+                xhr.send(file);
             });
 
-            if (!uploadResponse.ok) {
-                throw new Error(`Upload failed with status: ${uploadResponse.status}`);
-            }
-
+            await uploadPromise;
             console.log("Upload succeeded!");
             alert("Resume uploaded successfully!");
         } catch (err) {
