@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser, fetchAuthSession} from "aws-amplify/auth";
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Upload } from "@aws-sdk/lib-storage";
 import Header from "./Header"
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
 
@@ -82,47 +82,25 @@ function ProfileSetup() {
             const s3Key = `private/${identityID}/${file.name}`; // Path with the user's sub
             console.log("Uploading to:", s3Key);
 
-            const params = {
-                Bucket: "alumnireachresumestorage75831-dev",
-                Key: s3Key,
-                ContentType: file.type
-            };
-
-            // Generate pre-signed URL
-            const command = new PutObjectCommand(params);
-            const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-            
-            console.log("Got signed URL");
-
-            // Create a new promise for XMLHttpRequest
-            const uploadPromise = new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('PUT', signedUrl, true);
-                xhr.setRequestHeader('Content-Type', file.type);
-                
-                xhr.onload = function() {
-                    if (this.status === 200) {
-                        resolve(this.response);
-                    } else {
-                        reject(new Error(`Upload failed with status: ${this.status}`));
-                    }
-                };
-                
-                xhr.onerror = function() {
-                    reject(new Error('XMLHttpRequest failed'));
-                };
-                
-                xhr.upload.onprogress = function(e) {
-                    if (e.lengthComputable) {
-                        const percentComplete = (e.loaded / e.total) * 100;
-                        console.log(`Upload progress: ${percentComplete}%`);
-                    }
-                };
-                
-                xhr.send(file);
+            const upload = new Upload({
+                client: s3Client,
+                params: {
+                    Bucket: "alumnireachresumestorage75831-dev",
+                    Key: s3Key,
+                    Body: file,
+                    ContentType: file.type
+                },
+                queueSize: 4, // optional concurrency configuration
+                partSize: 1024 * 1024 * 5, // optional size of each part, in bytes, at least 5MB
+                leavePartsOnError: false, // optional manually handle dropped parts
             });
 
-            await uploadPromise;
+            upload.on("httpUploadProgress", (progress) => {
+                const percentComplete = Math.round((progress.loaded / progress.total) * 100);
+                console.log(`Upload progress: ${percentComplete}%`);
+            });
+
+            await upload.done();
             console.log("Upload succeeded!");
             alert("Resume uploaded successfully!");
         } catch (err) {
