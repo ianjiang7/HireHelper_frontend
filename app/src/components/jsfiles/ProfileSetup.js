@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser, fetchAuthSession} from "aws-amplify/auth";
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { Upload } from "@aws-sdk/lib-storage";
 import Header from "./Header"
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
 
@@ -70,38 +69,39 @@ function ProfileSetup() {
                 return;
             }
 
+            // Make sure we have valid credentials
+            if (!authSession?.credentials) {
+                console.error("No valid credentials");
+                alert("Please sign in again");
+                return;
+            }
+
             const s3Client = new S3Client({
                 region: "us-east-1",
                 credentials: authSession.credentials,
-                forcePathStyle: true,
-                signatureVersion: 'v4'
+                useAccelerateEndpoint: true // Enable transfer acceleration if you've enabled it on your bucket
             });
 
             setResumeName(file.name);
             
-            const s3Key = `private/${identityID}/${file.name}`; // Path with the user's sub
+            const s3Key = `private/${identityID}/${file.name}`;
             console.log("Uploading to:", s3Key);
 
-            const upload = new Upload({
-                client: s3Client,
-                params: {
-                    Bucket: "alumnireachresumestorage75831-dev",
-                    Key: s3Key,
-                    Body: file,
-                    ContentType: file.type
-                },
-                queueSize: 4, // optional concurrency configuration
-                partSize: 1024 * 1024 * 5, // optional size of each part, in bytes, at least 5MB
-                leavePartsOnError: false, // optional manually handle dropped parts
-            });
+            const params = {
+                Bucket: "alumnireachresumestorage75831-dev", // Your console-created bucket name
+                Key: s3Key,
+                Body: file,
+                ContentType: file.type,
+                ContentDisposition: 'inline',
+                Metadata: {
+                    'uploaded-by': identityID
+                }
+            };
 
-            upload.on("httpUploadProgress", (progress) => {
-                const percentComplete = Math.round((progress.loaded / progress.total) * 100);
-                console.log(`Upload progress: ${percentComplete}%`);
-            });
-
-            await upload.done();
-            console.log("Upload succeeded!");
+            console.log("Starting upload...");
+            const command = new PutObjectCommand(params);
+            const response = await s3Client.send(command);
+            console.log("Upload succeeded!", response);
             alert("Resume uploaded successfully!");
         } catch (err) {
             console.error("Upload failed:", err);
