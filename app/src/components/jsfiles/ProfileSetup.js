@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser, fetchAuthSession} from "aws-amplify/auth";
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Header from "./Header"
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
 
@@ -84,19 +85,29 @@ function ProfileSetup() {
             const params = {
                 Bucket: "alumnireachresumestorage75831-dev",
                 Key: s3Key,
-                Body: file,
-                ContentType: file.type,
-                ACL: 'private'
+                ContentType: file.type
             };
 
-            console.log("Starting upload with params:", {
-                Bucket: params.Bucket,
-                Key: params.Key,
-                ContentType: params.ContentType
+            // Generate pre-signed URL
+            const command = new PutObjectCommand(params);
+            const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+            
+            console.log("Got signed URL:", signedUrl);
+
+            // Upload using the pre-signed URL
+            const uploadResponse = await fetch(signedUrl, {
+                method: 'PUT',
+                body: file,
+                headers: {
+                    'Content-Type': file.type
+                }
             });
 
-            const data = await s3Client.send(new PutObjectCommand(params));
-            console.log("Upload succeeded:", data);
+            if (!uploadResponse.ok) {
+                throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+            }
+
+            console.log("Upload succeeded!");
             alert("Resume uploaded successfully!");
         } catch (err) {
             console.error("Upload failed:", err);
