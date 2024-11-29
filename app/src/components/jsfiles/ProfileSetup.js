@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser, fetchAuthSession} from "aws-amplify/auth";
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Header from "./Header"
 import "../cssfiles/ProfileSetup.css"; // Import the CSS file
 
@@ -76,36 +77,71 @@ function ProfileSetup() {
                 return;
             }
 
+            console.log("Auth session:", {
+                accessKeyId: authSession.credentials.accessKeyId ? "Present" : "Missing",
+                secretAccessKey: authSession.credentials.secretAccessKey ? "Present" : "Missing",
+                sessionToken: authSession.credentials.sessionToken ? "Present" : "Missing",
+                sub: userSub ? "Present" : "Missing"
+            });
+
             const s3Client = new S3Client({
                 region: "us-east-1",
-                credentials: authSession.credentials,
-                useAccelerateEndpoint: true // Enable transfer acceleration if you've enabled it on your bucket
+                credentials: {
+                    accessKeyId: authSession.credentials.accessKeyId,
+                    secretAccessKey: authSession.credentials.secretAccessKey,
+                    sessionToken: authSession.credentials.sessionToken
+                }
             });
 
             setResumeName(file.name);
             
-            const s3Key = `private/${identityID}/${file.name}`;
+            // Use user's sub in the path
+            const s3Key = `private/${userSub}/${file.name}`;
             console.log("Uploading to:", s3Key);
 
             const params = {
-                Bucket: "alumnireachresumestorage75831-dev", // Your console-created bucket name
+                Bucket: "alumnireachresumestorage74831-dev",
                 Key: s3Key,
-                Body: file,
-                ContentType: file.type,
-                ContentDisposition: 'inline',
-                Metadata: {
-                    'uploaded-by': identityID
-                }
+                ContentType: file.type
             };
 
-            console.log("Starting upload...");
+            console.log("Upload params:", {
+                Bucket: params.Bucket,
+                Key: params.Key,
+                ContentType: params.ContentType
+            });
+
+            // Generate pre-signed URL
             const command = new PutObjectCommand(params);
-            const response = await s3Client.send(command);
-            console.log("Upload succeeded!", response);
+            const signedUrl = await getSignedUrl(s3Client, command, {
+                expiresIn: 3600,
+            });
+
+            console.log("Starting upload with signed URL...");
+            
+            // Use fetch with the pre-signed URL
+            const response = await fetch(signedUrl, {
+                method: 'PUT',
+                body: file,
+                headers: {
+                    'Content-Type': file.type
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text().catch(() => 'No error details available');
+                throw new Error(`Upload failed with status: ${response.status} ${response.statusText}. Details: ${errorText}`);
+            }
+
+            console.log("Upload succeeded!");
             alert("Resume uploaded successfully!");
         } catch (err) {
             console.error("Upload failed:", err);
-            alert("Failed to upload resume. Please try again.");
+            if (err.message.includes('status: 403')) {
+                alert("Permission denied. Please check your credentials and try again.");
+            } else {
+                alert(`Failed to upload resume: ${err.message}`);
+            }
         }
     };
 
