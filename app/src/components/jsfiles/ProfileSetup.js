@@ -3,12 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { generateClient } from 'aws-amplify/api';
 import Header from "./Header";
-import * as queries from "../../graphql/queries";
+import awsmobile from "../../aws-exports";
 import "../cssfiles/ProfileSetup.css";
 
-const client = generateClient();
+const client = null; // GraphQL client is no longer needed
 
 function ProfileSetup() {
     const navigate = useNavigate();
@@ -57,15 +56,40 @@ function ProfileSetup() {
     const loadExistingResume = async () => {
         try {
             console.log("Loading resume for user:", userSub);
-            const { data } = await client.query({
-                query: queries.getUserProfile,
-                variables: { userId: userSub }
+            const session = await fetchAuthSession();
+            const { idToken } = session.tokens ?? {};
+
+            if (!idToken) {
+                throw new Error("No ID token found.");
+            }
+
+            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                    query: `
+                    query GetUserProfile($userId: ID!) {
+                        getUserProfile(userId: $userId) {
+                            userId
+                            email
+                            fullname
+                            company
+                            role
+                            resumeName
+                        }
+                    }`,
+                    variables: { userId: userSub },
+                }),
             });
             
-            console.log("Got user data:", data);
+            const responseData = await response.json();
+            console.log("Got user data:", responseData);
             
-            if (data.getUserProfile?.resumeName) {
-                setResumeName(data.getUserProfile.resumeName);
+            if (responseData.data?.getUserProfile?.resumeName) {
+                setResumeName(responseData.data.getUserProfile.resumeName);
                 // Generate a temporary URL for viewing
                 const s3Client = new S3Client({
                     region: "us-east-1",
@@ -78,7 +102,7 @@ function ProfileSetup() {
 
                 const command = new GetObjectCommand({
                     Bucket: "alumnireachresumestorage74831-dev",
-                    Key: `private/${userSub}/${data.getUserProfile.resumeName}`
+                    Key: `private/${userSub}/${responseData.data.getUserProfile.resumeName}`
                 });
 
                 const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
@@ -127,15 +151,40 @@ function ProfileSetup() {
             }));
 
             // Update DynamoDB
-            await client.mutate({
-                mutation: queries.updateUserProfile,
-                variables: {
-                    input: {
-                        userId: userSub,
-                        resumeName: null
-                    }
-                }
+            const session = await fetchAuthSession();
+            const { idToken } = session.tokens ?? {};
+
+            if (!idToken) {
+                throw new Error("No ID token found for GraphQL update");
+            }
+
+            const graphqlResponse = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                    query: `
+                    mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
+                        updateUserProfile(input: $input) {
+                            userId
+                            resumeName
+                        }
+                    }`,
+                    variables: {
+                        input: {
+                            userId: userSub,
+                            resumeName: null
+                        }
+                    },
+                }),
             });
+
+            const graphqlData = await graphqlResponse.json();
+            if (graphqlData.errors) {
+                throw new Error(`GraphQL Error: ${JSON.stringify(graphqlData.errors)}`);
+            }
 
             setResumeName('');
             setResumeUrl('');
@@ -217,15 +266,40 @@ function ProfileSetup() {
             }
 
             // Update DynamoDB with resume info
-            await client.mutate({
-                mutation: queries.updateUserProfile,
-                variables: {
-                    input: {
-                        userId: userSub,
-                        resumeName: file.name
-                    }
-                }
+            const session = await fetchAuthSession();
+            const { idToken } = session.tokens ?? {};
+
+            if (!idToken) {
+                throw new Error("No ID token found for GraphQL update");
+            }
+
+            const graphqlResponse = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                    query: `
+                    mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
+                        updateUserProfile(input: $input) {
+                            userId
+                            resumeName
+                        }
+                    }`,
+                    variables: {
+                        input: {
+                            userId: userSub,
+                            resumeName: file.name
+                        }
+                    },
+                }),
             });
+
+            const graphqlData = await graphqlResponse.json();
+            if (graphqlData.errors) {
+                throw new Error(`GraphQL Error: ${JSON.stringify(graphqlData.errors)}`);
+            }
 
             setResumeName(file.name);
             // Generate URL for immediate viewing
