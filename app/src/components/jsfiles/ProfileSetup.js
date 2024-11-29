@@ -5,8 +5,8 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } fro
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { generateClient } from 'aws-amplify/api';
 import Header from "./Header";
+import * as queries from "../../graphql/queries";
 import "../cssfiles/ProfileSetup.css";
-import * as queries from '../graphql/queries';
 
 const client = generateClient();
 
@@ -56,10 +56,13 @@ function ProfileSetup() {
 
     const loadExistingResume = async () => {
         try {
+            console.log("Loading resume for user:", userSub);
             const { data } = await client.query({
                 query: queries.getUserProfile,
                 variables: { userId: userSub }
             });
+            
+            console.log("Got user data:", data);
             
             if (data.getUserProfile?.resumeName) {
                 setResumeName(data.getUserProfile.resumeName);
@@ -80,6 +83,7 @@ function ProfileSetup() {
 
                 const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
                 setResumeUrl(url);
+                console.log("Generated presigned URL for viewing");
             }
         } catch (err) {
             console.error("Error loading resume:", err);
