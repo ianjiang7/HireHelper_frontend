@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { signOut, getCurrentUser, fetchAuthSession} from "aws-amplify/auth";
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import Header from "./Header"
-import "../cssfiles/ProfileSetup.css"; // Import the CSS file
+import { generateClient } from 'aws-amplify/api';
+import Header from "./Header";
+import "../cssfiles/ProfileSetup.css";
+import * as queries from '../graphql/queries';
+
+const client = generateClient();
 
 function ProfileSetup() {
     const navigate = useNavigate();
@@ -14,7 +18,9 @@ function ProfileSetup() {
     const [jobSearch, setJobSearch] = useState("");
     const [industrySearch, setIndustrySearch] = useState("");
     const [company, setCompany] = useState("")
-    const [resumeName, setResumeName] = useState("Upload your resume"); // Placeholder name
+    const [resumeName, setResumeName] = useState("");
+    const [resumeUrl, setResumeUrl] = useState("");
+    const [isUploading, setIsUploading] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [showModal, setShowModal] = useState(false); // State to control modal visibility
     const [hasAccess, setHasAccess] = useState(true); // State to track access code entry
@@ -45,7 +51,40 @@ function ProfileSetup() {
             }
         }
         checkUserName();
+        loadExistingResume();
     }, []);
+
+    const loadExistingResume = async () => {
+        try {
+            const { data } = await client.query({
+                query: queries.getUserProfile,
+                variables: { userId: userSub }
+            });
+            
+            if (data.getUserProfile?.resumeName) {
+                setResumeName(data.getUserProfile.resumeName);
+                // Generate a temporary URL for viewing
+                const s3Client = new S3Client({
+                    region: "us-east-1",
+                    credentials: {
+                        accessKeyId: authSession.credentials.accessKeyId,
+                        secretAccessKey: authSession.credentials.secretAccessKey,
+                        sessionToken: authSession.credentials.sessionToken
+                    }
+                });
+
+                const command = new GetObjectCommand({
+                    Bucket: "alumnireachresumestorage74831-dev",
+                    Key: `private/${userSub}/${data.getUserProfile.resumeName}`
+                });
+
+                const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+                setResumeUrl(url);
+            }
+        } catch (err) {
+            console.error("Error loading resume:", err);
+        }
+    };
 
     const handleSignOut = async () => {
         try {
@@ -62,6 +101,47 @@ function ProfileSetup() {
         navigate("/alumni-login")
     }
 
+    const handleDeleteResume = async () => {
+        try {
+            if (!window.confirm('Are you sure you want to delete your resume?')) {
+                return;
+            }
+
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: {
+                    accessKeyId: authSession.credentials.accessKeyId,
+                    secretAccessKey: authSession.credentials.secretAccessKey,
+                    sessionToken: authSession.credentials.sessionToken
+                }
+            });
+
+            // Delete from S3
+            await s3Client.send(new DeleteObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: `private/${userSub}/${resumeName}`
+            }));
+
+            // Update DynamoDB
+            await client.mutate({
+                mutation: queries.updateUserProfile,
+                variables: {
+                    input: {
+                        userId: userSub,
+                        resumeName: null
+                    }
+                }
+            });
+
+            setResumeName('');
+            setResumeUrl('');
+            alert('Resume deleted successfully!');
+        } catch (err) {
+            console.error("Error deleting resume:", err);
+            alert('Failed to delete resume. Please try again.');
+        }
+    };
+
     const handleFileUpload = async(event) => {
         try {
             const file = event.target.files[0];
@@ -69,6 +149,13 @@ function ProfileSetup() {
                 console.error("No file selected");
                 return;
             }
+
+            // Check if replacing existing resume
+            if (resumeName && !window.confirm('Do you want to replace your existing resume?')) {
+                return;
+            }
+
+            setIsUploading(true);
 
             // Make sure we have valid credentials
             if (!authSession?.credentials) {
@@ -93,8 +180,6 @@ function ProfileSetup() {
                 }
             });
 
-            setResumeName(file.name);
-            
             // Use user's sub in the path
             const s3Key = `private/${userSub}/${file.name}`;
             console.log("Uploading to:", s3Key);
@@ -104,12 +189,6 @@ function ProfileSetup() {
                 Key: s3Key,
                 ContentType: file.type
             };
-
-            console.log("Upload params:", {
-                Bucket: params.Bucket,
-                Key: params.Key,
-                ContentType: params.ContentType
-            });
 
             // Generate pre-signed URL
             const command = new PutObjectCommand(params);
@@ -133,6 +212,23 @@ function ProfileSetup() {
                 throw new Error(`Upload failed with status: ${response.status} ${response.statusText}. Details: ${errorText}`);
             }
 
+            // Update DynamoDB with resume info
+            await client.mutate({
+                mutation: queries.updateUserProfile,
+                variables: {
+                    input: {
+                        userId: userSub,
+                        resumeName: file.name
+                    }
+                }
+            });
+
+            setResumeName(file.name);
+            // Generate URL for immediate viewing
+            const getCommand = new GetObjectCommand(params);
+            const viewUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
+            setResumeUrl(viewUrl);
+
             console.log("Upload succeeded!");
             alert("Resume uploaded successfully!");
         } catch (err) {
@@ -142,8 +238,53 @@ function ProfileSetup() {
             } else {
                 alert(`Failed to upload resume: ${err.message}`);
             }
+        } finally {
+            setIsUploading(false);
         }
     };
+
+    const resumeSection = (
+        <div className="resume-section">
+            <h3>Resume</h3>
+            {isUploading ? (
+                <p>Uploading...</p>
+            ) : resumeName ? (
+                <div>
+                    <p>Current Resume: {resumeName}</p>
+                    <div className="resume-actions">
+                        <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="view-button">
+                            View Resume
+                        </a>
+                        <button onClick={handleDeleteResume} className="delete-button">
+                            Delete Resume
+                        </button>
+                        <label className="replace-button">
+                            Replace Resume
+                            <input
+                                type="file"
+                                accept=".pdf,.doc,.docx"
+                                onChange={handleFileUpload}
+                                style={{ display: 'none' }}
+                            />
+                        </label>
+                    </div>
+                </div>
+            ) : (
+                <div>
+                    <p>No resume uploaded</p>
+                    <label className="upload-button">
+                        Upload Resume
+                        <input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            onChange={handleFileUpload}
+                            style={{ display: 'none' }}
+                        />
+                    </label>
+                </div>
+            )}
+        </div>
+    );
 
     return (
         <div>
@@ -160,13 +301,7 @@ function ProfileSetup() {
                 <div className="flex flex-col lg:flex-row w-full space-y-6 lg:space-y-0 lg:space-x-8">
                     {/* Attach Resume Section */}
                     <div className="bg-white rounded-lg p-6 shadow-md flex-grow">
-                        <h3 className="text-xl font-semibold mb-4">Attach Resume</h3>
-                        <p className="text-gray-600 mb-4">Please upload your resume for more targeted results</p>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                            <label htmlFor="resume-upload" className="text-gray-500 cursor-pointer">Drag & drop files or <span className="text-blue-500">Browse</span></label>
-                            {isSignedIn && (<input type="file" id="resume-upload" name="resume" className="hidden" onChange={handleFileUpload} />)}
-                        </div>
-                        <div className="mt-4 text-gray-700">{resumeName}</div>
+                        {resumeSection}
                     </div>
                     <div className="bg-white rounded-lg p-6 shadow-md flex-grow">
                         <label>
