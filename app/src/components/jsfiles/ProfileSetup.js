@@ -3,36 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import Header from "./Header";
 import awsmobile from "../../aws-exports";
 import "../cssfiles/ProfileSetup.css";
 
-const client = null; // GraphQL client is no longer needed
-
 function ProfileSetup() {
     const navigate = useNavigate();
-    const [industry, setIndustry] = useState("");
-    const [role, setRole] = useState("");
-    const [customJob, setCustomJob] = useState("");
-    const [jobSearch, setJobSearch] = useState("");
-    const [industrySearch, setIndustrySearch] = useState("");
-    const [company, setCompany] = useState("")
+    const [activeSection, setActiveSection] = useState("profile");
+    const [userSub, setUserSub] = useState("");
     const [resumeName, setResumeName] = useState("");
     const [resumeUrl, setResumeUrl] = useState("");
     const [isUploading, setIsUploading] = useState(false);
-    const [showDropdown, setShowDropdown] = useState(false);
-    const [showModal, setShowModal] = useState(false); // State to control modal visibility
-    const [hasAccess, setHasAccess] = useState(true); // State to track access code entry
     const [isSignedIn, setIsSignedIn] = useState(false);
-    const [signupData, setsignupData] = useState("");
-    const [isAlumni, setIsAlumni] = useState(false);
-    const [userSub, setUserSub] = useState("");
-    const [identityID, setIdentityID] = useState("");
     const [authSession, setAuthSession] = useState();
+    const [isSaving, setIsSaving] = useState(false);
     
+    // Profile state
+    const [profileData, setProfileData] = useState({
+        fullname: "",
+        email: "",
+        company: "",
+        role: "",
+    });
+
     const loadExistingResume = useCallback(async () => {
         try {
-            if (!userSub || !authSession) return; // Guard clause
+            if (!userSub || !authSession) return;
 
             console.log("Loading resume for user:", userSub);
             const session = await fetchAuthSession();
@@ -67,35 +62,43 @@ function ProfileSetup() {
             const responseData = await response.json();
             console.log("Got user data:", responseData);
             
-            if (responseData.data?.getUserProfile?.resumeName) {
-                const fileName = responseData.data.getUserProfile.resumeName;
-                setResumeName(fileName);
-                localStorage.setItem(`resumeName_${userSub}`, fileName);
-
-                // Generate a temporary URL for viewing
-                const s3Client = new S3Client({
-                    region: "us-east-1",
-                    credentials: {
-                        accessKeyId: authSession.credentials.accessKeyId,
-                        secretAccessKey: authSession.credentials.secretAccessKey,
-                        sessionToken: authSession.credentials.sessionToken
-                    }
+            if (responseData.data?.getUserProfile) {
+                const userData = responseData.data.getUserProfile;
+                setProfileData({
+                    fullname: userData.fullname || "",
+                    email: userData.email || "",
+                    company: userData.company || "",
+                    role: userData.role || "",
                 });
 
-                const command = new GetObjectCommand({
-                    Bucket: "alumnireachresumestorage74831-dev",
-                    Key: `private/${userSub}/${fileName}`
-                });
+                if (userData.resumeName) {
+                    const fileName = userData.resumeName;
+                    setResumeName(fileName);
+                    localStorage.setItem(`resumeName_${userSub}`, fileName);
 
-                const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-                setResumeUrl(url);
-                localStorage.setItem(`resumeUrl_${userSub}`, url);
-                console.log("Generated presigned URL for viewing");
+                    const s3Client = new S3Client({
+                        region: "us-east-1",
+                        credentials: {
+                            accessKeyId: authSession.credentials.accessKeyId,
+                            secretAccessKey: authSession.credentials.secretAccessKey,
+                            sessionToken: authSession.credentials.sessionToken
+                        }
+                    });
+
+                    const command = new GetObjectCommand({
+                        Bucket: "alumnireachresumestorage74831-dev",
+                        Key: `private/${userSub}/${fileName}`
+                    });
+
+                    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+                    setResumeUrl(url);
+                    localStorage.setItem(`resumeUrl_${userSub}`, url);
+                }
             }
         } catch (err) {
             console.error("Error loading resume:", err);
         }
-    }, [userSub, authSession]); // Dependencies for useCallback
+    }, [userSub, authSession]);
 
     useEffect(() => {
         const checkUserName = async () => {
@@ -125,7 +128,6 @@ function ProfileSetup() {
         checkUserName();
     }, []);
 
-    // Call loadExistingResume when userSub or authSession changes
     useEffect(() => {
         if (userSub && authSession) {
             loadExistingResume();
@@ -136,23 +138,18 @@ function ProfileSetup() {
         try {
             await signOut();
             setIsSignedIn(false);
-            setsignupData(null);
-            navigate("/search-results"); // Redirect to the home page after sign-out
+            navigate("/alumni-login");
         } catch (err) {
-            console.error("Error signing out:", err);
+            console.error("Error signing out: ", err);
         }
     };
 
-    const handleLogIn = async () => {
-        navigate("/alumni-login")
-    }
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
 
-    const handleDeleteResume = async () => {
+        setIsUploading(true);
         try {
-            if (!window.confirm('Are you sure you want to delete your resume?')) {
-                return;
-            }
-
             const s3Client = new S3Client({
                 region: "us-east-1",
                 credentials: {
@@ -162,140 +159,21 @@ function ProfileSetup() {
                 }
             });
 
-            // Delete from S3
-            await s3Client.send(new DeleteObjectCommand({
+            const command = new PutObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
-                Key: `private/${userSub}/${resumeName}`
-            }));
-
-            // Update DynamoDB
-            const session = await fetchAuthSession();
-            const { idToken } = session.tokens ?? {};
-
-            if (!idToken) {
-                throw new Error("No ID token found for GraphQL update");
-            }
-
-            const graphqlResponse = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${idToken}`,
-                },
-                body: JSON.stringify({
-                    query: `
-                    mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
-                        updateUserProfile(input: $input) {
-                            userId
-                            resumeName
-                        }
-                    }`,
-                    variables: {
-                        input: {
-                            userId: userSub,
-                            resumeName: null
-                        }
-                    },
-                }),
-            });
-
-            const graphqlData = await graphqlResponse.json();
-            if (graphqlData.errors) {
-                throw new Error(`GraphQL Error: ${JSON.stringify(graphqlData.errors)}`);
-            }
-
-            // Clear localStorage
-            localStorage.removeItem(`resumeName_${userSub}`);
-            localStorage.removeItem(`resumeUrl_${userSub}`);
-
-            setResumeName('');
-            setResumeUrl('');
-            alert('Resume deleted successfully!');
-        } catch (err) {
-            console.error("Error deleting resume:", err);
-            alert('Failed to delete resume. Please try again.');
-        }
-    };
-
-    const handleFileUpload = async(event) => {
-        try {
-            const file = event.target.files[0];
-            if (!file) {
-                console.error("No file selected");
-                return;
-            }
-
-            // Check if replacing existing resume
-            if (resumeName && !window.confirm('Do you want to replace your existing resume?')) {
-                return;
-            }
-
-            setIsUploading(true);
-
-            // Make sure we have valid credentials
-            if (!authSession?.credentials) {
-                console.error("No valid credentials");
-                alert("Please sign in again");
-                return;
-            }
-
-            console.log("Auth session:", {
-                accessKeyId: authSession.credentials.accessKeyId ? "Present" : "Missing",
-                secretAccessKey: authSession.credentials.secretAccessKey ? "Present" : "Missing",
-                sessionToken: authSession.credentials.sessionToken ? "Present" : "Missing",
-                sub: userSub ? "Present" : "Missing"
-            });
-
-            const s3Client = new S3Client({
-                region: "us-east-1",
-                credentials: {
-                    accessKeyId: authSession.credentials.accessKeyId,
-                    secretAccessKey: authSession.credentials.secretAccessKey,
-                    sessionToken: authSession.credentials.sessionToken
-                }
-            });
-
-            // Use user's sub in the path
-            const s3Key = `private/${userSub}/${file.name}`;
-            console.log("Uploading to:", s3Key);
-
-            const params = {
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: s3Key,
+                Key: `private/${userSub}/${file.name}`,
+                Body: file,
                 ContentType: file.type
-            };
-
-            // Generate pre-signed URL
-            const command = new PutObjectCommand(params);
-            const signedUrl = await getSignedUrl(s3Client, command, {
-                expiresIn: 3600,
             });
 
-            console.log("Starting upload with signed URL...");
-            
-            // Use fetch with the pre-signed URL
-            const response = await fetch(signedUrl, {
-                method: 'PUT',
-                body: file,
-                headers: {
-                    'Content-Type': file.type
-                }
-            });
+            await s3Client.send(command);
+            console.log("File uploaded successfully");
 
-            if (!response.ok) {
-                const errorText = await response.text().catch(() => 'No error details available');
-                throw new Error(`Upload failed with status: ${response.status} ${response.statusText}. Details: ${errorText}`);
-            }
-
-            // Update DynamoDB with resume info
+            // Update GraphQL
             const session = await fetchAuthSession();
             const { idToken } = session.tokens ?? {};
 
-            if (!idToken) {
-                throw new Error("No ID token found for GraphQL update");
-            }
-
-            const graphqlResponse = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -314,159 +192,286 @@ function ProfileSetup() {
                             userId: userSub,
                             resumeName: file.name
                         }
-                    },
+                    }
                 }),
             });
 
-            const graphqlData = await graphqlResponse.json();
-            if (graphqlData.errors) {
-                throw new Error(`GraphQL Error: ${JSON.stringify(graphqlData.errors)}`);
-            }
-
-            // Update localStorage
-            localStorage.setItem(`resumeName_${userSub}`, file.name);
+            const data = await response.json();
+            console.log("GraphQL response:", data);
 
             setResumeName(file.name);
-            // Generate URL for immediate viewing
-            const getCommand = new GetObjectCommand(params);
-            const viewUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
-            setResumeUrl(viewUrl);
-            localStorage.setItem(`resumeUrl_${userSub}`, viewUrl);
+            localStorage.setItem(`resumeName_${userSub}`, file.name);
 
-            console.log("Upload succeeded!");
-            alert("Resume uploaded successfully!");
+            // Generate URL for viewing
+            const getCommand = new GetObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: `private/${userSub}/${file.name}`
+            });
+
+            const url = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
+            setResumeUrl(url);
+            localStorage.setItem(`resumeUrl_${userSub}`, url);
+
         } catch (err) {
-            console.error("Upload failed:", err);
-            if (err.message.includes('status: 403')) {
-                alert("Permission denied. Please check your credentials and try again.");
-            } else {
-                alert(`Failed to upload resume: ${err.message}`);
-            }
+            console.error("Error uploading file:", err);
+            alert("Error uploading file. Please try again.");
         } finally {
             setIsUploading(false);
         }
     };
 
-    const resumeSection = (
-        <div className="resume-section">
-            <h3>Resume</h3>
-            {isUploading ? (
-                <p>Uploading...</p>
-            ) : resumeName ? (
-                <div>
-                    <p>Current Resume: {resumeName}</p>
-                    <div className="resume-actions">
-                        <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="view-button">
-                            View Resume
-                        </a>
-                        <button onClick={handleDeleteResume} className="delete-button">
-                            Delete Resume
-                        </button>
-                        <label className="replace-button">
-                            Replace Resume
-                            <input
-                                type="file"
-                                accept=".pdf,.doc,.docx"
-                                onChange={handleFileUpload}
-                                style={{ display: 'none' }}
-                            />
-                        </label>
-                    </div>
-                </div>
-            ) : (
-                <div>
-                    <p>No resume uploaded</p>
-                    <label className="upload-button">
-                        Upload Resume
-                        <input
-                            type="file"
-                            accept=".pdf,.doc,.docx"
-                            onChange={handleFileUpload}
-                            style={{ display: 'none' }}
-                        />
-                    </label>
-                </div>
-            )}
-        </div>
-    );
+    const handleDeleteResume = async () => {
+        if (!resumeName) return;
+
+        try {
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: {
+                    accessKeyId: authSession.credentials.accessKeyId,
+                    secretAccessKey: authSession.credentials.secretAccessKey,
+                    sessionToken: authSession.credentials.sessionToken
+                }
+            });
+
+            const command = new DeleteObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: `private/${userSub}/${resumeName}`
+            });
+
+            await s3Client.send(command);
+            console.log("File deleted successfully");
+
+            // Update GraphQL
+            const session = await fetchAuthSession();
+            const { idToken } = session.tokens ?? {};
+
+            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                    query: `
+                    mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
+                        updateUserProfile(input: $input) {
+                            userId
+                            resumeName
+                        }
+                    }`,
+                    variables: {
+                        input: {
+                            userId: userSub,
+                            resumeName: null
+                        }
+                    }
+                }),
+            });
+
+            const data = await response.json();
+            console.log("GraphQL response:", data);
+
+            setResumeName("");
+            setResumeUrl("");
+            localStorage.removeItem(`resumeName_${userSub}`);
+            localStorage.removeItem(`resumeUrl_${userSub}`);
+
+        } catch (err) {
+            console.error("Error deleting file:", err);
+            alert("Error deleting file. Please try again.");
+        }
+    };
+
+    const handleProfileChange = (e) => {
+        const { name, value } = e.target;
+        setProfileData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSaveProfile = async () => {
+        setIsSaving(true);
+        try {
+            const session = await fetchAuthSession();
+            const { idToken } = session.tokens ?? {};
+
+            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                    query: `
+                    mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
+                        updateUserProfile(input: $input) {
+                            userId
+                            email
+                            fullname
+                            company
+                            role
+                        }
+                    }`,
+                    variables: {
+                        input: {
+                            userId: userSub,
+                            ...profileData
+                        }
+                    }
+                }),
+            });
+
+            const data = await response.json();
+            if (data.errors) {
+                throw new Error(data.errors[0].message);
+            }
+            alert("Profile updated successfully!");
+        } catch (err) {
+            console.error("Error updating profile:", err);
+            alert("Error updating profile. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
-        <div>
-            <Header
-                navigate={navigate}
-                isAlumni={isAlumni}
-                isSignedIn={isSignedIn}
-            />
+        <div className="profile-container">
+            <div className="sidebar">
+                <h2>HireHelper</h2>
+                <ul className="sidebar-menu">
+                    <li 
+                        className={activeSection === "profile" ? "active" : ""}
+                        onClick={() => setActiveSection("profile")}
+                    >
+                        <i className="fas fa-user"></i> Profile
+                    </li>
+                    <li 
+                        className={activeSection === "analytics" ? "active" : ""}
+                        onClick={() => setActiveSection("analytics")}
+                    >
+                        <i className="fas fa-chart-line"></i> Analytics
+                    </li>
+                    <li onClick={handleSignOut}>
+                        <i className="fas fa-sign-out-alt"></i> Sign Out
+                    </li>
+                </ul>
+            </div>
 
-
-            {/* Main content */}
-            <main className="profile-setup-container">
-                <h2 className="section-title">My Profile</h2>
-                <div className="flex flex-col lg:flex-row w-full space-y-6 lg:space-y-0 lg:space-x-8">
-                    {/* Attach Resume Section */}
-                    <div className="bg-white rounded-lg p-6 shadow-md flex-grow">
-                        {resumeSection}
-                    </div>
-                    <div className="bg-white rounded-lg p-6 shadow-md flex-grow">
-                        <label>
-                            Analytics Coming Soon!
-                        </label>
-                    </div>
-                </div>
-            </main>
-             {/* Show AccessCodeModal only if showModal is true */}
-             {/*showModal && <AccessCodeModal onClose={() => setShowModal(false)} onAccessGranted={handleAccessGranted} />*/}
-
-            <footer className="footer">
-                    <p>AlumniReach LLC</p>
-            </footer>
-            <div
-                style={{
-                    position: "fixed",
-                    bottom: "10px",
-                    right: "10px",
-                    background: "rgba(255, 255, 255, 0.8)",
-                    color: "#333",
-                    border: "1px solid #ddd",
-                    borderRadius: "10px",
-                    padding: "1rem",
-                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
-                }}
-            >
-                {isSignedIn ? (
+            <div className="main-content">
+                {activeSection === "profile" ? (
                     <>
-                        <p>Hi {signupData}!</p>
-                        <button
-                            onClick={handleSignOut}
-                            style={{
-                                padding: "0.5rem 1rem",
-                                background: "#2575fc",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "8px",
-                                cursor: "pointer",
-                            }}
-                        >
-                            Sign Out
-                        </button>
+                        <div className="profile-section">
+                            <h2 className="section-title">Profile Information</h2>
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label htmlFor="fullname">Full Name</label>
+                                    <input
+                                        type="text"
+                                        id="fullname"
+                                        name="fullname"
+                                        value={profileData.fullname}
+                                        onChange={handleProfileChange}
+                                        placeholder="Enter your full name"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="email">Email</label>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        value={profileData.email}
+                                        onChange={handleProfileChange}
+                                        placeholder="Enter your email"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="company">Company</label>
+                                    <input
+                                        type="text"
+                                        id="company"
+                                        name="company"
+                                        value={profileData.company}
+                                        onChange={handleProfileChange}
+                                        placeholder="Enter your company"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="role">Role</label>
+                                    <input
+                                        type="text"
+                                        id="role"
+                                        name="role"
+                                        value={profileData.role}
+                                        onChange={handleProfileChange}
+                                        placeholder="Enter your role"
+                                    />
+                                </div>
+                            </div>
+                            <button 
+                                className="save-button" 
+                                onClick={handleSaveProfile}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? (
+                                    <span className="loading-spinner"></span>
+                                ) : (
+                                    "Save Changes"
+                                )}
+                            </button>
+                        </div>
+
+                        <div className="resume-section">
+                            <h2 className="section-title">Resume Management</h2>
+                            {resumeName ? (
+                                <>
+                                    <p>Current Resume: {resumeName}</p>
+                                    <div className="resume-actions">
+                                        <a 
+                                            href={resumeUrl} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="view-button"
+                                        >
+                                            View Resume
+                                        </a>
+                                        <button 
+                                            className="delete-button"
+                                            onClick={handleDeleteResume}
+                                        >
+                                            Delete Resume
+                                        </button>
+                                        <label className="replace-button">
+                                            Replace Resume
+                                            <input
+                                                type="file"
+                                                onChange={handleFileUpload}
+                                                accept=".pdf,.doc,.docx"
+                                                style={{ display: "none" }}
+                                            />
+                                        </label>
+                                    </div>
+                                </>
+                            ) : (
+                                <label className="upload-button">
+                                    Upload Resume
+                                    <input
+                                        type="file"
+                                        onChange={handleFileUpload}
+                                        accept=".pdf,.doc,.docx"
+                                        style={{ display: "none" }}
+                                    />
+                                </label>
+                            )}
+                            {isUploading && <div className="loading-spinner"></div>}
+                        </div>
                     </>
                 ) : (
-                    <>
-                        <p>You are signed out.</p>
-                        <button
-                            onClick={handleLogIn}
-                            style={{
-                                padding: "0.5rem 1rem",
-                                background: "#2575fc",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "8px",
-                                cursor: "pointer",
-                            }}
-                        >
-                            Log In
-                        </button>
-                    </>
+                    <div className="profile-section">
+                        <h2 className="section-title">Analytics</h2>
+                        <p>Analytics features coming soon!</p>
+                    </div>
                 )}
             </div>
         </div>
