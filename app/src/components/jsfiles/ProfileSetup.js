@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import Header from "./Header";
 import awsmobile from "../../aws-exports";
 import "../cssfiles/ProfileSetup.css";
 
@@ -336,145 +337,151 @@ function ProfileSetup() {
     };
 
     return (
-        <div className="profile-container">
-            <div className="sidebar">
-                <h2>HireHelper</h2>
-                <ul className="sidebar-menu">
-                    <li 
-                        className={activeSection === "profile" ? "active" : ""}
-                        onClick={() => setActiveSection("profile")}
-                    >
-                        <i className="fas fa-user"></i> Profile
-                    </li>
-                    <li 
-                        className={activeSection === "analytics" ? "active" : ""}
-                        onClick={() => setActiveSection("analytics")}
-                    >
-                        <i className="fas fa-chart-line"></i> Analytics
-                    </li>
-                    <li onClick={handleSignOut}>
-                        <i className="fas fa-sign-out-alt"></i> Sign Out
-                    </li>
-                </ul>
-            </div>
+        <>
+            <Header
+                navigate={navigate}
+                isSignedIn={isSignedIn}
+            />
+            <div className="profile-container">
+                <div className="sidebar">
+                    <h2>AlumniReach</h2>
+                    <ul className="sidebar-menu">
+                        <li 
+                            className={activeSection === "profile" ? "active" : ""}
+                            onClick={() => setActiveSection("profile")}
+                        >
+                            <i className="fas fa-user"></i> Profile
+                        </li>
+                        <li 
+                            className={activeSection === "analytics" ? "active" : ""}
+                            onClick={() => setActiveSection("analytics")}
+                        >
+                            <i className="fas fa-chart-line"></i> Analytics
+                        </li>
+                        <li onClick={handleSignOut}>
+                            <i className="fas fa-sign-out-alt"></i> Sign Out
+                        </li>
+                    </ul>
+                </div>
 
-            <div className="main-content">
-                {activeSection === "profile" ? (
-                    <>
-                        <div className="profile-section">
-                            <h2 className="section-title">Profile Information</h2>
-                            <div className="form-grid">
-                                <div className="form-group">
-                                    <label htmlFor="fullname">Full Name</label>
-                                    <input
-                                        type="text"
-                                        id="fullname"
-                                        name="fullname"
-                                        value={profileData.fullname}
-                                        onChange={handleProfileChange}
-                                        placeholder="Enter your full name"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="email">Email</label>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        value={profileData.email}
-                                        onChange={handleProfileChange}
-                                        placeholder="Enter your email"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="company">Company</label>
-                                    <input
-                                        type="text"
-                                        id="company"
-                                        name="company"
-                                        value={profileData.company}
-                                        onChange={handleProfileChange}
-                                        placeholder="Enter your company"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="role">Role</label>
-                                    <input
-                                        type="text"
-                                        id="role"
-                                        name="role"
-                                        value={profileData.role}
-                                        onChange={handleProfileChange}
-                                        placeholder="Enter your role"
-                                    />
-                                </div>
-                            </div>
-                            <button 
-                                className="save-button" 
-                                onClick={handleSaveProfile}
-                                disabled={isSaving}
-                            >
-                                {isSaving ? (
-                                    <span className="loading-spinner"></span>
-                                ) : (
-                                    "Save Changes"
-                                )}
-                            </button>
-                        </div>
-
-                        <div className="resume-section">
-                            <h2 className="section-title">Resume Management</h2>
-                            {resumeName ? (
-                                <>
-                                    <p>Current Resume: {resumeName}</p>
-                                    <div className="resume-actions">
-                                        <a 
-                                            href={resumeUrl} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="view-button"
-                                        >
-                                            View Resume
-                                        </a>
-                                        <button 
-                                            className="delete-button"
-                                            onClick={handleDeleteResume}
-                                        >
-                                            Delete Resume
-                                        </button>
-                                        <label className="replace-button">
-                                            Replace Resume
-                                            <input
-                                                type="file"
-                                                onChange={handleFileUpload}
-                                                accept=".pdf,.doc,.docx"
-                                                style={{ display: "none" }}
-                                            />
-                                        </label>
+                <div className="main-content">
+                    {activeSection === "profile" ? (
+                        <>
+                            <div className="profile-section">
+                                <h2 className="section-title">Profile Information</h2>
+                                <div className="form-grid">
+                                    <div className="form-group">
+                                        <label htmlFor="fullname">Full Name</label>
+                                        <input
+                                            type="text"
+                                            id="fullname"
+                                            name="fullname"
+                                            value={profileData.fullname}
+                                            onChange={handleProfileChange}
+                                            placeholder="Enter your full name"
+                                        />
                                     </div>
-                                </>
-                            ) : (
-                                <label className="upload-button">
-                                    Upload Resume
-                                    <input
-                                        type="file"
-                                        onChange={handleFileUpload}
-                                        accept=".pdf,.doc,.docx"
-                                        style={{ display: "none" }}
-                                    />
-                                </label>
-                            )}
-                            {isUploading && <div className="loading-spinner"></div>}
+                                    <div className="form-group">
+                                        <label htmlFor="email">Email</label>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            name="email"
+                                            value={profileData.email}
+                                            onChange={handleProfileChange}
+                                            placeholder="Enter your email"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="company">Company</label>
+                                        <input
+                                            type="text"
+                                            id="company"
+                                            name="company"
+                                            value={profileData.company}
+                                            onChange={handleProfileChange}
+                                            placeholder="Enter your company"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="role">Role</label>
+                                        <input
+                                            type="text"
+                                            id="role"
+                                            name="role"
+                                            value={profileData.role}
+                                            onChange={handleProfileChange}
+                                            placeholder="Enter your role"
+                                        />
+                                    </div>
+                                </div>
+                                <button 
+                                    className="save-button" 
+                                    onClick={handleSaveProfile}
+                                    disabled={isSaving}
+                                >
+                                    {isSaving ? (
+                                        <span className="loading-spinner"></span>
+                                    ) : (
+                                        "Save Changes"
+                                    )}
+                                </button>
+                            </div>
+
+                            <div className="resume-section">
+                                <h2 className="section-title">Resume Management</h2>
+                                {resumeName ? (
+                                    <>
+                                        <p>Current Resume: {resumeName}</p>
+                                        <div className="resume-actions">
+                                            <a 
+                                                href={resumeUrl} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="view-button"
+                                            >
+                                                View Resume
+                                            </a>
+                                            <button 
+                                                className="delete-button"
+                                                onClick={handleDeleteResume}
+                                            >
+                                                Delete Resume
+                                            </button>
+                                            <label className="replace-button">
+                                                Replace Resume
+                                                <input
+                                                    type="file"
+                                                    onChange={handleFileUpload}
+                                                    accept=".pdf,.doc,.docx"
+                                                    style={{ display: "none" }}
+                                                />
+                                            </label>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <label className="upload-button">
+                                        Upload Resume
+                                        <input
+                                            type="file"
+                                            onChange={handleFileUpload}
+                                            accept=".pdf,.doc,.docx"
+                                            style={{ display: "none" }}
+                                        />
+                                    </label>
+                                )}
+                                {isUploading && <div className="loading-spinner"></div>}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="profile-section">
+                            <h2 className="section-title">Analytics</h2>
+                            <p>Analytics features coming soon!</p>
                         </div>
-                    </>
-                ) : (
-                    <div className="profile-section">
-                        <h2 className="section-title">Analytics</h2>
-                        <p>Analytics features coming soon!</p>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
-        </div>
+        </>
     );
 }
 
