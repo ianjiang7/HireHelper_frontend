@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
@@ -30,31 +30,10 @@ function ProfileSetup() {
     const [identityID, setIdentityID] = useState("");
     const [authSession, setAuthSession] = useState();
     
-    useEffect(() => {
-        async function checkUserName() {
-            try {
-                const fullName = localStorage.getItem("FullName");
-                const userID = localStorage.getItem("USERID");
-                const currentUser = await getCurrentUser();
-                const session = await fetchAuthSession();
-                if (fullName && currentUser) {
-                    setIsSignedIn(true);
-                    setsignupData(fullName);
-                    setUserSub(userID);
-                    setIdentityID(session.identityId);
-                    setAuthSession(session);
-                };
-            } catch (err) {
-                console.error("Error fetching user data:", err);
-                setIsSignedIn(false);
-            }
-        }
-        checkUserName();
-        loadExistingResume();
-    }, []);
-
-    const loadExistingResume = async () => {
+    const loadExistingResume = useCallback(async () => {
         try {
+            if (!userSub || !authSession) return; // Guard clause
+
             console.log("Loading resume for user:", userSub);
             const session = await fetchAuthSession();
             const { idToken } = session.tokens ?? {};
@@ -89,7 +68,10 @@ function ProfileSetup() {
             console.log("Got user data:", responseData);
             
             if (responseData.data?.getUserProfile?.resumeName) {
-                setResumeName(responseData.data.getUserProfile.resumeName);
+                const fileName = responseData.data.getUserProfile.resumeName;
+                setResumeName(fileName);
+                localStorage.setItem(`resumeName_${userSub}`, fileName);
+
                 // Generate a temporary URL for viewing
                 const s3Client = new S3Client({
                     region: "us-east-1",
@@ -102,17 +84,53 @@ function ProfileSetup() {
 
                 const command = new GetObjectCommand({
                     Bucket: "alumnireachresumestorage74831-dev",
-                    Key: `private/${userSub}/${responseData.data.getUserProfile.resumeName}`
+                    Key: `private/${userSub}/${fileName}`
                 });
 
                 const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
                 setResumeUrl(url);
+                localStorage.setItem(`resumeUrl_${userSub}`, url);
                 console.log("Generated presigned URL for viewing");
             }
         } catch (err) {
             console.error("Error loading resume:", err);
         }
-    };
+    }, [userSub, authSession]); // Dependencies for useCallback
+
+    useEffect(() => {
+        const checkUserName = async () => {
+            try {
+                const { username, userId } = await getCurrentUser();
+                setUserSub(userId);
+                const auth = await fetchAuthSession();
+                setAuthSession(auth);
+                setIsSignedIn(true);
+
+                // Check localStorage first
+                const storedResumeName = localStorage.getItem(`resumeName_${userId}`);
+                const storedResumeUrl = localStorage.getItem(`resumeUrl_${userId}`);
+                
+                if (storedResumeName) {
+                    setResumeName(storedResumeName);
+                    if (storedResumeUrl) {
+                        setResumeUrl(storedResumeUrl);
+                    }
+                }
+            } catch (err) {
+                console.error("Authentication error:", err);
+                setIsSignedIn(false);
+                alert("Please sign in to access your profile and resume.");
+            }
+        };
+        checkUserName();
+    }, []);
+
+    // Call loadExistingResume when userSub or authSession changes
+    useEffect(() => {
+        if (userSub && authSession) {
+            loadExistingResume();
+        }
+    }, [userSub, authSession, loadExistingResume]);
 
     const handleSignOut = async () => {
         try {
@@ -185,6 +203,10 @@ function ProfileSetup() {
             if (graphqlData.errors) {
                 throw new Error(`GraphQL Error: ${JSON.stringify(graphqlData.errors)}`);
             }
+
+            // Clear localStorage
+            localStorage.removeItem(`resumeName_${userSub}`);
+            localStorage.removeItem(`resumeUrl_${userSub}`);
 
             setResumeName('');
             setResumeUrl('');
@@ -301,11 +323,15 @@ function ProfileSetup() {
                 throw new Error(`GraphQL Error: ${JSON.stringify(graphqlData.errors)}`);
             }
 
+            // Update localStorage
+            localStorage.setItem(`resumeName_${userSub}`, file.name);
+
             setResumeName(file.name);
             // Generate URL for immediate viewing
             const getCommand = new GetObjectCommand(params);
             const viewUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
             setResumeUrl(viewUrl);
+            localStorage.setItem(`resumeUrl_${userSub}`, viewUrl);
 
             console.log("Upload succeeded!");
             alert("Resume uploaded successfully!");
