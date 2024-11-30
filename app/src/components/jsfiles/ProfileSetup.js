@@ -218,9 +218,9 @@ function ProfileSetup() {
 
     // Function to get the analysis S3 path
     const getAnalysisS3Path = useCallback(() => {
-        if (!profileData?.id || !profileData?.resumeName) return null;
-        return `private/${profileData.id}/analysis/${profileData.resumeName.replace(/\.[^/.]+$/, '')}_analysis.json`;
-    }, [profileData]);
+        if (!userSub || !profileData?.resumeName) return null;
+        return `private/${userSub}/analysis/${profileData.resumeName.replace(/\.[^/.]+$/, '')}_analysis.json`;
+    }, [userSub, profileData]);
 
     // Function to check if analysis exists
     const checkAnalysisExists = useCallback(async () => {
