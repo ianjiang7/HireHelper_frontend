@@ -518,39 +518,7 @@ function ProfileSetup() {
                                                     disabled={isUploading}
                                                 />
                                             </label>
-                                            <button 
-                                                className="analyze-button"
-                                                onClick={handleAnalyzeResume}
-                                                disabled={isAnalyzing || !resumeName}
-                                            >
-                                                {isAnalyzing ? 'Analyzing...' : 'Analyze Resume'}
-                                            </button>
                                         </div>
-                                        {(isAnalyzing || analysisResult || analysisError) && (
-                                            <div className="analysis-container">
-                                                {isAnalyzing && (
-                                                    <div className="loading-state">
-                                                        <div className="loading-spinner"></div>
-                                                        <p>Analyzing your resume...</p>
-                                                    </div>
-                                                )}
-                                                
-                                                {analysisError && (
-                                                    <div className="error-message">
-                                                        {analysisError}
-                                                    </div>
-                                                )}
-                                                
-                                                {analysisResult && (
-                                                    <div className="analysis-result">
-                                                        <h3>Resume Analysis</h3>
-                                                        <div className="analysis-content">
-                                                            {analysisResult}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
                                     </>
                                 ) : (
                                     <>
@@ -571,15 +539,23 @@ function ProfileSetup() {
                             </div>
                         </>
                     ) : (
-                        <div className="profile-section">
+                        <div className="analytics-section">
                             <h2 className="section-title">Resume Analytics</h2>
                             {!resumeName ? (
                                 <div className="analytics-message">
-                                    <p>Please upload a resume in the Profile section to analyze your qualifications.</p>
+                                    <p>Upload a resume in the Profile tab to get started with analytics</p>
                                 </div>
                             ) : (
                                 <div className="analytics-content">
                                     <p>Current Resume: {resumeName}</p>
+                                    <button 
+                                        className="analyze-button"
+                                        onClick={handleAnalyzeResume}
+                                        disabled={isAnalyzing || !resumeName}
+                                    >
+                                        {isAnalyzing ? 'Analyzing...' : 'Analyze Resume'}
+                                    </button>
+                                    
                                     {(isAnalyzing || analysisResult || analysisError) && (
                                         <div className="analysis-container">
                                             {isAnalyzing && (
@@ -597,7 +573,7 @@ function ProfileSetup() {
                                             
                                             {analysisResult && (
                                                 <div className="analysis-result">
-                                                    <h3>Analysis Results</h3>
+                                                    <h3>Resume Analysis</h3>
                                                     <div className="analysis-content">
                                                         {analysisResult}
                                                     </div>
