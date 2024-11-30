@@ -17,6 +17,8 @@
     height: calc(100vh - 64px); /* Subtract navbar height */
     border-right: 1px solid #e0e0e0;
     top: 64px; /* Position below navbar */
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar h2 {
@@ -29,6 +31,7 @@
     list-style: none;
     padding: 0;
     margin-top: 1.5rem;
+    flex-grow: 1;
 }
 
 .sidebar-menu li {
@@ -53,6 +56,27 @@
 }
 
 .sidebar-menu i {
+    margin-right: 8px;
+    font-size: 0.9rem;
+}
+
+.sign-out-button {
+    margin-top: auto;
+    padding: 0.75rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+    color: #e53e3e;
+    background-color: #fff5f5;
+}
+
+.sign-out-button:hover {
+    background-color: #fed7d7;
+    color: #c53030;
+}
+
+.sign-out-button i {
     margin-right: 8px;
     font-size: 0.9rem;
 }
@@ -323,4 +347,84 @@
 
 .sign-out-button:hover {
     background-color: #005ecb;
+}
+
+.analytics-message {
+    text-align: center;
+    padding: 2rem;
+    background-color: #f7f4ff;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.analytics-content {
+    padding: 1rem;
+}
+
+.analysis-result {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: #f7f4ff;
+    border-radius: 8px;
+    border: 1px solid #e9d8fd;
+}
+
+.analysis-result h3 {
+    color: #2d3748;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.analysis-content {
+    white-space: pre-wrap;
+    font-family: inherit;
+    color: #4a5568;
+    line-height: 1.6;
+}
+
+.error-message {
+    color: #e53e3e;
+    background-color: #fff5f5;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    border: 1px solid #feb2b2;
+}
+
+.analyze-button {
+    background-color: #6b46c1;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.analyze-button:hover:not(:disabled) {
+    background-color: #553c9a;
+}
+
+.analyze-button:disabled {
+    background-color: #a0aec0;
+    cursor: not-allowed;
+}
+
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #6b46c1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

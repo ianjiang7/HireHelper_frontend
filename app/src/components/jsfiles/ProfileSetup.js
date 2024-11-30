@@ -17,6 +17,9 @@ function ProfileSetup() {
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [authSession, setAuthSession] = useState();
     const [isSaving, setIsSaving] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisResult, setAnalysisResult] = useState(null);
+    const [analysisError, setAnalysisError] = useState(null);
     
     // Profile state
     const [profileData, setProfileData] = useState({
@@ -336,6 +339,95 @@ function ProfileSetup() {
         }
     };
 
+    const analyzeResume = async () => {
+        if (!resumeName || !userSub) {
+            setAnalysisError("Please upload a resume first.");
+            return;
+        }
+
+        setIsAnalyzing(true);
+        setAnalysisError(null);
+        
+        try {
+            // 1. Get the resume file from S3
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: {
+                    accessKeyId: authSession.credentials.accessKeyId,
+                    secretAccessKey: authSession.credentials.secretAccessKey,
+                    sessionToken: authSession.credentials.sessionToken
+                }
+            });
+
+            const getCommand = new GetObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: `private/${userSub}/${resumeName}`
+            });
+
+            const response = await s3Client.send(getCommand);
+            const arrayBuffer = await response.Body.transformToByteArray();
+            const text = new TextDecoder().decode(arrayBuffer);
+
+            // 2. Send to ChatGPT API
+            const session = await fetchAuthSession();
+            const { idToken } = session.tokens ?? {};
+
+            const openaiResponse = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                    query: `
+                    mutation AnalyzeResume($input: AnalyzeResumeInput!) {
+                        analyzeResume(input: $input) {
+                            success
+                            analysis
+                            error
+                        }
+                    }`,
+                    variables: {
+                        input: {
+                            userId: userSub,
+                            resumeText: text
+                        }
+                    }
+                }),
+            });
+
+            const data = await openaiResponse.json();
+            
+            if (data.errors) {
+                throw new Error(data.errors[0].message);
+            }
+
+            if (data.data?.analyzeResume?.error) {
+                throw new Error(data.data.analyzeResume.error);
+            }
+
+            setAnalysisResult(data.data.analyzeResume.analysis);
+
+            // 3. Store analysis as PDF in S3
+            const analysisBlob = new Blob([data.data.analyzeResume.analysis], { type: 'application/pdf' });
+            
+            const putCommand = new PutObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: `private/${userSub}/analysis.pdf`,
+                Body: analysisBlob,
+                ContentType: 'application/pdf'
+            });
+
+            await s3Client.send(putCommand);
+
+        } catch (err) {
+            console.error("Error analyzing resume:", err);
+            setAnalysisError(err.message || "Failed to analyze resume. Please try again.");
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     return (
         <>
             <Header
@@ -358,10 +450,13 @@ function ProfileSetup() {
                         >
                             <i className="fas fa-chart-line"></i> Analytics
                         </li>
-                        <li onClick={handleSignOut}>
-                            <i className="fas fa-sign-out-alt"></i> Sign Out
-                        </li>
                     </ul>
+                    <div 
+                        className="sign-out-button"
+                        onClick={handleSignOut}
+                    >
+                        <i className="fas fa-sign-out-alt"></i> Sign Out
+                    </div>
                 </div>
 
                 <div className="main-content">
@@ -429,54 +524,119 @@ function ProfileSetup() {
                             </div>
 
                             <div className="resume-section">
-                                <h2 className="section-title">Resume Management</h2>
+                                <h2 className="section-title">Resume</h2>
                                 {resumeName ? (
                                     <>
                                         <p>Current Resume: {resumeName}</p>
                                         <div className="resume-actions">
-                                            <a 
-                                                href={resumeUrl} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className="view-button"
-                                            >
+                                            <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="view-button">
                                                 View Resume
                                             </a>
-                                            <button 
-                                                className="delete-button"
-                                                onClick={handleDeleteResume}
-                                            >
-                                                Delete Resume
-                                            </button>
                                             <label className="replace-button">
                                                 Replace Resume
                                                 <input
                                                     type="file"
                                                     onChange={handleFileUpload}
                                                     accept=".pdf,.doc,.docx"
-                                                    style={{ display: "none" }}
+                                                    disabled={isUploading}
+                                                />
+                                            </label>
+                                            <button 
+                                                className="analyze-button" 
+                                                onClick={analyzeResume}
+                                                disabled={isAnalyzing || !resumeName}
+                                            >
+                                                {isAnalyzing ? (
+                                                    <>
+                                                        <div className="loading-spinner"></div>
+                                                        Analyzing...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <i className="fas fa-robot"></i>
+                                                        Analyze Resume
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                        {/* Analysis Result Section */}
+                                        {analysisError && (
+                                            <div className="error-message">
+                                                {analysisError}
+                                            </div>
+                                        )}
+                                        {analysisResult && (
+                                            <div className="analysis-result">
+                                                <h3>Resume Analysis</h3>
+                                                <div 
+                                                    className="analysis-content"
+                                                    dangerouslySetInnerHTML={{ 
+                                                        __html: analysisResult.replace(/\n/g, '<br />') 
+                                                    }} 
+                                                />
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <p>Upload your resume to get started</p>
+                                        <div className="resume-actions">
+                                            <label className="upload-button">
+                                                Upload Resume
+                                                <input
+                                                    type="file"
+                                                    onChange={handleFileUpload}
+                                                    accept=".pdf,.doc,.docx"
+                                                    disabled={isUploading}
                                                 />
                                             </label>
                                         </div>
                                     </>
-                                ) : (
-                                    <label className="upload-button">
-                                        Upload Resume
-                                        <input
-                                            type="file"
-                                            onChange={handleFileUpload}
-                                            accept=".pdf,.doc,.docx"
-                                            style={{ display: "none" }}
-                                        />
-                                    </label>
                                 )}
-                                {isUploading && <div className="loading-spinner"></div>}
                             </div>
                         </>
                     ) : (
                         <div className="profile-section">
-                            <h2 className="section-title">Analytics</h2>
-                            <p>Analytics features coming soon!</p>
+                            <h2 className="section-title">Resume Analytics</h2>
+                            {!resumeName ? (
+                                <div className="analytics-message">
+                                    <p>Please upload a resume in the Profile section to analyze your qualifications.</p>
+                                </div>
+                            ) : (
+                                <div className="analytics-content">
+                                    <p>Current Resume: {resumeName}</p>
+                                    <button 
+                                        className="analyze-button"
+                                        onClick={analyzeResume}
+                                        disabled={isAnalyzing}
+                                    >
+                                        {isAnalyzing ? (
+                                            <>
+                                                <div className="loading-spinner"></div>
+                                                Analyzing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="fas fa-search"></i>
+                                                Analyze Resume
+                                            </>
+                                        )}
+                                    </button>
+                                    
+                                    {analysisError && (
+                                        <div className="error-message">
+                                            {analysisError}
+                                        </div>
+                                    )}
+                                    
+                                    {analysisResult && (
+                                        <div className="analysis-result">
+                                            <h3>Analysis Results</h3>
+                                            <pre>{analysisResult}</pre>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
