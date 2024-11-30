@@ -261,7 +261,7 @@ function ProfileSetup() {
                         input: {
                             userId: userSub,
                             bucket: "alumnireachresumestorage74831-dev",
-                            key: `private/${resumeName}`
+                            key: resumeName.startsWith('private/') ? resumeName : `private/${resumeName}`
                         }
                     }
                 }),
