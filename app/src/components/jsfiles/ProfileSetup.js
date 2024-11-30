@@ -339,17 +339,16 @@ function ProfileSetup() {
         }
     };
 
-    const analyzeResume = async () => {
-        if (!resumeName || !userSub) {
-            setAnalysisError("Please upload a resume first.");
-            return;
-        }
+    const handleResumeUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
 
         setIsAnalyzing(true);
         setAnalysisError(null);
-        
+
         try {
-            // 1. Get the resume file from S3
+            // Upload file to S3
+            const fileName = `${userSub}/resume/${Date.now()}-${file.name}`;
             const s3Client = new S3Client({
                 region: "us-east-1",
                 credentials: {
@@ -359,20 +358,20 @@ function ProfileSetup() {
                 }
             });
 
-            const getCommand = new GetObjectCommand({
+            const command = new PutObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
-                Key: `private/${userSub}/${resumeName}`
+                Key: `private/${fileName}`,
+                Body: file,
+                ContentType: file.type
             });
 
-            const response = await s3Client.send(getCommand);
-            const arrayBuffer = await response.Body.transformToByteArray();
-            const text = new TextDecoder().decode(arrayBuffer);
+            await s3Client.send(command);
 
-            // 2. Send to ChatGPT API
+            // Analyze the resume
             const session = await fetchAuthSession();
             const { idToken } = session.tokens ?? {};
 
-            const openaiResponse = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -390,39 +389,30 @@ function ProfileSetup() {
                     variables: {
                         input: {
                             userId: userSub,
-                            resumeText: text
+                            bucket: "alumnireachresumestorage74831-dev",
+                            key: `private/${fileName}`
                         }
                     }
                 }),
             });
 
-            const data = await openaiResponse.json();
-            
-            if (data.errors) {
-                throw new Error(data.errors[0].message);
+            const data = await response.json();
+
+            if (data.data.analyzeResume.success) {
+                setAnalysisResult(data.data.analyzeResume.analysis);
+                // Add show class after a brief delay to trigger animation
+                setTimeout(() => {
+                    const resultElement = document.querySelector('.analysis-result');
+                    if (resultElement) {
+                        resultElement.classList.add('show');
+                    }
+                }, 100);
+            } else {
+                setAnalysisError(data.data.analyzeResume.error || 'Failed to analyze resume');
             }
-
-            if (data.data?.analyzeResume?.error) {
-                throw new Error(data.data.analyzeResume.error);
-            }
-
-            setAnalysisResult(data.data.analyzeResume.analysis);
-
-            // 3. Store analysis as PDF in S3
-            const analysisBlob = new Blob([data.data.analyzeResume.analysis], { type: 'application/pdf' });
-            
-            const putCommand = new PutObjectCommand({
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: `private/${userSub}/analysis.pdf`,
-                Body: analysisBlob,
-                ContentType: 'application/pdf'
-            });
-
-            await s3Client.send(putCommand);
-
-        } catch (err) {
-            console.error("Error analyzing resume:", err);
-            setAnalysisError(err.message || "Failed to analyze resume. Please try again.");
+        } catch (error) {
+            console.error('Error processing resume:', error);
+            setAnalysisError(error.message || 'Error processing resume');
         } finally {
             setIsAnalyzing(false);
         }
@@ -536,44 +526,35 @@ function ProfileSetup() {
                                                 Replace Resume
                                                 <input
                                                     type="file"
-                                                    onChange={handleFileUpload}
+                                                    onChange={handleResumeUpload}
                                                     accept=".pdf,.doc,.docx"
                                                     disabled={isUploading}
                                                 />
                                             </label>
-                                            <button 
-                                                className="analyze-button" 
-                                                onClick={analyzeResume}
-                                                disabled={isAnalyzing || !resumeName}
-                                            >
-                                                {isAnalyzing ? (
-                                                    <>
-                                                        <div className="loading-spinner"></div>
-                                                        Analyzing...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <i className="fas fa-robot"></i>
-                                                        Analyze Resume
-                                                    </>
-                                                )}
-                                            </button>
                                         </div>
-                                        {/* Analysis Result Section */}
-                                        {analysisError && (
-                                            <div className="error-message">
-                                                {analysisError}
-                                            </div>
-                                        )}
-                                        {analysisResult && (
-                                            <div className="analysis-result">
-                                                <h3>Resume Analysis</h3>
-                                                <div 
-                                                    className="analysis-content"
-                                                    dangerouslySetInnerHTML={{ 
-                                                        __html: analysisResult.replace(/\n/g, '<br />') 
-                                                    }} 
-                                                />
+                                        {(isAnalyzing || analysisResult || analysisError) && (
+                                            <div className="analysis-container">
+                                                {isAnalyzing && (
+                                                    <div className="loading-state">
+                                                        <div className="loading-spinner"></div>
+                                                        <p>Analyzing your resume...</p>
+                                                    </div>
+                                                )}
+                                                
+                                                {analysisError && (
+                                                    <div className="error-message">
+                                                        {analysisError}
+                                                    </div>
+                                                )}
+                                                
+                                                {analysisResult && (
+                                                    <div className="analysis-result">
+                                                        <h3>Resume Analysis</h3>
+                                                        <div className="analysis-content">
+                                                            {analysisResult}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </>
@@ -585,7 +566,7 @@ function ProfileSetup() {
                                                 Upload Resume
                                                 <input
                                                     type="file"
-                                                    onChange={handleFileUpload}
+                                                    onChange={handleResumeUpload}
                                                     accept=".pdf,.doc,.docx"
                                                     disabled={isUploading}
                                                 />
@@ -605,34 +586,29 @@ function ProfileSetup() {
                             ) : (
                                 <div className="analytics-content">
                                     <p>Current Resume: {resumeName}</p>
-                                    <button 
-                                        className="analyze-button"
-                                        onClick={analyzeResume}
-                                        disabled={isAnalyzing}
-                                    >
-                                        {isAnalyzing ? (
-                                            <>
-                                                <div className="loading-spinner"></div>
-                                                Analyzing...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i className="fas fa-search"></i>
-                                                Analyze Resume
-                                            </>
-                                        )}
-                                    </button>
-                                    
-                                    {analysisError && (
-                                        <div className="error-message">
-                                            {analysisError}
-                                        </div>
-                                    )}
-                                    
-                                    {analysisResult && (
-                                        <div className="analysis-result">
-                                            <h3>Analysis Results</h3>
-                                            <pre>{analysisResult}</pre>
+                                    {(isAnalyzing || analysisResult || analysisError) && (
+                                        <div className="analysis-container">
+                                            {isAnalyzing && (
+                                                <div className="loading-state">
+                                                    <div className="loading-spinner"></div>
+                                                    <p>Analyzing your resume...</p>
+                                                </div>
+                                            )}
+                                            
+                                            {analysisError && (
+                                                <div className="error-message">
+                                                    {analysisError}
+                                                </div>
+                                            )}
+                                            
+                                            {analysisResult && (
+                                                <div className="analysis-result">
+                                                    <h3>Analysis Results</h3>
+                                                    <div className="analysis-content">
+                                                        {analysisResult}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
