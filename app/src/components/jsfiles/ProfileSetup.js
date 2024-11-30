@@ -4,6 +4,7 @@ import { signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Header from "./Header";
+import SearchResults from "./SearchResults";
 import awsmobile from "../../aws-exports";
 import ReactMarkdown from 'react-markdown';
 import "../cssfiles/ProfileSetup.css";
@@ -15,7 +16,7 @@ function ProfileSetup() {
     const [resumeName, setResumeName] = useState("");
     const [resumeUrl, setResumeUrl] = useState("");
     const [isUploading, setIsUploading] = useState(false);
-    const [isSignedIn, setIsSignedIn] = useState(false);
+    const [isSignedIn, setIsSignedIn] = useState(true);
     const [authSession, setAuthSession] = useState();
     const [isSaving, setIsSaving] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -25,6 +26,8 @@ function ProfileSetup() {
     const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
     const [analysisVersions, setAnalysisVersions] = useState([]);
     const [currentVersionIndex, setCurrentVersionIndex] = useState(0);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isAlumni, setIsAlumni] = useState(false);
 
     // Profile state
     const [profileData, setProfileData] = useState({
@@ -153,6 +156,19 @@ function ProfileSetup() {
         }
     }, [userSub, authSession, loadExistingResume]);
 
+    useEffect(() => {
+        const checkUserRole = async () => {
+            try {
+                const currentUser = await getCurrentUser();
+                const userGroups = currentUser.signInUserSession.accessToken.payload['cognito:groups'] || [];
+                setIsAlumni(userGroups.includes('Alumni'));
+            } catch (error) {
+                console.error('Error checking user role:', error);
+            }
+        };
+        checkUserRole();
+    }, []);
+
     const handleSignOut = async () => {
         try {
             await signOut();
@@ -221,339 +237,181 @@ function ProfileSetup() {
     };
 
     // Function to list all analysis versions
-    const listAnalysisVersions = useCallback(async () => {
+    const listAnalysisVersions = async () => {
         try {
-            if (!userSub || !profileData?.resumeName) return [];
-
             const s3Client = new S3Client({
-                region: "us-east-1",
-                credentials: await fetchAuthSession().then(session => session.credentials)
+                region: awsmobile.aws_project_region,
+                credentials: (await fetchAuthSession()).credentials
             });
 
-            const prefix = `private/${userSub}/analysis/${profileData.resumeName.replace(/\.[^/.]+$/, '')}_analysis`;
+            const prefix = `private/${userSub}/analysis/${resumeName}_analysis_version_`;
             const command = new ListObjectsV2Command({
-                Bucket: "alumnireachresumestorage74831-dev",
+                Bucket: awsmobile.aws_user_files_s3_bucket,
                 Prefix: prefix
             });
 
             const response = await s3Client.send(command);
             const versions = response.Contents || [];
             
-            // Sort versions by last modified date
-            return versions.sort((a, b) => b.LastModified - a.LastModified)
-                .map(v => ({
-                    key: v.Key,
-                    version: parseInt(v.Key.match(/version_(\d+)/)?.[1] || '1'),
-                    lastModified: v.LastModified
-                }));
-        } catch (error) {
-            console.error('Error listing analysis versions:', error);
-            return [];
-        }
-    }, [userSub, profileData]);
-
-    // Function to get next version number
-    const getNextVersionNumber = useCallback(async () => {
-        const versions = await listAnalysisVersions();
-        const maxVersion = versions.reduce((max, v) => Math.max(max, v.version), 0);
-        return maxVersion + 1;
-    }, [listAnalysisVersions]);
-
-    // Function to get analysis S3 path with version
-    const getAnalysisS3Path = useCallback(async (isNewVersion = false) => {
-        if (!userSub || !profileData?.resumeName) return null;
-        
-        const basePath = `private/${userSub}/analysis/${profileData.resumeName.replace(/\.[^/.]+$/, '')}_analysis`;
-        
-        if (isNewVersion) {
-            const nextVersion = await getNextVersionNumber();
-            return `${basePath}_version_${nextVersion}.json`;
-        }
-        
-        // Return latest version path
-        const versions = await listAnalysisVersions();
-        return versions.length > 0 ? versions[0].key : `${basePath}_version_1.json`;
-    }, [userSub, profileData, getNextVersionNumber, listAnalysisVersions]);
-
-    // Function to delete a specific version
-    const deleteAnalysisVersion = useCallback(async (versionKey) => {
-        try {
-            const s3Client = new S3Client({
-                region: "us-east-1",
-                credentials: await fetchAuthSession().then(session => session.credentials)
-            });
-
-            const command = new DeleteObjectCommand({
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: versionKey
-            });
-
-            await s3Client.send(command);
+            // Sort versions by last modified date, newest first
+            versions.sort((a, b) => b.LastModified - a.LastModified);
             
-            // Refresh versions list
-            const versions = await listAnalysisVersions();
             setAnalysisVersions(versions);
-            
-            // Update current version if needed
-            if (versions.length > 0) {
-                const currentVersion = versions[Math.min(currentVersionIndex, versions.length - 1)];
-                loadAnalysisVersion(currentVersion.key);
-            } else {
-                setAnalysisResult(null);
-                setHasExistingAnalysis(false);
+            if (versions.length > 0 && currentVersionIndex >= versions.length) {
+                setCurrentVersionIndex(0);
             }
         } catch (error) {
-            console.error('Error deleting analysis version:', error);
-            throw error;
+            console.error('Error listing analysis versions:', error);
         }
-    }, [currentVersionIndex, listAnalysisVersions]);
+    };
+
+    // Function to get the next version number
+    const getNextVersionNumber = () => {
+        if (analysisVersions.length === 0) return 1;
+        
+        const versionNumbers = analysisVersions.map(version => {
+            const match = version.Key.match(/_version_(\d+)\.json$/);
+            return match ? parseInt(match[1]) : 0;
+        });
+        
+        return Math.max(...versionNumbers) + 1;
+    };
 
     // Function to load a specific version
-    const loadAnalysisVersion = useCallback(async (versionKey) => {
+    const loadAnalysisVersion = async (versionIndex) => {
         try {
+            const version = analysisVersions[versionIndex];
+            if (!version) return;
+
             const s3Client = new S3Client({
-                region: "us-east-1",
-                credentials: await fetchAuthSession().then(session => session.credentials)
+                region: awsmobile.aws_project_region,
+                credentials: (await fetchAuthSession()).credentials
             });
 
             const command = new GetObjectCommand({
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: versionKey
+                Bucket: awsmobile.aws_user_files_s3_bucket,
+                Key: version.Key
             });
 
             const response = await s3Client.send(command);
             const analysisText = await response.Body.transformToString();
             setAnalysisResult(JSON.parse(analysisText));
+            setCurrentVersionIndex(versionIndex);
+            setIsAnalysisOpen(true);
         } catch (error) {
             console.error('Error loading analysis version:', error);
-            throw error;
         }
-    }, []);
-
-    // Effect to load versions when resume changes
-    useEffect(() => {
-        const loadVersions = async () => {
-            const versions = await listAnalysisVersions();
-            setAnalysisVersions(versions);
-            setHasExistingAnalysis(versions.length > 0);
-            if (versions.length > 0) {
-                setCurrentVersionIndex(0);
-                await loadAnalysisVersion(versions[0].key);
-            }
-        };
-        
-        loadVersions();
-    }, [profileData?.resumeName, listAnalysisVersions, loadAnalysisVersion]);
-
-    // Function to check if analysis exists
-    const checkAnalysisExists = useCallback(async () => {
-        try {
-            const analysisPath = await getAnalysisS3Path();
-            if (!analysisPath) return null;
-
-            const s3Client = new S3Client({
-                region: "us-east-1",
-                credentials: await fetchAuthSession().then(session => session.credentials)
-            });
-
-            const command = new GetObjectCommand({
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: analysisPath
-            });
-
-            try {
-                const response = await s3Client.send(command);
-                const analysisText = await response.Body.transformToString();
-                return JSON.parse(analysisText);
-            } catch (error) {
-                if (error.name === 'NoSuchKey') return null;
-                throw error;
-            }
-        } catch (error) {
-            console.error('Error checking analysis:', error);
-            return null;
-        }
-    }, [getAnalysisS3Path]);
-
-    // Function to store analysis in S3
-    const storeAnalysisInS3 = useCallback(async (analysisResult, analysisPath) => {
-        try {
-            const s3Client = new S3Client({
-                region: "us-east-1",
-                credentials: await fetchAuthSession().then(session => session.credentials)
-            });
-
-            const command = new PutObjectCommand({
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: analysisPath,
-                Body: JSON.stringify(analysisResult),
-                ContentType: 'application/json'
-            });
-
-            await s3Client.send(command);
-        } catch (error) {
-            console.error('Error storing analysis:', error);
-            throw error;
-        }
-    }, []);
-
-    const handleAnalyzeResume = useCallback(async () => {
-        if (!profileData?.resumeName || isAnalyzing) return;
-
-        setIsAnalyzing(true);
-        setAnalysisError(null);
-
-        try {
-            // Check if analysis already exists
-            const existingAnalysis = await checkAnalysisExists();
-            if (existingAnalysis) {
-                setAnalysisResult(existingAnalysis);
-                setHasExistingAnalysis(true);
-                setIsAnalysisOpen(true);
-                return;
-            }
-
-            const session = await fetchAuthSession();
-            const { idToken } = session.tokens ?? {};
-
-            if (!idToken) {
-                throw new Error('No authentication token found');
-            }
-
-            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: idToken.toString(),
-                },
-                body: JSON.stringify({
-                    query: `
-                    mutation AnalyzeResume($input: AnalyzeResumeInput!) {
-                        analyzeResume(input: $input) {
-                            analysis
-                        }
-                    }
-                `,
-                    variables: {
-                        input: {
-                            userId: userSub,
-                            s3Path: getResumeS3Path(profileData.resumeName)
-                        }
-                    }
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log("Analysis response:", data);
-
-            if (data.data?.analyzeResume?.analysis) {
-                const analysis = data.data.analyzeResume.analysis;
-                
-                // Store new version in S3
-                const newVersionPath = await getAnalysisS3Path(true);
-                await storeAnalysisInS3(analysis, newVersionPath);
-                
-                // Refresh versions list and display new version
-                const versions = await listAnalysisVersions();
-                setAnalysisVersions(versions);
-                setCurrentVersionIndex(0);
-                setAnalysisResult(analysis);
-                setHasExistingAnalysis(true);
-                setIsAnalysisOpen(true);
-
-            } else {
-                const errorMessage = data.data?.analyzeResume?.error || 'Unknown error occurred';
-                console.error('Resume analysis failed:', errorMessage);
-                setAnalysisError(errorMessage);
-            }
-        } catch (error) {
-            console.error('Error analyzing resume:', error);
-            setAnalysisError(error.message || 'Failed to analyze resume');
-        } finally {
-            setIsAnalyzing(false);
-        }
-    }, [profileData, isAnalyzing, userSub, getAnalysisS3Path, storeAnalysisInS3, listAnalysisVersions]);
-
-    const checkForExistingAnalysis = useCallback(async () => {
-        if (!profileData?.resumeName) return;
-        const existingAnalysis = await checkAnalysisExists();
-        setHasExistingAnalysis(!!existingAnalysis);
-        return existingAnalysis;
-    }, [profileData, checkAnalysisExists]);
-
-    useEffect(() => {
-        checkForExistingAnalysis();
-    }, [profileData?.resumeName, checkForExistingAnalysis]);
-
-    const toggleAnalysis = useCallback(async () => {
-        if (!isAnalysisOpen && !analysisResult) {
-            const existingAnalysis = await checkAnalysisExists();
-            if (existingAnalysis) {
-                setAnalysisResult(existingAnalysis);
-            }
-        }
-        setIsAnalysisOpen(!isAnalysisOpen);
-    }, [isAnalysisOpen, analysisResult, checkAnalysisExists]);
-
-    const formatAnalysis = (analysis) => {
-        if (!analysis) return '';
-        
-        // Replace ** with markdown headers
-        let formatted = analysis
-            .replace(/\*\*\*(.*?)\*\*\*/g, '### $1')  // Replace *** with ###
-            .replace(/\*\*(.*?)\*\*/g, '## $1')       // Replace ** with ##
-            .replace(/\*(.*?)\*/g, '*$1*');           // Keep single * for italics
-            
-        return formatted;
     };
 
-    const handleDeleteResume = async () => {
+    // Function to delete a version
+    const deleteAnalysisVersion = async () => {
         try {
-            if (!profileData.resumeName) {
-                console.error('No resume to delete');
+            if (analysisVersions.length <= 1) {
+                alert("Cannot delete the last remaining version.");
                 return;
             }
 
-            const s3Path = getResumeS3Path(profileData.resumeName);
+            const versionToDelete = analysisVersions[currentVersionIndex];
             const s3Client = new S3Client({
-                region: "us-east-1",
-                credentials: {
-                    accessKeyId: authSession.credentials.accessKeyId,
-                    secretAccessKey: authSession.credentials.secretAccessKey,
-                    sessionToken: authSession.credentials.sessionToken
-                }
+                region: awsmobile.aws_project_region,
+                credentials: (await fetchAuthSession()).credentials
             });
 
             const command = new DeleteObjectCommand({
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: s3Path
+                Bucket: awsmobile.aws_user_files_s3_bucket,
+                Key: versionToDelete.Key
             });
 
             await s3Client.send(command);
-
-            setProfileData(prev => ({
-                ...prev,
-                resumeName: '',
-                resumeS3Path: '',
-                resumeAnalysis: ''
-            }));
-
-            setResumeName('');
-            setResumeUrl('');
-            setAnalysisResult('');
+            await listAnalysisVersions();
             
-            localStorage.removeItem(`resumeName_${userSub}`);
-            localStorage.removeItem(`resumeUrl_${userSub}`);
-
-            console.log('Resume deleted successfully');
+            // Load the newest version after deletion
+            if (analysisVersions.length > 0) {
+                await loadAnalysisVersion(0);
+            } else {
+                setIsAnalysisOpen(false);
+                setAnalysisResult(null);
+            }
+            
+            setShowDeleteConfirm(false);
         } catch (error) {
-            console.error('Error deleting resume:', error);
+            console.error('Error deleting analysis version:', error);
+            alert('Failed to delete version. Please try again.');
         }
     };
+
+    // Modified handleAnalyzeResume to support versioning
+    const handleAnalyzeResume = async () => {
+        if (!resumeUrl) {
+            alert("Please upload a resume first.");
+            return;
+        }
+
+        setIsAnalyzing(true);
+        try {
+            const response = await fetch(resumeUrl);
+            const blob = await response.blob();
+            const reader = new FileReader();
+
+            reader.onload = async () => {
+                const base64Data = reader.result.split(',')[1];
+
+                try {
+                    const response = await fetch('https://qdpuqjvdd6.execute-api.us-east-1.amazonaws.com/dev/analyze-resume', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ pdf_base64: base64Data }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Analysis failed');
+                    }
+
+                    const result = await response.json();
+                    setAnalysisResult(result);
+
+                    // Save new version to S3
+                    const versionNumber = getNextVersionNumber();
+                    const s3Client = new S3Client({
+                        region: awsmobile.aws_project_region,
+                        credentials: (await fetchAuthSession()).credentials
+                    });
+
+                    const key = `private/${userSub}/analysis/${resumeName}_analysis_version_${versionNumber}.json`;
+                    const command = new PutObjectCommand({
+                        Bucket: awsmobile.aws_user_files_s3_bucket,
+                        Key: key,
+                        Body: JSON.stringify(result),
+                        ContentType: 'application/json'
+                    });
+
+                    await s3Client.send(command);
+                    await listAnalysisVersions();
+                    setCurrentVersionIndex(0); // Show newest version
+                    setIsAnalysisOpen(true);
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to analyze resume. Please try again.');
+                }
+            };
+
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to process resume. Please try again.');
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
+    // Load versions when resume is loaded
+    useEffect(() => {
+        if (resumeName) {
+            listAnalysisVersions();
+        }
+    }, [resumeName]);
 
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
@@ -608,6 +466,62 @@ function ProfileSetup() {
         }
     };
 
+    const handleDeleteResume = async () => {
+        try {
+            if (!profileData.resumeName) {
+                console.error('No resume to delete');
+                return;
+            }
+
+            const s3Path = getResumeS3Path(profileData.resumeName);
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: {
+                    accessKeyId: authSession.credentials.accessKeyId,
+                    secretAccessKey: authSession.credentials.secretAccessKey,
+                    sessionToken: authSession.credentials.sessionToken
+                }
+            });
+
+            const command = new DeleteObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: s3Path
+            });
+
+            await s3Client.send(command);
+
+            setProfileData(prev => ({
+                ...prev,
+                resumeName: '',
+                resumeS3Path: '',
+                resumeAnalysis: ''
+            }));
+
+            setResumeName('');
+            setResumeUrl('');
+            setAnalysisResult('');
+            
+            localStorage.removeItem(`resumeName_${userSub}`);
+            localStorage.removeItem(`resumeUrl_${userSub}`);
+
+            console.log('Resume deleted successfully');
+        } catch (error) {
+            console.error('Error deleting resume:', error);
+        }
+    };
+
+    const formatAnalysis = (analysis) => {
+        if (!analysis) return '';
+        
+        // Replace ** with markdown headers
+        let formatted = analysis
+            .replace(/\*\*\*(.*?)\*\*\*/g, '### $1')  // Replace *** with ###
+            .replace(/\*\*(.*?)\*\*/g, '## $1')       // Replace ** with ##
+            .replace(/\*(.*?)\*/g, '*$1*');           // Keep single * for italics
+            
+        return formatted;
+    };
+
     return (
         <>
             <Header
@@ -629,6 +543,12 @@ function ProfileSetup() {
                             onClick={() => setActiveSection("analytics")}
                         >
                             <i className="fas fa-chart-line"></i> Analytics
+                        </li>
+                        <li 
+                            className={activeSection === "people" ? "active" : ""}
+                            onClick={() => setActiveSection("people")}
+                        >
+                            <i className="fas fa-users"></i> People
                         </li>
                     </ul>
                     <div 
@@ -741,102 +661,83 @@ function ProfileSetup() {
                                 )}
                             </div>
                         </> 
-                    ) : (
+                    ) : activeSection === "analytics" ? (
                         <div className="analytics-section">
                             <h2 className="section-title">Resume Analytics</h2>
                             {!resumeName ? (
-                                <div className="analytics-message">
-                                    <p>Upload a resume in the Profile tab to get started with analytics</p>
+                                <div className="upload-prompt">
+                                    <p>Please upload your resume first to view analytics.</p>
+                                </div>
+                            ) : isAnalyzing ? (
+                                <div className="analyzing-message">
+                                    <p>Analyzing your resume...</p>
+                                </div>
+                            ) : isAnalysisOpen && analysisResult ? (
+                                <div className="analysis-content">
+                                    <div className="analysis-header">
+                                        <div className="version-controls">
+                                            <select 
+                                                value={currentVersionIndex}
+                                                onChange={(e) => loadAnalysisVersion(parseInt(e.target.value))}
+                                                className="version-selector"
+                                            >
+                                                {analysisVersions.map((version, index) => {
+                                                    const date = new Date(version.LastModified).toLocaleDateString();
+                                                    return (
+                                                        <option key={version.Key} value={index}>
+                                                            Version {analysisVersions.length - index} ({date})
+                                                        </option>
+                                                    );
+                                                })}
+                                            </select>
+                                            <button 
+                                                onClick={() => setShowDeleteConfirm(true)}
+                                                className="delete-version-btn"
+                                                disabled={analysisVersions.length <= 1}
+                                            >
+                                                Delete Version
+                                            </button>
+                                            <button 
+                                                onClick={handleAnalyzeResume}
+                                                className="new-analysis-btn"
+                                            >
+                                                New Analysis
+                                            </button>
+                                        </div>
+                                        {showDeleteConfirm && (
+                                            <div className="delete-confirm">
+                                                <p>Are you sure you want to delete this version?</p>
+                                                <div className="delete-confirm-buttons">
+                                                    <button onClick={deleteAnalysisVersion}>Yes, Delete</button>
+                                                    <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="analysis-results">
+                                        <ReactMarkdown>{formatAnalysis(analysisResult.analysis)}</ReactMarkdown>
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="analytics-content">
-                                    <p>Current Resume: {resumeName}</p>
-                                    {hasExistingAnalysis ? (
-                                        <div className="analysis-actions">
-                                            <div className="analysis-controls">
-                                                <button 
-                                                    className={`view-analysis-button ${isAnalysisOpen ? 'active' : ''}`}
-                                                    onClick={toggleAnalysis}
-                                                >
-                                                    {isAnalysisOpen ? 'Hide Analysis' : 'View Analysis'}
-                                                </button>
-                                                <button 
-                                                    className="analyze-button"
-                                                    onClick={handleAnalyzeResume} 
-                                                    disabled={isAnalyzing}
-                                                >
-                                                    New Analysis
-                                                </button>
-                                            </div>
-                                            {isAnalysisOpen && analysisVersions.length > 0 && (
-                                                <div className="version-controls">
-                                                    <select
-                                                        value={currentVersionIndex}
-                                                        onChange={(e) => {
-                                                            const newIndex = parseInt(e.target.value);
-                                                            setCurrentVersionIndex(newIndex);
-                                                            loadAnalysisVersion(analysisVersions[newIndex].key);
-                                                        }}
-                                                    >
-                                                        {analysisVersions.map((version, index) => (
-                                                            <option key={version.key} value={index}>
-                                                                Version {version.version} ({new Date(version.lastModified).toLocaleDateString()})
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <button
-                                                        className="delete-version-button"
-                                                        onClick={() => {
-                                                            if (window.confirm('Are you sure you want to delete this version?')) {
-                                                                deleteAnalysisVersion(analysisVersions[currentVersionIndex].key);
-                                                            }
-                                                        }}
-                                                        disabled={analysisVersions.length <= 1}
-                                                    >
-                                                        Delete Version
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <button 
-                                            className={`analyze-button ${isAnalyzing ? 'loading' : ''}`}
-                                            onClick={handleAnalyzeResume} 
-                                            disabled={isAnalyzing || !profileData.resumeName}
-                                        >
-                                            {isAnalyzing ? 'Analyzing...' : 'Analyze Resume'}
-                                        </button>
-                                    )}
-                                    
-                                    {(isAnalyzing || (isAnalysisOpen && analysisResult) || analysisError) && (
-                                        <div className="analysis-container">
-                                            {isAnalyzing && (
-                                                <div className="loading-state">
-                                                    <div className="loading-spinner"></div>
-                                                    <p>Analyzing your resume...</p>
-                                                </div>
-                                            )}
-                                            
-                                            {analysisError && (
-                                                <div className="error-message">
-                                                    {analysisError}
-                                                </div>
-                                            )}
-                                            
-                                            {(isAnalysisOpen && analysisResult) && (
-                                                <div className="analysis-result">
-                                                    <h2>Resume Analysis</h2>
-                                                    <div className="analysis-content">
-                                                        <ReactMarkdown>{analysisResult}</ReactMarkdown>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+                                <div className="analysis-actions">
+                                    <button 
+                                        onClick={handleAnalyzeResume}
+                                        className="analyze-btn"
+                                        disabled={!resumeName}
+                                    >
+                                        Analyze Resume
+                                    </button>
                                 </div>
                             )}
                         </div>
-                    )}
+                    ) : activeSection === "people" ? (
+                        <div className="people-section">
+                            <h2 className="section-title">Search People</h2>
+                            <div className="people-content">
+                                <SearchResults embedded={true} />
+                            </div>
+                        </div>
+                    ) : null}
                 </div>
             </div>
         </>
