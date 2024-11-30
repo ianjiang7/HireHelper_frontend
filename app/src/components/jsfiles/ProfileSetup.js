@@ -159,8 +159,8 @@ function ProfileSetup() {
     useEffect(() => {
         const checkUserRole = async () => {
             try {
-                const currentUser = await getCurrentUser();
-                const userGroups = currentUser.signInUserSession.accessToken.payload['cognito:groups'] || [];
+                const { tokens } = await fetchAuthSession();
+                const userGroups = tokens?.accessToken?.payload['cognito:groups'] || [];
                 setIsAlumni(userGroups.includes('Alumni'));
             } catch (error) {
                 console.error('Error checking user role:', error);
@@ -238,15 +238,22 @@ function ProfileSetup() {
 
     // Function to list all analysis versions
     const listAnalysisVersions = async () => {
+        if (!userSub || !resumeName) return;
+        
         try {
+            const { credentials } = await fetchAuthSession();
             const s3Client = new S3Client({
-                region: awsmobile.aws_project_region,
-                credentials: (await fetchAuthSession()).credentials
+                region: "us-east-1",
+                credentials: {
+                    accessKeyId: credentials.accessKeyId,
+                    secretAccessKey: credentials.secretAccessKey,
+                    sessionToken: credentials.sessionToken
+                }
             });
 
-            const prefix = `private/${userSub}/analysis/${resumeName}_analysis_version_`;
+            const prefix = `private/${userSub}/analysis/${resumeName.replace(/\.[^/.]+$/, '')}_analysis_version_`;
             const command = new ListObjectsV2Command({
-                Bucket: awsmobile.aws_user_files_s3_bucket,
+                Bucket: "alumnireachresumestorage74831-dev",
                 Prefix: prefix
             });
 
@@ -283,13 +290,18 @@ function ProfileSetup() {
             const version = analysisVersions[versionIndex];
             if (!version) return;
 
+            const { credentials } = await fetchAuthSession();
             const s3Client = new S3Client({
-                region: awsmobile.aws_project_region,
-                credentials: (await fetchAuthSession()).credentials
+                region: "us-east-1",
+                credentials: {
+                    accessKeyId: credentials.accessKeyId,
+                    secretAccessKey: credentials.secretAccessKey,
+                    sessionToken: credentials.sessionToken
+                }
             });
 
             const command = new GetObjectCommand({
-                Bucket: awsmobile.aws_user_files_s3_bucket,
+                Bucket: "alumnireachresumestorage74831-dev",
                 Key: version.Key
             });
 
@@ -312,20 +324,24 @@ function ProfileSetup() {
             }
 
             const versionToDelete = analysisVersions[currentVersionIndex];
+            const { credentials } = await fetchAuthSession();
             const s3Client = new S3Client({
-                region: awsmobile.aws_project_region,
-                credentials: (await fetchAuthSession()).credentials
+                region: "us-east-1",
+                credentials: {
+                    accessKeyId: credentials.accessKeyId,
+                    secretAccessKey: credentials.secretAccessKey,
+                    sessionToken: credentials.sessionToken
+                }
             });
 
             const command = new DeleteObjectCommand({
-                Bucket: awsmobile.aws_user_files_s3_bucket,
+                Bucket: "alumnireachresumestorage74831-dev",
                 Key: versionToDelete.Key
             });
 
             await s3Client.send(command);
             await listAnalysisVersions();
             
-            // Load the newest version after deletion
             if (analysisVersions.length > 0) {
                 await loadAnalysisVersion(0);
             } else {
@@ -340,67 +356,80 @@ function ProfileSetup() {
         }
     };
 
-    // Modified handleAnalyzeResume to support versioning
+    // Modified handleAnalyzeResume to use GraphQL mutation
     const handleAnalyzeResume = async () => {
-        if (!resumeUrl) {
+        if (!resumeUrl || !userSub || !resumeName) {
             alert("Please upload a resume first.");
             return;
         }
 
         setIsAnalyzing(true);
         try {
-            const response = await fetch(resumeUrl);
-            const blob = await response.blob();
-            const reader = new FileReader();
+            const { tokens } = await fetchAuthSession();
+            const idToken = tokens.idToken.toString();
 
-            reader.onload = async () => {
-                const base64Data = reader.result.split(',')[1];
-
-                try {
-                    const response = await fetch('https://qdpuqjvdd6.execute-api.us-east-1.amazonaws.com/dev/analyze-resume', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ pdf_base64: base64Data }),
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Analysis failed');
+            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': idToken
+                },
+                body: JSON.stringify({
+                    query: `
+                        mutation AnalyzeResume($input: AnalyzeResumeInput!) {
+                            analyzeResume(input: $input) {
+                                analysis
+                            }
+                        }
+                    `,
+                    variables: {
+                        input: {
+                            userId: userSub,
+                            s3Path: `private/${userSub}/resumes/${resumeName}`
+                        }
                     }
+                })
+            });
 
-                    const result = await response.json();
-                    setAnalysisResult(result);
+            if (!response.ok) {
+                throw new Error('Analysis request failed');
+            }
 
-                    // Save new version to S3
-                    const versionNumber = getNextVersionNumber();
-                    const s3Client = new S3Client({
-                        region: awsmobile.aws_project_region,
-                        credentials: (await fetchAuthSession()).credentials
-                    });
+            const data = await response.json();
+            if (data.errors) {
+                throw new Error(data.errors[0].message);
+            }
 
-                    const key = `private/${userSub}/analysis/${resumeName}_analysis_version_${versionNumber}.json`;
-                    const command = new PutObjectCommand({
-                        Bucket: awsmobile.aws_user_files_s3_bucket,
-                        Key: key,
-                        Body: JSON.stringify(result),
-                        ContentType: 'application/json'
-                    });
+            const result = data.data.analyzeResume;
+            setAnalysisResult(result);
 
-                    await s3Client.send(command);
-                    await listAnalysisVersions();
-                    setCurrentVersionIndex(0); // Show newest version
-                    setIsAnalysisOpen(true);
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Failed to analyze resume. Please try again.');
+            // Save new version to S3
+            const versionNumber = getNextVersionNumber();
+            const { credentials } = await fetchAuthSession();
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: {
+                    accessKeyId: credentials.accessKeyId,
+                    secretAccessKey: credentials.secretAccessKey,
+                    sessionToken: credentials.sessionToken
                 }
-            };
+            });
 
-            reader.readAsDataURL(blob);
+            const key = `private/${userSub}/analysis/${resumeName.replace(/\.[^/.]+$/, '')}_analysis_version_${versionNumber}.json`;
+            const command = new PutObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: key,
+                Body: JSON.stringify(result),
+                ContentType: 'application/json'
+            });
+
+            await s3Client.send(command);
+            await listAnalysisVersions();
+            setCurrentVersionIndex(0);
+            setIsAnalysisOpen(true);
         } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to process resume. Please try again.');
+            console.error('Error analyzing resume:', error);
+            alert('Failed to analyze resume. Please try again.');
         } finally {
             setIsAnalyzing(false);
         }
