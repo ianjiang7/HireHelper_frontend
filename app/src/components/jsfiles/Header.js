@@ -75,13 +75,11 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                 </button>
                 <button
                     onClick={() => navigate("/my-connections")}
-                    disabled={!isAlumni}
                     style={{
                         fontSize: "1rem",
                         fontWeight: 500,
                         color: "purple",
-                        cursor: isAlumni ? "pointer" : "not-allowed",
-                        opacity: isAlumni ? 1 : 0.5,
+                        cursor: "pointer",
                         background: "none",
                         border: "none",
                     }}
