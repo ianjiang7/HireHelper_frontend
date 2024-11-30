@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Header from "./Header";
 import awsmobile from "../../aws-exports";
@@ -209,52 +209,74 @@ function ProfileSetup() {
             }
 
             // Analyze the resume after upload
-            await handleAnalyzeResume(s3Path);
+            await handleAnalyzeResume();
         } catch (error) {
             console.error('Error uploading file:', error);
         }
     };
 
-    const handleAnalyzeResume = async (providedPath = null) => {
+    const handleAnalyzeResume = async () => {
         try {
-            // Use provided path, or construct from state, or use stored resumeName
-            const s3Path = providedPath || 
-                          profileData.resumeS3Path || 
-                          (profileData.resumeName ? getResumeS3Path(profileData.resumeName) : null);
-            
-            if (!s3Path) {
+            // Validate userSub
+            if (!userSub) {
+                console.error('User ID not found');
+                return;
+            }
+
+            // Validate resumeName exists
+            if (!profileData.resumeName) {
                 console.error('No resume file found to analyze');
                 return;
             }
 
+            // Construct S3 path
+            const s3Path = getResumeS3Path(profileData.resumeName);
             console.log('Analyzing resume at path:', s3Path);
             
             const session = await fetchAuthSession();
             const { idToken } = session.tokens ?? {};
 
-            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${idToken}`,
-                },
-                body: JSON.stringify({
-                    query: `
+            if (!idToken) {
+                console.error('No authentication token found');
+                return;
+            }
+
+            // Create clean request payload
+            const requestPayload = {
+                query: `
                     mutation AnalyzeResume($input: AnalyzeResumeInput!) {
                         analyzeResume(input: $input) {
                             success
                             analysis
                             error
                         }
-                    }`,
-                    variables: {
-                        input: {
-                            userId: userSub,
-                            s3Path: s3Path
-                        }
                     }
-                }),
+                `,
+                variables: {
+                    input: {
+                        userId: userSub,
+                        s3Path: s3Path
+                    }
+                }
+            };
+
+            console.log('Request payload:', {
+                userId: userSub,
+                s3Path: s3Path
             });
+
+            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: idToken.toString(),
+                },
+                body: JSON.stringify(requestPayload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
             const data = await response.json();
             console.log("Analysis response:", data);
@@ -268,10 +290,13 @@ function ProfileSetup() {
                 setAnalysisResult(analysis);
                 console.log('Resume analysis completed:', analysis);
             } else {
-                console.error('Resume analysis failed:', data.data?.analyzeResume?.error);
+                const errorMessage = data.data?.analyzeResume?.error || 'Unknown error occurred';
+                console.error('Resume analysis failed:', errorMessage);
+                setAnalysisError(errorMessage);
             }
         } catch (error) {
             console.error('Error analyzing resume:', error);
+            setAnalysisError(error.message || 'Failed to analyze resume');
         }
     };
 
