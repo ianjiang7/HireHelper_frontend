@@ -163,9 +163,10 @@ function ProfileSetup() {
                 }
             });
 
+            const fileName = `${userSub}/${file.name}`;
             const command = new PutObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
-                Key: `private/${userSub}/${file.name}`,
+                Key: `private/${fileName}`,
                 Body: file,
                 ContentType: file.type
             });
@@ -194,7 +195,7 @@ function ProfileSetup() {
                     variables: {
                         input: {
                             userId: userSub,
-                            resumeName: file.name
+                            resumeName: fileName
                         }
                     }
                 }),
@@ -203,24 +204,89 @@ function ProfileSetup() {
             const data = await response.json();
             console.log("GraphQL response:", data);
 
-            setResumeName(file.name);
-            localStorage.setItem(`resumeName_${userSub}`, file.name);
+            setResumeName(fileName);
+            localStorage.setItem(`resumeName_${userSub}`, fileName);
 
             // Generate URL for viewing
             const getCommand = new GetObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
-                Key: `private/${userSub}/${file.name}`
+                Key: `private/${fileName}`
             });
 
             const url = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
             setResumeUrl(url);
             localStorage.setItem(`resumeUrl_${userSub}`, url);
 
+            // Clear any previous analysis
+            setAnalysisResult(null);
+            setAnalysisError(null);
+
         } catch (err) {
             console.error("Error uploading file:", err);
             alert("Error uploading file. Please try again.");
         } finally {
             setIsUploading(false);
+        }
+    };
+
+    const handleAnalyzeResume = async () => {
+        if (!resumeName) {
+            alert("Please upload a resume first");
+            return;
+        }
+
+        setIsAnalyzing(true);
+        setAnalysisError(null);
+
+        try {
+            const session = await fetchAuthSession();
+            const { idToken } = session.tokens ?? {};
+
+            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                    query: `
+                    mutation AnalyzeResume($input: AnalyzeResumeInput!) {
+                        analyzeResume(input: $input) {
+                            success
+                            analysis
+                            error
+                        }
+                    }`,
+                    variables: {
+                        input: {
+                            userId: userSub,
+                            bucket: "alumnireachresumestorage74831-dev",
+                            key: `private/${resumeName}`
+                        }
+                    }
+                }),
+            });
+
+            const data = await response.json();
+            console.log("Analysis response:", data);
+
+            if (data.data?.analyzeResume?.success) {
+                setAnalysisResult(data.data.analyzeResume.analysis);
+                // Add show class after a brief delay to trigger animation
+                setTimeout(() => {
+                    const resultElement = document.querySelector('.analysis-result');
+                    if (resultElement) {
+                        resultElement.classList.add('show');
+                    }
+                }, 100);
+            } else {
+                setAnalysisError(data.data?.analyzeResume?.error || 'Failed to analyze resume');
+            }
+        } catch (error) {
+            console.error('Error analyzing resume:', error);
+            setAnalysisError(error.message || 'Error analyzing resume');
+        } finally {
+            setIsAnalyzing(false);
         }
     };
 
@@ -339,85 +405,6 @@ function ProfileSetup() {
         }
     };
 
-    const handleResumeUpload = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        setIsAnalyzing(true);
-        setAnalysisError(null);
-
-        try {
-            // Upload file to S3
-            const fileName = `${userSub}/resume/${Date.now()}-${file.name}`;
-            const s3Client = new S3Client({
-                region: "us-east-1",
-                credentials: {
-                    accessKeyId: authSession.credentials.accessKeyId,
-                    secretAccessKey: authSession.credentials.secretAccessKey,
-                    sessionToken: authSession.credentials.sessionToken
-                }
-            });
-
-            const command = new PutObjectCommand({
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: `private/${fileName}`,
-                Body: file,
-                ContentType: file.type
-            });
-
-            await s3Client.send(command);
-
-            // Analyze the resume
-            const session = await fetchAuthSession();
-            const { idToken } = session.tokens ?? {};
-
-            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${idToken}`,
-                },
-                body: JSON.stringify({
-                    query: `
-                    mutation AnalyzeResume($input: AnalyzeResumeInput!) {
-                        analyzeResume(input: $input) {
-                            success
-                            analysis
-                            error
-                        }
-                    }`,
-                    variables: {
-                        input: {
-                            userId: userSub,
-                            bucket: "alumnireachresumestorage74831-dev",
-                            key: `private/${fileName}`
-                        }
-                    }
-                }),
-            });
-
-            const data = await response.json();
-
-            if (data.data.analyzeResume.success) {
-                setAnalysisResult(data.data.analyzeResume.analysis);
-                // Add show class after a brief delay to trigger animation
-                setTimeout(() => {
-                    const resultElement = document.querySelector('.analysis-result');
-                    if (resultElement) {
-                        resultElement.classList.add('show');
-                    }
-                }, 100);
-            } else {
-                setAnalysisError(data.data.analyzeResume.error || 'Failed to analyze resume');
-            }
-        } catch (error) {
-            console.error('Error processing resume:', error);
-            setAnalysisError(error.message || 'Error processing resume');
-        } finally {
-            setIsAnalyzing(false);
-        }
-    };
-
     return (
         <>
             <Header
@@ -526,11 +513,18 @@ function ProfileSetup() {
                                                 Replace Resume
                                                 <input
                                                     type="file"
-                                                    onChange={handleResumeUpload}
+                                                    onChange={handleFileUpload}
                                                     accept=".pdf,.doc,.docx"
                                                     disabled={isUploading}
                                                 />
                                             </label>
+                                            <button 
+                                                className="analyze-button"
+                                                onClick={handleAnalyzeResume}
+                                                disabled={isAnalyzing || !resumeName}
+                                            >
+                                                {isAnalyzing ? 'Analyzing...' : 'Analyze Resume'}
+                                            </button>
                                         </div>
                                         {(isAnalyzing || analysisResult || analysisError) && (
                                             <div className="analysis-container">
@@ -566,7 +560,7 @@ function ProfileSetup() {
                                                 Upload Resume
                                                 <input
                                                     type="file"
-                                                    onChange={handleResumeUpload}
+                                                    onChange={handleFileUpload}
                                                     accept=".pdf,.doc,.docx"
                                                     disabled={isUploading}
                                                 />
