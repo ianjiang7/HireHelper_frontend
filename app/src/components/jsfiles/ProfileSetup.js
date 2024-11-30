@@ -21,7 +21,9 @@ function ProfileSetup() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState(null);
     const [analysisError, setAnalysisError] = useState(null);
-    
+    const [hasExistingAnalysis, setHasExistingAnalysis] = useState(false);
+    const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+
     // Profile state
     const [profileData, setProfileData] = useState({
         fullname: "",
@@ -288,6 +290,8 @@ function ProfileSetup() {
             const existingAnalysis = await checkAnalysisExists();
             if (existingAnalysis) {
                 setAnalysisResult(existingAnalysis);
+                setHasExistingAnalysis(true);
+                setIsAnalysisOpen(true);
                 return;
             }
 
@@ -359,7 +363,28 @@ function ProfileSetup() {
         } finally {
             setIsAnalyzing(false);
         }
-    }, [profileData, isAnalyzing, checkAnalysisExists, storeAnalysisInS3]);
+    }, [profileData, isAnalyzing, checkAnalysisExists, storeAnalysisInS3, userSub]);
+
+    const checkForExistingAnalysis = useCallback(async () => {
+        if (!profileData?.resumeName) return;
+        const existingAnalysis = await checkAnalysisExists();
+        setHasExistingAnalysis(!!existingAnalysis);
+        return existingAnalysis;
+    }, [profileData, checkAnalysisExists]);
+
+    useEffect(() => {
+        checkForExistingAnalysis();
+    }, [profileData?.resumeName, checkForExistingAnalysis]);
+
+    const toggleAnalysis = useCallback(async () => {
+        if (!isAnalysisOpen && !analysisResult) {
+            const existingAnalysis = await checkAnalysisExists();
+            if (existingAnalysis) {
+                setAnalysisResult(existingAnalysis);
+            }
+        }
+        setIsAnalysisOpen(!isAnalysisOpen);
+    }, [isAnalysisOpen, analysisResult, checkAnalysisExists]);
 
     const formatAnalysis = (analysis) => {
         if (!analysis) return '';
@@ -613,15 +638,33 @@ function ProfileSetup() {
                             ) : (
                                 <div className="analytics-content">
                                     <p>Current Resume: {resumeName}</p>
-                                    <button 
-                                        className={`analyze-button ${isAnalyzing ? 'loading' : ''}`}
-                                        onClick={handleAnalyzeResume} 
-                                        disabled={isAnalyzing || !profileData.resumeName}
-                                    >
-                                        {isAnalyzing ? 'Analyzing...' : 'Analyze Resume'}
-                                    </button>
+                                    {hasExistingAnalysis ? (
+                                        <div className="analysis-actions">
+                                            <button 
+                                                className={`view-analysis-button ${isAnalysisOpen ? 'active' : ''}`}
+                                                onClick={toggleAnalysis}
+                                            >
+                                                {isAnalysisOpen ? 'Hide Analysis' : 'View Analysis'}
+                                            </button>
+                                            <button 
+                                                className="analyze-button"
+                                                onClick={handleAnalyzeResume} 
+                                                disabled={isAnalyzing}
+                                            >
+                                                Reanalyze Resume
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            className={`analyze-button ${isAnalyzing ? 'loading' : ''}`}
+                                            onClick={handleAnalyzeResume} 
+                                            disabled={isAnalyzing || !profileData.resumeName}
+                                        >
+                                            {isAnalyzing ? 'Analyzing...' : 'Analyze Resume'}
+                                        </button>
+                                    )}
                                     
-                                    {(isAnalyzing || analysisResult || analysisError) && (
+                                    {(isAnalyzing || (isAnalysisOpen && analysisResult) || analysisError) && (
                                         <div className="analysis-container">
                                             {isAnalyzing && (
                                                 <div className="loading-state">
@@ -636,7 +679,7 @@ function ProfileSetup() {
                                                 </div>
                                             )}
                                             
-                                            {analysisResult && (
+                                            {(isAnalysisOpen && analysisResult) && (
                                                 <div className="analysis-result">
                                                     <h2>Resume Analysis</h2>
                                                     <div className="analysis-content">
