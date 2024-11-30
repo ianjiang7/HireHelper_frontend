@@ -318,27 +318,63 @@
 .analysis-content {
     line-height: 1.6;
     color: #444;
+    padding: 20px;
+}
+
+.analysis-content h1 {
+    font-size: 1.8em;
+    color: #2c3e50;
+    margin-bottom: 1em;
 }
 
 .analysis-content h2 {
-    color: #007bff;
-    margin-top: 20px;
-    margin-bottom: 10px;
+    font-size: 1.5em;
+    color: #3498db;
+    margin-top: 1.5em;
+    margin-bottom: 0.8em;
 }
 
 .analysis-content h3 {
-    color: #0056b3;
-    margin-top: 15px;
-    margin-bottom: 8px;
+    font-size: 1.2em;
+    color: #2980b9;
+    margin-top: 1.2em;
+    margin-bottom: 0.6em;
 }
 
-.error-message {
-    margin-top: 10px;
-    padding: 10px;
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
+.analysis-content ul {
+    padding-left: 1.5em;
+    margin: 1em 0;
+}
+
+.analysis-content li {
+    margin: 0.5em 0;
+}
+
+.analysis-content p {
+    margin: 1em 0;
+}
+
+.analysis-content strong {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.analysis-content em {
+    color: #7f8c8d;
+}
+
+.analysis-content code {
+    background-color: #f7f9fa;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+.analysis-content blockquote {
+    border-left: 4px solid #3498db;
+    margin: 1em 0;
+    padding-left: 1em;
+    color: #7f8c8d;
 }
 
 /* Markdown Styling */
