@@ -27,7 +27,15 @@ function ProfileSetup() {
         email: "",
         company: "",
         role: "",
+        resumeName: "", 
+        resumeS3Path: "", 
+        resumeAnalysis: ""
     });
+
+    // Helper function to construct S3 path
+    const getResumeS3Path = (fileName) => {
+        return `private/${userSub}/${fileName}`;
+    };
 
     const loadExistingResume = useCallback(async () => {
         try {
@@ -73,6 +81,8 @@ function ProfileSetup() {
                     email: userData.email || "",
                     company: userData.company || "",
                     role: userData.role || "",
+                    resumeName: userData.resumeName || "", 
+                    resumeS3Path: userData.resumeName ? getResumeS3Path(userData.resumeName) : ""
                 });
 
                 if (userData.resumeName) {
@@ -149,11 +159,12 @@ function ProfileSetup() {
     };
 
     const handleFileUpload = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        setIsUploading(true);
         try {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const s3Path = getResumeS3Path(file.name);
+            
             const s3Client = new S3Client({
                 region: "us-east-1",
                 credentials: {
@@ -163,11 +174,9 @@ function ProfileSetup() {
                 }
             });
 
-            const fileName = `${userSub}/${file.name}`;
-            const fullPath = `private/${fileName}`;
             const command = new PutObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
-                Key: fullPath,
+                Key: s3Path,
                 Body: file,
                 ContentType: file.type
             });
@@ -175,71 +184,51 @@ function ProfileSetup() {
             await s3Client.send(command);
             console.log("File uploaded successfully");
 
-            // Update GraphQL
-            const session = await fetchAuthSession();
-            const { idToken } = session.tokens ?? {};
+            // Update state with both resumeName and full S3 path
+            setProfileData(prev => ({
+                ...prev,
+                resumeName: file.name,
+                resumeS3Path: s3Path
+            }));
 
-            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${idToken}`,
-                },
-                body: JSON.stringify({
-                    query: `
-                    mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
-                        updateUserProfile(input: $input) {
-                            userId
-                            resumeName
-                        }
-                    }`,
-                    variables: {
-                        input: {
-                            userId: userSub,
-                            resumeName: fullPath
-                        }
-                    }
-                }),
-            });
-
-            const data = await response.json();
-            console.log("GraphQL response:", data);
-
-            setResumeName(fullPath);
-            localStorage.setItem(`resumeName_${userSub}`, fullPath);
+            setResumeName(s3Path);
+            localStorage.setItem(`resumeName_${userSub}`, s3Path);
 
             // Generate URL for viewing
-            const getCommand = new GetObjectCommand({
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: fullPath
-            });
+            try {
+                const command = new GetObjectCommand({
+                    Bucket: "alumnireachresumestorage74831-dev",
+                    Key: s3Path
+                });
 
-            const url = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
-            setResumeUrl(url);
-            localStorage.setItem(`resumeUrl_${userSub}`, url);
+                const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+                setResumeUrl(url);
+                localStorage.setItem(`resumeUrl_${userSub}`, url);
+            } catch (error) {
+                console.error('Error generating resume URL:', error);
+            }
 
-            // Clear any previous analysis
-            setAnalysisResult(null);
-            setAnalysisError(null);
-
-        } catch (err) {
-            console.error("Error uploading file:", err);
-            alert("Error uploading file. Please try again.");
-        } finally {
-            setIsUploading(false);
+            // Analyze the resume after upload
+            await handleAnalyzeResume(s3Path);
+        } catch (error) {
+            console.error('Error uploading file:', error);
         }
     };
 
-    const handleAnalyzeResume = async () => {
-        if (!resumeName) {
-            alert("Please upload a resume first");
-            return;
-        }
-
-        setIsAnalyzing(true);
-        setAnalysisError(null);
-
+    const handleAnalyzeResume = async (providedPath = null) => {
         try {
+            // Use provided path, or construct from state, or use stored resumeName
+            const s3Path = providedPath || 
+                          profileData.resumeS3Path || 
+                          (profileData.resumeName ? getResumeS3Path(profileData.resumeName) : null);
+            
+            if (!s3Path) {
+                console.error('No resume file found to analyze');
+                return;
+            }
+
+            console.log('Analyzing resume at path:', s3Path);
+            
             const session = await fetchAuthSession();
             const { idToken } = session.tokens ?? {};
 
@@ -261,7 +250,7 @@ function ProfileSetup() {
                     variables: {
                         input: {
                             userId: userSub,
-                            s3Path: resumeName  // This includes the full path: private/userId/filename
+                            s3Path: s3Path
                         }
                     }
                 }),
@@ -271,28 +260,29 @@ function ProfileSetup() {
             console.log("Analysis response:", data);
 
             if (data.data?.analyzeResume?.success) {
-                setAnalysisResult(data.data.analyzeResume.analysis);
-                setTimeout(() => {
-                    const resultElement = document.querySelector('.analysis-result');
-                    if (resultElement) {
-                        resultElement.classList.add('show');
-                    }
-                }, 100);
+                const analysis = data.data.analyzeResume.analysis;
+                setProfileData(prev => ({
+                    ...prev,
+                    resumeAnalysis: analysis
+                }));
+                setAnalysisResult(analysis);
+                console.log('Resume analysis completed:', analysis);
             } else {
-                setAnalysisError(data.data?.analyzeResume?.error || 'Failed to analyze resume');
+                console.error('Resume analysis failed:', data.data?.analyzeResume?.error);
             }
         } catch (error) {
             console.error('Error analyzing resume:', error);
-            setAnalysisError(error.message || 'Error analyzing resume');
-        } finally {
-            setIsAnalyzing(false);
         }
     };
 
     const handleDeleteResume = async () => {
-        if (!resumeName) return;
-
         try {
+            if (!profileData.resumeName) {
+                console.error('No resume to delete');
+                return;
+            }
+
+            const s3Path = getResumeS3Path(profileData.resumeName);
             const s3Client = new S3Client({
                 region: "us-east-1",
                 credentials: {
@@ -304,50 +294,28 @@ function ProfileSetup() {
 
             const command = new DeleteObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
-                Key: resumeName
+                Key: s3Path
             });
 
             await s3Client.send(command);
-            console.log("File deleted successfully");
 
-            // Update GraphQL
-            const session = await fetchAuthSession();
-            const { idToken } = session.tokens ?? {};
+            setProfileData(prev => ({
+                ...prev,
+                resumeName: '',
+                resumeS3Path: '',
+                resumeAnalysis: ''
+            }));
 
-            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${idToken}`,
-                },
-                body: JSON.stringify({
-                    query: `
-                    mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
-                        updateUserProfile(input: $input) {
-                            userId
-                            resumeName
-                        }
-                    }`,
-                    variables: {
-                        input: {
-                            userId: userSub,
-                            resumeName: null
-                        }
-                    }
-                }),
-            });
-
-            const data = await response.json();
-            console.log("GraphQL response:", data);
-
-            setResumeName("");
-            setResumeUrl("");
+            setResumeName('');
+            setResumeUrl('');
+            setAnalysisResult('');
+            
             localStorage.removeItem(`resumeName_${userSub}`);
             localStorage.removeItem(`resumeUrl_${userSub}`);
 
-        } catch (err) {
-            console.error("Error deleting file:", err);
-            alert("Error deleting file. Please try again.");
+            console.log('Resume deleted successfully');
+        } catch (error) {
+            console.error('Error deleting resume:', error);
         }
     };
 
