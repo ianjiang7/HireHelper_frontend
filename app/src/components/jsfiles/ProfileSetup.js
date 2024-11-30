@@ -91,7 +91,7 @@ function ProfileSetup() {
 
                     const command = new GetObjectCommand({
                         Bucket: "alumnireachresumestorage74831-dev",
-                        Key: `private/${userSub}/${fileName}`
+                        Key: fileName
                     });
 
                     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
@@ -164,9 +164,10 @@ function ProfileSetup() {
             });
 
             const fileName = `${userSub}/${file.name}`;
+            const fullPath = `private/${fileName}`;
             const command = new PutObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
-                Key: `private/${fileName}`,
+                Key: fullPath,
                 Body: file,
                 ContentType: file.type
             });
@@ -195,7 +196,7 @@ function ProfileSetup() {
                     variables: {
                         input: {
                             userId: userSub,
-                            resumeName: fileName
+                            resumeName: fullPath
                         }
                     }
                 }),
@@ -204,13 +205,13 @@ function ProfileSetup() {
             const data = await response.json();
             console.log("GraphQL response:", data);
 
-            setResumeName(fileName);
-            localStorage.setItem(`resumeName_${userSub}`, fileName);
+            setResumeName(fullPath);
+            localStorage.setItem(`resumeName_${userSub}`, fullPath);
 
             // Generate URL for viewing
             const getCommand = new GetObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
-                Key: `private/${fileName}`
+                Key: fullPath
             });
 
             const url = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
@@ -260,8 +261,7 @@ function ProfileSetup() {
                     variables: {
                         input: {
                             userId: userSub,
-                            bucket: "alumnireachresumestorage74831-dev",
-                            key: resumeName.startsWith('private/') ? resumeName : `private/${resumeName}`
+                            s3Path: resumeName  // This includes the full path: private/userId/filename
                         }
                     }
                 }),
@@ -272,7 +272,6 @@ function ProfileSetup() {
 
             if (data.data?.analyzeResume?.success) {
                 setAnalysisResult(data.data.analyzeResume.analysis);
-                // Add show class after a brief delay to trigger animation
                 setTimeout(() => {
                     const resultElement = document.querySelector('.analysis-result');
                     if (resultElement) {
@@ -305,7 +304,7 @@ function ProfileSetup() {
 
             const command = new DeleteObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
-                Key: `private/${userSub}/${resumeName}`
+                Key: resumeName
             });
 
             await s3Client.send(command);
