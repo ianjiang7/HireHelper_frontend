@@ -216,58 +216,87 @@ function ProfileSetup() {
         }
     };
 
-    const handleAnalyzeResume = async () => {
+    // Function to get the analysis S3 path
+    const getAnalysisS3Path = useCallback(() => {
+        if (!profileData?.id || !profileData?.resumeName) return null;
+        return `private/${profileData.id}/analysis/${profileData.resumeName.replace(/\.[^/.]+$/, '')}_analysis.json`;
+    }, [profileData]);
+
+    // Function to check if analysis exists
+    const checkAnalysisExists = useCallback(async () => {
         try {
-            // Validate userSub
-            if (!userSub) {
-                console.error('User ID not found');
+            const analysisPath = getAnalysisS3Path();
+            if (!analysisPath) return null;
+
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: await fetchAuthSession().then(session => session.credentials)
+            });
+
+            const command = new GetObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: analysisPath
+            });
+
+            try {
+                const response = await s3Client.send(command);
+                const analysisText = await response.Body.transformToString();
+                return JSON.parse(analysisText);
+            } catch (error) {
+                if (error.name === 'NoSuchKey') return null;
+                throw error;
+            }
+        } catch (error) {
+            console.error('Error checking analysis:', error);
+            return null;
+        }
+    }, [getAnalysisS3Path]);
+
+    // Function to store analysis in S3
+    const storeAnalysisInS3 = useCallback(async (analysisResult) => {
+        try {
+            const analysisPath = getAnalysisS3Path();
+            if (!analysisPath) throw new Error('Cannot determine analysis path');
+
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: await fetchAuthSession().then(session => session.credentials)
+            });
+
+            const command = new PutObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: analysisPath,
+                Body: JSON.stringify(analysisResult),
+                ContentType: 'application/json'
+            });
+
+            await s3Client.send(command);
+        } catch (error) {
+            console.error('Error storing analysis:', error);
+            throw error;
+        }
+    }, [getAnalysisS3Path]);
+
+    const handleAnalyzeResume = useCallback(async () => {
+        if (!profileData?.resumeName || isAnalyzing) return;
+
+        setIsAnalyzing(true);
+        setAnalysisError(null);
+
+        try {
+            // Check if analysis already exists
+            const existingAnalysis = await checkAnalysisExists();
+            if (existingAnalysis) {
+                setAnalysisResult(existingAnalysis);
                 return;
             }
 
-            // Validate resumeName exists
-            if (!profileData.resumeName) {
-                console.error('No resume file found to analyze');
-                return;
-            }
-
-            setIsAnalyzing(true);
-            setAnalysisError(null);
-
-            // Construct S3 path
-            const s3Path = getResumeS3Path(profileData.resumeName);
-            console.log('Analyzing resume at path:', s3Path);
-            
             const session = await fetchAuthSession();
             const { idToken } = session.tokens ?? {};
 
             if (!idToken) {
-                console.error('No authentication token found');
-                return;
+                throw new Error('No authentication token found');
             }
-
-            // Create clean request payload
-            const requestPayload = {
-                query: `
-                    mutation AnalyzeResume($input: AnalyzeResumeInput!) {
-                        analyzeResume(input: $input) {
-                            success
-                            analysis
-                            error
-                        }
-                    }
-                `,
-                variables: {
-                    input: {
-                        userId: userSub,
-                        s3Path: s3Path
-                    }
-                }
-            };
-
-            console.log('Request payload:', {
-                userId: userSub,
-                s3Path: s3Path
-            });
 
             const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
                 method: "POST",
@@ -275,7 +304,21 @@ function ProfileSetup() {
                     "Content-Type": "application/json",
                     Authorization: idToken.toString(),
                 },
-                body: JSON.stringify(requestPayload)
+                body: JSON.stringify({
+                    query: `
+                    mutation AnalyzeResume($input: AnalyzeResumeInput!) {
+                        analyzeResume(input: $input) {
+                            analysis
+                        }
+                    }
+                `,
+                    variables: {
+                        input: {
+                            userId: userSub,
+                            s3Path: getResumeS3Path(profileData.resumeName)
+                        }
+                    }
+                }),
             });
 
             if (!response.ok) {
@@ -285,7 +328,7 @@ function ProfileSetup() {
             const data = await response.json();
             console.log("Analysis response:", data);
 
-            if (data.data?.analyzeResume?.success) {
+            if (data.data?.analyzeResume?.analysis) {
                 const analysis = data.data.analyzeResume.analysis;
                 const formattedAnalysis = formatAnalysis(analysis);
                 setProfileData(prev => ({
@@ -294,6 +337,9 @@ function ProfileSetup() {
                 }));
                 setAnalysisResult(formattedAnalysis);
                 console.log('Resume analysis completed:', formattedAnalysis);
+
+                // Store the analysis in S3
+                await storeAnalysisInS3(analysis);
 
                 // Scroll to analysis result
                 setTimeout(() => {
@@ -313,7 +359,7 @@ function ProfileSetup() {
         } finally {
             setIsAnalyzing(false);
         }
-    };
+    }, [profileData, isAnalyzing, checkAnalysisExists, storeAnalysisInS3]);
 
     const formatAnalysis = (analysis) => {
         if (!analysis) return '';
@@ -538,7 +584,7 @@ function ProfileSetup() {
                                                 />
                                             </label>
                                         </div>
-                                    </>
+                                    </> 
                                 ) : (
                                     <>
                                         <p>Upload your resume to get started</p>
@@ -553,10 +599,10 @@ function ProfileSetup() {
                                                 />
                                             </label>
                                         </div>
-                                    </>
+                                    </> 
                                 )}
                             </div>
-                        </>
+                        </> 
                     ) : (
                         <div className="analytics-section">
                             <h2 className="section-title">Resume Analytics</h2>
