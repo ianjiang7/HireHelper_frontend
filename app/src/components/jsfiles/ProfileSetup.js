@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Header from "./Header";
 import awsmobile from "../../aws-exports";
@@ -23,6 +23,8 @@ function ProfileSetup() {
     const [analysisError, setAnalysisError] = useState(null);
     const [hasExistingAnalysis, setHasExistingAnalysis] = useState(false);
     const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+    const [analysisVersions, setAnalysisVersions] = useState([]);
+    const [currentVersionIndex, setCurrentVersionIndex] = useState(0);
 
     // Profile state
     const [profileData, setProfileData] = useState({
@@ -218,16 +220,135 @@ function ProfileSetup() {
         }
     };
 
-    // Function to get the analysis S3 path
-    const getAnalysisS3Path = useCallback(() => {
-        if (!userSub || !profileData?.resumeName) return null;
-        return `private/${userSub}/analysis/${profileData.resumeName.replace(/\.[^/.]+$/, '')}_analysis.json`;
+    // Function to list all analysis versions
+    const listAnalysisVersions = useCallback(async () => {
+        try {
+            if (!userSub || !profileData?.resumeName) return [];
+
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: await fetchAuthSession().then(session => session.credentials)
+            });
+
+            const prefix = `private/${userSub}/analysis/${profileData.resumeName.replace(/\.[^/.]+$/, '')}_analysis`;
+            const command = new ListObjectsV2Command({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Prefix: prefix
+            });
+
+            const response = await s3Client.send(command);
+            const versions = response.Contents || [];
+            
+            // Sort versions by last modified date
+            return versions.sort((a, b) => b.LastModified - a.LastModified)
+                .map(v => ({
+                    key: v.Key,
+                    version: parseInt(v.Key.match(/version_(\d+)/)?.[1] || '1'),
+                    lastModified: v.LastModified
+                }));
+        } catch (error) {
+            console.error('Error listing analysis versions:', error);
+            return [];
+        }
     }, [userSub, profileData]);
+
+    // Function to get next version number
+    const getNextVersionNumber = useCallback(async () => {
+        const versions = await listAnalysisVersions();
+        const maxVersion = versions.reduce((max, v) => Math.max(max, v.version), 0);
+        return maxVersion + 1;
+    }, [listAnalysisVersions]);
+
+    // Function to get analysis S3 path with version
+    const getAnalysisS3Path = useCallback(async (isNewVersion = false) => {
+        if (!userSub || !profileData?.resumeName) return null;
+        
+        const basePath = `private/${userSub}/analysis/${profileData.resumeName.replace(/\.[^/.]+$/, '')}_analysis`;
+        
+        if (isNewVersion) {
+            const nextVersion = await getNextVersionNumber();
+            return `${basePath}_version_${nextVersion}.json`;
+        }
+        
+        // Return latest version path
+        const versions = await listAnalysisVersions();
+        return versions.length > 0 ? versions[0].key : `${basePath}_version_1.json`;
+    }, [userSub, profileData, getNextVersionNumber, listAnalysisVersions]);
+
+    // Function to delete a specific version
+    const deleteAnalysisVersion = useCallback(async (versionKey) => {
+        try {
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: await fetchAuthSession().then(session => session.credentials)
+            });
+
+            const command = new DeleteObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: versionKey
+            });
+
+            await s3Client.send(command);
+            
+            // Refresh versions list
+            const versions = await listAnalysisVersions();
+            setAnalysisVersions(versions);
+            
+            // Update current version if needed
+            if (versions.length > 0) {
+                const currentVersion = versions[Math.min(currentVersionIndex, versions.length - 1)];
+                loadAnalysisVersion(currentVersion.key);
+            } else {
+                setAnalysisResult(null);
+                setHasExistingAnalysis(false);
+            }
+        } catch (error) {
+            console.error('Error deleting analysis version:', error);
+            throw error;
+        }
+    }, [currentVersionIndex, listAnalysisVersions]);
+
+    // Function to load a specific version
+    const loadAnalysisVersion = useCallback(async (versionKey) => {
+        try {
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: await fetchAuthSession().then(session => session.credentials)
+            });
+
+            const command = new GetObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: versionKey
+            });
+
+            const response = await s3Client.send(command);
+            const analysisText = await response.Body.transformToString();
+            setAnalysisResult(JSON.parse(analysisText));
+        } catch (error) {
+            console.error('Error loading analysis version:', error);
+            throw error;
+        }
+    }, []);
+
+    // Effect to load versions when resume changes
+    useEffect(() => {
+        const loadVersions = async () => {
+            const versions = await listAnalysisVersions();
+            setAnalysisVersions(versions);
+            setHasExistingAnalysis(versions.length > 0);
+            if (versions.length > 0) {
+                setCurrentVersionIndex(0);
+                await loadAnalysisVersion(versions[0].key);
+            }
+        };
+        
+        loadVersions();
+    }, [profileData?.resumeName, listAnalysisVersions, loadAnalysisVersion]);
 
     // Function to check if analysis exists
     const checkAnalysisExists = useCallback(async () => {
         try {
-            const analysisPath = getAnalysisS3Path();
+            const analysisPath = await getAnalysisS3Path();
             if (!analysisPath) return null;
 
             const s3Client = new S3Client({
@@ -255,11 +376,8 @@ function ProfileSetup() {
     }, [getAnalysisS3Path]);
 
     // Function to store analysis in S3
-    const storeAnalysisInS3 = useCallback(async (analysisResult) => {
+    const storeAnalysisInS3 = useCallback(async (analysisResult, analysisPath) => {
         try {
-            const analysisPath = getAnalysisS3Path();
-            if (!analysisPath) throw new Error('Cannot determine analysis path');
-
             const s3Client = new S3Client({
                 region: "us-east-1",
                 credentials: await fetchAuthSession().then(session => session.credentials)
@@ -277,7 +395,7 @@ function ProfileSetup() {
             console.error('Error storing analysis:', error);
             throw error;
         }
-    }, [getAnalysisS3Path]);
+    }, []);
 
     const handleAnalyzeResume = useCallback(async () => {
         if (!profileData?.resumeName || isAnalyzing) return;
@@ -334,24 +452,19 @@ function ProfileSetup() {
 
             if (data.data?.analyzeResume?.analysis) {
                 const analysis = data.data.analyzeResume.analysis;
-                const formattedAnalysis = formatAnalysis(analysis);
-                setProfileData(prev => ({
-                    ...prev,
-                    resumeAnalysis: formattedAnalysis
-                }));
-                setAnalysisResult(formattedAnalysis);
-                console.log('Resume analysis completed:', formattedAnalysis);
+                
+                // Store new version in S3
+                const newVersionPath = await getAnalysisS3Path(true);
+                await storeAnalysisInS3(analysis, newVersionPath);
+                
+                // Refresh versions list and display new version
+                const versions = await listAnalysisVersions();
+                setAnalysisVersions(versions);
+                setCurrentVersionIndex(0);
+                setAnalysisResult(analysis);
+                setHasExistingAnalysis(true);
+                setIsAnalysisOpen(true);
 
-                // Store the analysis in S3
-                await storeAnalysisInS3(analysis);
-
-                // Scroll to analysis result
-                setTimeout(() => {
-                    const resultElement = document.querySelector('.analysis-result');
-                    if (resultElement) {
-                        resultElement.scrollIntoView({ behavior: 'smooth' });
-                    }
-                }, 100);
             } else {
                 const errorMessage = data.data?.analyzeResume?.error || 'Unknown error occurred';
                 console.error('Resume analysis failed:', errorMessage);
@@ -363,7 +476,7 @@ function ProfileSetup() {
         } finally {
             setIsAnalyzing(false);
         }
-    }, [profileData, isAnalyzing, checkAnalysisExists, storeAnalysisInS3, userSub]);
+    }, [profileData, isAnalyzing, userSub, getAnalysisS3Path, storeAnalysisInS3, listAnalysisVersions]);
 
     const checkForExistingAnalysis = useCallback(async () => {
         if (!profileData?.resumeName) return;
@@ -640,19 +753,50 @@ function ProfileSetup() {
                                     <p>Current Resume: {resumeName}</p>
                                     {hasExistingAnalysis ? (
                                         <div className="analysis-actions">
-                                            <button 
-                                                className={`view-analysis-button ${isAnalysisOpen ? 'active' : ''}`}
-                                                onClick={toggleAnalysis}
-                                            >
-                                                {isAnalysisOpen ? 'Hide Analysis' : 'View Analysis'}
-                                            </button>
-                                            <button 
-                                                className="analyze-button"
-                                                onClick={handleAnalyzeResume} 
-                                                disabled={isAnalyzing}
-                                            >
-                                                Reanalyze Resume
-                                            </button>
+                                            <div className="analysis-controls">
+                                                <button 
+                                                    className={`view-analysis-button ${isAnalysisOpen ? 'active' : ''}`}
+                                                    onClick={toggleAnalysis}
+                                                >
+                                                    {isAnalysisOpen ? 'Hide Analysis' : 'View Analysis'}
+                                                </button>
+                                                <button 
+                                                    className="analyze-button"
+                                                    onClick={handleAnalyzeResume} 
+                                                    disabled={isAnalyzing}
+                                                >
+                                                    New Analysis
+                                                </button>
+                                            </div>
+                                            {isAnalysisOpen && analysisVersions.length > 0 && (
+                                                <div className="version-controls">
+                                                    <select
+                                                        value={currentVersionIndex}
+                                                        onChange={(e) => {
+                                                            const newIndex = parseInt(e.target.value);
+                                                            setCurrentVersionIndex(newIndex);
+                                                            loadAnalysisVersion(analysisVersions[newIndex].key);
+                                                        }}
+                                                    >
+                                                        {analysisVersions.map((version, index) => (
+                                                            <option key={version.key} value={index}>
+                                                                Version {version.version} ({new Date(version.lastModified).toLocaleDateString()})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <button
+                                                        className="delete-version-button"
+                                                        onClick={() => {
+                                                            if (window.confirm('Are you sure you want to delete this version?')) {
+                                                                deleteAnalysisVersion(analysisVersions[currentVersionIndex].key);
+                                                            }
+                                                        }}
+                                                        disabled={analysisVersions.length <= 1}
+                                                    >
+                                                        Delete Version
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <button 
