@@ -5,6 +5,7 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } fro
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Header from "./Header";
 import awsmobile from "../../aws-exports";
+import ReactMarkdown from 'react-markdown';
 import "../cssfiles/ProfileSetup.css";
 
 function ProfileSetup() {
@@ -229,6 +230,9 @@ function ProfileSetup() {
                 return;
             }
 
+            setIsAnalyzing(true);
+            setAnalysisError(null);
+
             // Construct S3 path
             const s3Path = getResumeS3Path(profileData.resumeName);
             console.log('Analyzing resume at path:', s3Path);
@@ -283,12 +287,21 @@ function ProfileSetup() {
 
             if (data.data?.analyzeResume?.success) {
                 const analysis = data.data.analyzeResume.analysis;
+                const formattedAnalysis = formatAnalysis(analysis);
                 setProfileData(prev => ({
                     ...prev,
-                    resumeAnalysis: analysis
+                    resumeAnalysis: formattedAnalysis
                 }));
-                setAnalysisResult(analysis);
-                console.log('Resume analysis completed:', analysis);
+                setAnalysisResult(formattedAnalysis);
+                console.log('Resume analysis completed:', formattedAnalysis);
+
+                // Scroll to analysis result
+                setTimeout(() => {
+                    const resultElement = document.querySelector('.analysis-result');
+                    if (resultElement) {
+                        resultElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 100);
             } else {
                 const errorMessage = data.data?.analyzeResume?.error || 'Unknown error occurred';
                 console.error('Resume analysis failed:', errorMessage);
@@ -297,7 +310,21 @@ function ProfileSetup() {
         } catch (error) {
             console.error('Error analyzing resume:', error);
             setAnalysisError(error.message || 'Failed to analyze resume');
+        } finally {
+            setIsAnalyzing(false);
         }
+    };
+
+    const formatAnalysis = (analysis) => {
+        if (!analysis) return '';
+        
+        // Replace ** with markdown headers
+        let formatted = analysis
+            .replace(/\*\*\*(.*?)\*\*\*/g, '### $1')  // Replace *** with ###
+            .replace(/\*\*(.*?)\*\*/g, '## $1')       // Replace ** with ##
+            .replace(/\*(.*?)\*/g, '*$1*');           // Keep single * for italics
+            
+        return formatted;
     };
 
     const handleDeleteResume = async () => {
@@ -541,9 +568,9 @@ function ProfileSetup() {
                                 <div className="analytics-content">
                                     <p>Current Resume: {resumeName}</p>
                                     <button 
-                                        className="analyze-button"
-                                        onClick={handleAnalyzeResume}
-                                        disabled={isAnalyzing || !resumeName}
+                                        className={`analyze-button ${isAnalyzing ? 'loading' : ''}`}
+                                        onClick={handleAnalyzeResume} 
+                                        disabled={isAnalyzing || !profileData.resumeName}
                                     >
                                         {isAnalyzing ? 'Analyzing...' : 'Analyze Resume'}
                                     </button>
@@ -565,9 +592,9 @@ function ProfileSetup() {
                                             
                                             {analysisResult && (
                                                 <div className="analysis-result">
-                                                    <h3>Resume Analysis</h3>
+                                                    <h2>Resume Analysis</h2>
                                                     <div className="analysis-content">
-                                                        {analysisResult}
+                                                        <ReactMarkdown>{analysisResult}</ReactMarkdown>
                                                     </div>
                                                 </div>
                                             )}
