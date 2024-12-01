@@ -162,7 +162,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             const { tokens } = await fetchAuthSession();
             const idToken = tokens.idToken.toString();
 
-            console.log("Analyzing resume with path:", `private/${userSub}/resumes/${resumeName}`);
+            console.log("Analyzing resume with path:", `private/${userSub}/${resumeName}`);
             
             const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
                 method: 'POST',
@@ -175,7 +175,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                     variables: {
                         input: {
                             userId: userSub,
-                            s3Path: `private/${userSub}/resumes/${resumeName}`
+                            s3Path: `private/${userSub}/${resumeName}`
                         }
                     }
                 })
