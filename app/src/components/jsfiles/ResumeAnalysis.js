@@ -13,11 +13,11 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const [analysisVersions, setAnalysisVersions] = useState([]);
     const [currentVersionIndex, setCurrentVersionIndex] = useState(0);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showAnalysis, setShowAnalysis] = useState(false);
 
     // Function to list all analysis versions
     const listAnalysisVersions = useCallback(async () => {
         if (!userSub || !resumeName) {
-            console.log("Missing userSub or resumeName", { userSub, resumeName });
             return;
         }
         
@@ -34,7 +34,6 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             });
 
             const prefix = `private/${userSub}/analysis/${resumeName.replace(/\.[^/.]+$/, '')}_analysis_version_`;
-            console.log("Searching for versions with prefix:", prefix);
             
             const command = new ListObjectsV2Command({
                 Bucket: "alumnireachresumestorage74831-dev",
@@ -43,7 +42,6 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
             const response = await s3Client.send(command);
             const versions = response.Contents || [];
-            console.log("Found versions:", versions);
             
             // Sort versions by last modified date, newest first
             versions.sort((a, b) => b.LastModified - a.LastModified);
@@ -64,11 +62,9 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         try {
             const version = analysisVersions[versionIndex];
             if (!version) {
-                console.log("No version found at index:", versionIndex);
                 return;
             }
 
-            console.log("Loading version:", version.Key);
             const { credentials } = await fetchAuthSession();
             const s3Client = new S3Client({
                 region: "us-east-1",
@@ -86,10 +82,8 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
             const response = await s3Client.send(command);
             const analysisText = await response.Body.transformToString();
-            console.log("Loaded analysis text:", analysisText);
             
             const parsedAnalysis = JSON.parse(analysisText);
-            console.log("Parsed analysis:", parsedAnalysis);
             
             setAnalysisResult(parsedAnalysis);
             setCurrentVersionIndex(versionIndex);
@@ -161,8 +155,6 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         try {
             const { tokens } = await fetchAuthSession();
             const idToken = tokens.idToken.toString();
-
-            console.log("Analyzing resume with path:", `private/${userSub}/${resumeName}`);
             
             const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
                 method: 'POST',
@@ -182,7 +174,6 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             });
 
             const data = await response.json();
-            console.log("Analysis response:", data);
 
             if (data.errors) {
                 throw new Error(data.errors[0].message);
@@ -193,13 +184,11 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             }
 
             const result = data.data.analyzeResume;
-            console.log("Analysis result:", result);
 
             if (!result.analysis) {
                 throw new Error('Analysis is empty');
             }
 
-            // Create a formatted result object
             const formattedResult = {
                 analysis: result.analysis,
                 success: result.success,
@@ -207,6 +196,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             };
 
             setAnalysisResult(formattedResult);
+            setShowAnalysis(true);
 
             // Save new version to S3
             const versionNumber = getNextVersionNumber();
@@ -221,7 +211,6 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             });
 
             const key = `private/${userSub}/analysis/${resumeName.replace(/\.[^/.]+$/, '')}_analysis_version_${versionNumber}.json`;
-            console.log("Saving analysis to S3:", key);
 
             const command = new PutObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
@@ -231,8 +220,6 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             });
 
             await s3Client.send(command);
-            console.log("Analysis saved to S3");
-            
             await listAnalysisVersions();
             setCurrentVersionIndex(0);
         } catch (error) {
@@ -243,101 +230,86 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         }
     };
 
-    // Load versions when component mounts or resume changes
-    useEffect(() => {
-        if (resumeName && userSub) {
-            listAnalysisVersions();
-        }
-    }, [resumeName, userSub, listAnalysisVersions]);
+    const renderAnalysisContent = () => {
+        if (!analysisResult) return null;
 
-    const formatAnalysis = (analysis) => {
-        if (!analysis) {
-            console.log("No analysis to format");
-            return '';
-        }
-        
-        console.log("Formatting analysis:", analysis);
-        let formatted = analysis
-            .replace(/\*\*\*(.*?)\*\*\*/g, '### $1')
-            .replace(/\*\*(.*?)\*\*/g, '## $1')
-            .replace(/\*(.*?)\*/g, '*$1*');
-            
-        console.log("Formatted analysis:", formatted);
-        return formatted;
-    };
-
-    if (!resumeName) {
         return (
-            <div className="upload-prompt">
-                <p>Please upload your resume first to view analytics.</p>
-            </div>
-        );
-    }
-
-    if (isAnalyzing || isLoading) {
-        return (
-            <div className="analyzing-message">
-                <p>{isAnalyzing ? "Analyzing your resume..." : "Loading analysis..."}</p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="analysis-section">
-            <div className="analysis-content">
-                <div className="analysis-header">
-                    <div className="version-controls">
-                        {analysisVersions.length > 0 && (
-                            <>
-                                <select 
-                                    value={currentVersionIndex}
-                                    onChange={(e) => loadAnalysisVersion(parseInt(e.target.value))}
-                                    className="version-selector"
-                                >
-                                    {analysisVersions.map((version, index) => {
-                                        const date = new Date(version.LastModified).toLocaleDateString();
-                                        return (
-                                            <option key={version.Key} value={index}>
-                                                Version {analysisVersions.length - index} ({date})
-                                            </option>
-                                        );
-                                    })}
-                                </select>
-                                <button 
-                                    onClick={() => setShowDeleteConfirm(true)}
-                                    className="delete-version-btn"
-                                    disabled={analysisVersions.length <= 1}
-                                >
-                                    Delete Version
-                                </button>
-                            </>
-                        )}
-                        <button 
-                            onClick={handleAnalyzeResume}
-                            className="new-analysis-btn"
-                        >
-                            {analysisVersions.length === 0 ? 'Analyze Resume' : 'New Analysis'}
-                        </button>
-                    </div>
-                    {showDeleteConfirm && (
-                        <div className="delete-confirm">
-                            <p>Are you sure you want to delete this version?</p>
-                            <div className="delete-confirm-buttons">
-                                <button onClick={deleteAnalysisVersion}>Yes, Delete</button>
-                                <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-                {analysisResult && (
-                    <div className="analysis-results">
-                        <pre>{JSON.stringify(analysisResult, null, 2)}</pre>
-                        <div className="markdown-content">
-                            <ReactMarkdown>{formatAnalysis(analysisResult.analysis)}</ReactMarkdown>
+            <div className="analysis-container">
+                <button 
+                    className="analysis-button"
+                    onClick={() => setShowAnalysis(!showAnalysis)}
+                >
+                    {showAnalysis ? 'Hide Analysis' : 'View Analysis'}
+                </button>
+                
+                {showAnalysis && (
+                    <div className="analysis-dropdown">
+                        <div className="analysis-content">
+                            <ReactMarkdown>{analysisResult.analysis}</ReactMarkdown>
                         </div>
                     </div>
                 )}
             </div>
+        );
+    };
+
+    const renderVersionControls = () => {
+        if (analysisVersions.length === 0) return null;
+
+        return (
+            <div className="version-controls">
+                <select 
+                    value={currentVersionIndex}
+                    onChange={(e) => loadAnalysisVersion(parseInt(e.target.value))}
+                    className="version-selector"
+                >
+                    {analysisVersions.map((version, index) => {
+                        const date = new Date(version.LastModified).toLocaleDateString();
+                        return (
+                            <option key={version.Key} value={index}>
+                                Version {analysisVersions.length - index} ({date})
+                            </option>
+                        );
+                    })}
+                </select>
+                <button 
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="delete-version-btn"
+                    disabled={analysisVersions.length <= 1}
+                >
+                    Delete Version
+                </button>
+            </div>
+        );
+    };
+
+    return (
+        <div>
+            <button 
+                onClick={handleAnalyzeResume}
+                disabled={isAnalyzing}
+                className="analyze-button"
+            >
+                {isAnalyzing ? (
+                    <>
+                        Analyzing Resume
+                        <div className="loading-spinner" />
+                    </>
+                ) : (
+                    'Analyze Resume'
+                )}
+            </button>
+            {renderVersionControls()}
+            {renderAnalysisContent()}
+            {showDeleteConfirm && (
+                <div className="delete-confirm">
+                    <p>Are you sure you want to delete this version?</p>
+                    <div className="delete-confirm-buttons">
+                        <button onClick={deleteAnalysisVersion}>Yes, Delete</button>
+                        <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
