@@ -15,7 +15,10 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
     // Function to list all analysis versions
     const listAnalysisVersions = useCallback(async () => {
-        if (!userSub || !resumeName) return;
+        if (!userSub || !resumeName) {
+            console.log("Missing userSub or resumeName", { userSub, resumeName });
+            return;
+        }
         
         setIsLoading(true);
         try {
@@ -30,6 +33,8 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             });
 
             const prefix = `private/${userSub}/analysis/${resumeName.replace(/\.[^/.]+$/, '')}_analysis_version_`;
+            console.log("Searching for versions with prefix:", prefix);
+            
             const command = new ListObjectsV2Command({
                 Bucket: "alumnireachresumestorage74831-dev",
                 Prefix: prefix
@@ -37,6 +42,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
             const response = await s3Client.send(command);
             const versions = response.Contents || [];
+            console.log("Found versions:", versions);
             
             // Sort versions by last modified date, newest first
             versions.sort((a, b) => b.LastModified - a.LastModified);
@@ -52,24 +58,16 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         }
     }, [userSub, resumeName]);
 
-    // Function to get the next version number
-    const getNextVersionNumber = () => {
-        if (analysisVersions.length === 0) return 1;
-        
-        const versionNumbers = analysisVersions.map(version => {
-            const match = version.Key.match(/_version_(\d+)\.json$/);
-            return match ? parseInt(match[1]) : 0;
-        });
-        
-        return Math.max(...versionNumbers) + 1;
-    };
-
     // Function to load a specific version
     const loadAnalysisVersion = async (versionIndex) => {
         try {
             const version = analysisVersions[versionIndex];
-            if (!version) return;
+            if (!version) {
+                console.log("No version found at index:", versionIndex);
+                return;
+            }
 
+            console.log("Loading version:", version.Key);
             const { credentials } = await fetchAuthSession();
             const s3Client = new S3Client({
                 region: "us-east-1",
@@ -87,11 +85,28 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
             const response = await s3Client.send(command);
             const analysisText = await response.Body.transformToString();
-            setAnalysisResult(JSON.parse(analysisText));
+            console.log("Loaded analysis text:", analysisText);
+            
+            const parsedAnalysis = JSON.parse(analysisText);
+            console.log("Parsed analysis:", parsedAnalysis);
+            
+            setAnalysisResult(parsedAnalysis);
             setCurrentVersionIndex(versionIndex);
         } catch (error) {
             console.error('Error loading analysis version:', error);
         }
+    };
+
+    // Function to get the next version number
+    const getNextVersionNumber = () => {
+        if (analysisVersions.length === 0) return 1;
+        
+        const versionNumbers = analysisVersions.map(version => {
+            const match = version.Key.match(/_version_(\d+)\.json$/);
+            return match ? parseInt(match[1]) : 0;
+        });
+        
+        return Math.max(...versionNumbers) + 1;
     };
 
     // Function to delete a version
@@ -220,13 +235,18 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     }, [resumeName, userSub, listAnalysisVersions]);
 
     const formatAnalysis = (analysis) => {
-        if (!analysis) return '';
+        if (!analysis) {
+            console.log("No analysis to format");
+            return '';
+        }
         
+        console.log("Formatting analysis:", analysis);
         let formatted = analysis
             .replace(/\*\*\*(.*?)\*\*\*/g, '### $1')
             .replace(/\*\*(.*?)\*\*/g, '## $1')
             .replace(/\*(.*?)\*/g, '*$1*');
             
+        console.log("Formatted analysis:", formatted);
         return formatted;
     };
 
@@ -295,7 +315,10 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                 </div>
                 {analysisResult && (
                     <div className="analysis-results">
-                        <ReactMarkdown>{formatAnalysis(analysisResult.analysis)}</ReactMarkdown>
+                        <pre>{JSON.stringify(analysisResult, null, 2)}</pre>
+                        <div className="markdown-content">
+                            <ReactMarkdown>{formatAnalysis(analysisResult.analysis)}</ReactMarkdown>
+                        </div>
                     </div>
                 )}
             </div>
