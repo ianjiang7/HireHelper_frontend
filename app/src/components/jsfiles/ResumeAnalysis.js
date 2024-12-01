@@ -9,12 +9,14 @@ import "../cssfiles/ResumeAnalysis.css";
 function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const [analysisResult, setAnalysisResult] = useState(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [analysisVersions, setAnalysisVersions] = useState([]);
     const [currentVersionIndex, setCurrentVersionIndex] = useState(0);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [versionsLoaded, setVersionsLoaded] = useState(false);
+    const [selectedVersion, setSelectedVersion] = useState(null);
+    const [showAnalyzeConfirm, setShowAnalyzeConfirm] = useState(false);
 
     // Function to list all analysis versions
     const listAnalysisVersions = useCallback(async () => {
@@ -56,33 +58,15 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         }
     }, [userSub, resumeName]);
 
-    // Load versions and latest analysis when component mounts
+    // Load versions when component mounts
     useEffect(() => {
-        const loadInitialAnalysis = async () => {
-            if (!resumeName || !userSub) {
-                setIsLoading(false);
-                return;
-            }
-            
-            try {
-                setIsLoading(true);
-                const versions = await listAnalysisVersions();
-                
-                if (versions.length > 0) {
-                    await loadAnalysisVersion(0);
-                    setShowAnalysis(true);
-                }
-            } catch (error) {
-                console.error('Error loading initial analysis:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        loadInitialAnalysis();
+        if (resumeName && userSub) {
+            listAnalysisVersions();
+        }
     }, [resumeName, userSub, listAnalysisVersions]);
 
     const loadAnalysisVersion = async (versionIndex) => {
+        setIsLoading(true);
         try {
             const version = analysisVersions[versionIndex];
             if (!version) {
@@ -110,17 +94,20 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             
             setAnalysisResult(parsedAnalysis);
             setCurrentVersionIndex(versionIndex);
+            setShowAnalysis(true);
         } catch (error) {
             console.error('Error loading analysis version:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const renderAnalysisContent = () => {
-        if (isLoading) {
+        if (!versionsLoaded) {
             return (
                 <div className="analysis-container">
                     <div className="loading-spinner" />
-                    <p>Loading analysis...</p>
+                    <p>Loading versions...</p>
                 </div>
             );
         }
@@ -128,12 +115,12 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         if (versionsLoaded && analysisVersions.length === 0) {
             return (
                 <div className="analysis-container">
-                    <p>No analysis available yet. Click "Analyze Resume" to generate one.</p>
+                    <p>No analysis available yet. Click "New Analysis" to generate one.</p>
                 </div>
             );
         }
 
-        if (!analysisResult && !isAnalyzing) {
+        if (isLoading) {
             return (
                 <div className="analysis-container">
                     <div className="loading-spinner" />
@@ -144,14 +131,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
         return (
             <div className="analysis-container">
-                <button 
-                    className="analysis-button"
-                    onClick={() => setShowAnalysis(!showAnalysis)}
-                >
-                    {showAnalysis ? 'Hide Analysis' : 'View Analysis'}
-                </button>
-                
-                {showAnalysis && (
+                {analysisResult && showAnalysis && (
                     <div className="analysis-dropdown">
                         <div className="analysis-content">
                             <ReactMarkdown>{analysisResult.analysis}</ReactMarkdown>
@@ -168,10 +148,11 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         return (
             <div className="version-controls">
                 <select 
-                    value={currentVersionIndex}
-                    onChange={(e) => loadAnalysisVersion(parseInt(e.target.value))}
+                    value={selectedVersion === null ? "" : selectedVersion}
+                    onChange={(e) => setSelectedVersion(parseInt(e.target.value))}
                     className="version-selector"
                 >
+                    <option value="">Select a version...</option>
                     {analysisVersions.map((version, index) => {
                         const date = new Date(version.LastModified).toLocaleDateString();
                         return (
@@ -181,10 +162,17 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                         );
                     })}
                 </select>
+                <button
+                    onClick={() => loadAnalysisVersion(selectedVersion)}
+                    className="view-button"
+                    disabled={selectedVersion === null}
+                >
+                    View Analysis
+                </button>
                 <button 
                     onClick={() => setShowDeleteConfirm(true)}
                     className="delete-version-btn"
-                    disabled={analysisVersions.length <= 1}
+                    disabled={analysisVersions.length <= 1 || selectedVersion === null}
                 >
                     Delete Version
                 </button>
@@ -212,7 +200,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                 return;
             }
 
-            const versionToDelete = analysisVersions[currentVersionIndex];
+            const versionToDelete = analysisVersions[selectedVersion];
             const { credentials } = await fetchAuthSession();
             const s3Client = new S3Client({
                 region: "us-east-1",
@@ -232,7 +220,8 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             await listAnalysisVersions();
             
             if (analysisVersions.length > 0) {
-                await loadAnalysisVersion(0);
+                setSelectedVersion(0);
+                loadAnalysisVersion(0);
             } else {
                 setAnalysisResult(null);
             }
@@ -321,7 +310,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
             await s3Client.send(command);
             await listAnalysisVersions();
-            setCurrentVersionIndex(0);
+            setSelectedVersion(0);
         } catch (error) {
             console.error('Error analyzing resume:', error);
             alert('Failed to analyze resume. Please try again.');
@@ -330,33 +319,62 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         }
     };
 
+    const confirmAnalyzeResume = () => {
+        setShowAnalyzeConfirm(true);
+    };
+
+    const handleConfirmedAnalysis = async () => {
+        setShowAnalyzeConfirm(false);
+        await handleAnalyzeResume();
+    };
+
     return (
-        <div>
-            <button 
-                onClick={handleAnalyzeResume}
-                disabled={isAnalyzing}
-                className="analyze-button"
-            >
-                {isAnalyzing ? (
-                    <>
-                        Analyzing Resume
-                        <div className="loading-spinner" />
-                    </>
-                ) : (
-                    'Analyze Resume'
-                )}
-            </button>
-            {renderVersionControls()}
-            {renderAnalysisContent()}
-            {showDeleteConfirm && (
-                <div className="delete-confirm">
-                    <p>Are you sure you want to delete this version?</p>
-                    <div className="delete-confirm-buttons">
-                        <button onClick={deleteAnalysisVersion}>Yes, Delete</button>
-                        <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+        <div className="resume-analysis">
+            {showAnalyzeConfirm && (
+                <div className="confirm-dialog">
+                    <div className="confirm-content">
+                        <h3>Create New Analysis</h3>
+                        <p>Are you sure you want to create a new analysis version for resume "{resumeName}"?</p>
+                        <div className="confirm-buttons">
+                            <button onClick={handleConfirmedAnalysis} className="confirm-yes">Yes, Create New Analysis</button>
+                            <button onClick={() => setShowAnalyzeConfirm(false)} className="confirm-no">Cancel</button>
+                        </div>
                     </div>
                 </div>
             )}
+
+            <div className="analysis-header">
+                <button
+                    onClick={confirmAnalyzeResume}
+                    className="new-analysis-btn"
+                    disabled={isAnalyzing || !resumeName}
+                >
+                    {isAnalyzing ? (
+                        <>
+                            <div className="loading-spinner" />
+                            Analyzing...
+                        </>
+                    ) : (
+                        "New Analysis"
+                    )}
+                </button>
+                {renderVersionControls()}
+            </div>
+
+            {showDeleteConfirm && (
+                <div className="confirm-dialog">
+                    <div className="confirm-content">
+                        <h3>Delete Analysis Version</h3>
+                        <p>Are you sure you want to delete this analysis version? This action cannot be undone.</p>
+                        <div className="confirm-buttons">
+                            <button onClick={deleteAnalysisVersion} className="confirm-yes">Yes, Delete</button>
+                            <button onClick={() => setShowDeleteConfirm(false)} className="confirm-no">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {renderAnalysisContent()}
         </div>
     );
 }
