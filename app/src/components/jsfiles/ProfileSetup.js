@@ -5,6 +5,7 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, List
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Header from "./Header";
 import SearchResults from "./SearchResults";
+import ResumeAnalysis from "./ResumeAnalysis";
 import awsmobile from "../../aws-exports";
 import ReactMarkdown from 'react-markdown';
 import "../cssfiles/ProfileSetup.css";
@@ -13,12 +14,10 @@ function ProfileSetup() {
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState("profile");
     const [userSub, setUserSub] = useState("");
-    const [resumeName, setResumeName] = useState("");
-    const [resumeUrl, setResumeUrl] = useState("");
-    const [isUploading, setIsUploading] = useState(false);
     const [isSignedIn, setIsSignedIn] = useState(true);
     const [authSession, setAuthSession] = useState();
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState(null);
     const [analysisError, setAnalysisError] = useState(null);
@@ -693,71 +692,21 @@ function ProfileSetup() {
                     ) : activeSection === "analytics" ? (
                         <div className="analytics-section">
                             <h2 className="section-title">Resume Analytics</h2>
-                            {!resumeName ? (
-                                <div className="upload-prompt">
-                                    <p>Please upload your resume first to view analytics.</p>
-                                </div>
-                            ) : isAnalyzing ? (
-                                <div className="analyzing-message">
-                                    <p>Analyzing your resume...</p>
-                                </div>
-                            ) : isAnalysisOpen && analysisResult ? (
-                                <div className="analysis-content">
-                                    <div className="analysis-header">
-                                        <div className="version-controls">
-                                            <select 
-                                                value={currentVersionIndex}
-                                                onChange={(e) => loadAnalysisVersion(parseInt(e.target.value))}
-                                                className="version-selector"
-                                            >
-                                                {analysisVersions.map((version, index) => {
-                                                    const date = new Date(version.LastModified).toLocaleDateString();
-                                                    return (
-                                                        <option key={version.Key} value={index}>
-                                                            Version {analysisVersions.length - index} ({date})
-                                                        </option>
-                                                    );
-                                                })}
-                                            </select>
-                                            <button 
-                                                onClick={() => setShowDeleteConfirm(true)}
-                                                className="delete-version-btn"
-                                                disabled={analysisVersions.length <= 1}
-                                            >
-                                                Delete Version
-                                            </button>
-                                            <button 
-                                                onClick={handleAnalyzeResume}
-                                                className="new-analysis-btn"
-                                            >
-                                                New Analysis
-                                            </button>
-                                        </div>
-                                        {showDeleteConfirm && (
-                                            <div className="delete-confirm">
-                                                <p>Are you sure you want to delete this version?</p>
-                                                <div className="delete-confirm-buttons">
-                                                    <button onClick={deleteAnalysisVersion}>Yes, Delete</button>
-                                                    <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="analysis-results">
-                                        <ReactMarkdown>{formatAnalysis(analysisResult.analysis)}</ReactMarkdown>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="analysis-actions">
-                                    <button 
-                                        onClick={handleAnalyzeResume}
-                                        className="analyze-btn"
-                                        disabled={!resumeName}
-                                    >
-                                        Analyze Resume
-                                    </button>
-                                </div>
-                            )}
+                            <ResumeAnalysis 
+                                userSub={userSub}
+                                resumeName={resumeName}
+                                resumeUrl={resumeUrl}
+                                analysisResult={analysisResult}
+                                analysisVersions={analysisVersions}
+                                currentVersionIndex={currentVersionIndex}
+                                loadAnalysisVersion={loadAnalysisVersion}
+                                deleteAnalysisVersion={deleteAnalysisVersion}
+                                handleAnalyzeResume={handleAnalyzeResume}
+                                isAnalyzing={isAnalyzing}
+                                isAnalysisOpen={isAnalysisOpen}
+                                showDeleteConfirm={showDeleteConfirm}
+                                setShowDeleteConfirm={setShowDeleteConfirm}
+                            />
                         </div>
                     ) : activeSection === "people" ? (
                         <div className="people-section">
