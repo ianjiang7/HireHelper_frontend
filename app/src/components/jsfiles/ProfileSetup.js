@@ -563,12 +563,6 @@ function ProfileSetup() {
                     <h2>AlumniReach</h2>
                     <ul className="sidebar-menu">
                         <li 
-                            className={activeSection === "profile" ? "active" : ""}
-                            onClick={() => setActiveSection("profile")}
-                        >
-                            <i className="fas fa-user"></i> Profile
-                        </li>
-                        <li 
                             className={activeSection === "analytics" ? "active" : ""}
                             onClick={() => setActiveSection("analytics")}
                         >
@@ -580,13 +574,13 @@ function ProfileSetup() {
                         >
                             <i className="fas fa-users"></i> People
                         </li>
+                        <li 
+                            className={activeSection === "profile" ? "active" : ""}
+                            onClick={() => setActiveSection("profile")}
+                        >
+                            <i className="fas fa-user"></i> Profile
+                        </li>
                     </ul>
-                    <div 
-                        className="sign-out-button"
-                        onClick={handleSignOut}
-                    >
-                        <i className="fas fa-sign-out-alt"></i> Sign Out
-                    </div>
                 </div>
 
                 <div className="main-content">

@@ -1,8 +1,18 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHouse, faUser, faUsersLine, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faHouse, faUser, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { signOut } from "aws-amplify/auth";
 
 function Header({ navigate, isAlumni, isSignedIn }) {
+    const handleSignOut = async () => {
+        try {
+            await signOut();
+            navigate("/alumni-login");
+        } catch (err) {
+            console.error("Error signing out: ", err);
+        }
+    };
+
     return (
         <nav
             style={{
@@ -28,7 +38,7 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                     fontSize: "1.75rem",
                     fontWeight: "bold",
                     cursor: "pointer",
-                    color: "#8a2be2", // Dark blue text color
+                    color: "#8a2be2",
                 }}
                 onClick={() => navigate("/")}
             >
@@ -39,7 +49,7 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                     onClick={() => navigate("/")}
                     style={{
                         fontSize: "1rem",
-                        fontWeight: 500,
+                        padding: "0.5rem",
                         color: "purple",
                         background: "none",
                         border: "none",
@@ -49,22 +59,10 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                    <FontAwesomeIcon icon={faHouse} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
                 </button>
                 <button
-                    onClick={() => navigate("/search-results")}
-                    style={{
-                        fontSize: "1rem",
-                        fontWeight: 500,
-                        color: "purple",
-                        background: "none",
-                        border: "none",
-                    }}
-                >
-                    <FontAwesomeIcon icon={faMagnifyingGlass} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
-                </button>
-                <button
                     onClick={() => navigate("/profile-setup")}
                     style={{
                         fontSize: "1rem",
-                        fontWeight: 500,
+                        padding: "0.5rem",
                         color: "purple",
                         background: "none",
                         border: "none",
@@ -74,17 +72,17 @@ function Header({ navigate, isAlumni, isSignedIn }) {
                     <FontAwesomeIcon icon={faUser} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
                 </button>
                 <button
-                    onClick={() => navigate("/my-connections")}
+                    onClick={handleSignOut}
                     style={{
                         fontSize: "1rem",
-                        fontWeight: 500,
+                        padding: "0.5rem",
                         color: "purple",
-                        cursor: "pointer",
                         background: "none",
                         border: "none",
+                        cursor: "pointer",
                     }}
                 >
-                    <FontAwesomeIcon icon={faUsersLine} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
+                    <FontAwesomeIcon icon={faRightFromBracket} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
                 </button>
             </div>
         </nav>
