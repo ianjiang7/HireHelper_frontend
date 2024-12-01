@@ -12,6 +12,9 @@
 }
 
 body {
+    margin: 0;
+    padding: 0;
+    background-color: white;
     color: #000000;
     min-height: 100vh;
     display: flex;
@@ -19,7 +22,6 @@ body {
     align-items: center;
 }
 
-.app {
+.App {
     width: 100%;
 }
-

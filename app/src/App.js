@@ -1,36 +1,46 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./components/jsfiles/Home";
-import ProfileSetup from "./components/jsfiles/ProfileSetup";
-import AlumniLogin from "./components/jsfiles/AlumniLogin";
-import Signup from "./components/jsfiles/Signup";
-import MyConnections from "./components/jsfiles/MyConnections";
-import MyJobPostings from "./components/jsfiles/MyJobPostings";
-import SearchResults from "./components/jsfiles/SearchResults";
-import "./App.css";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import ProfileSetup from './components/jsfiles/ProfileSetup';
+import AlumniLogin from './components/jsfiles/AlumniLogin';
+import Signup from './components/jsfiles/Signup';
+import './App.css';
 import { Amplify } from 'aws-amplify';
 import awsExports from './aws-exports';
-import ProtectedRoute from "./components/jsfiles/ProtectedRoute";
-import { AuthProvider } from './components/jsfiles/AuthContext'
+import { AuthProvider } from './components/jsfiles/AuthContext';
+import ProtectedRoute from './components/jsfiles/ProtectedRoute';
 
 Amplify.configure(awsExports);
 
 function App() {
-    return (
-        <AuthProvider>
-            <Router>
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/alumni-login" element={<AlumniLogin />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/profile-setup" element={<ProfileSetup />} />
-                    <Route path="/my-connections" element={<ProtectedRoute><MyConnections /></ProtectedRoute>} />
-                    <Route path="/my-job-postings" element={<ProtectedRoute><MyJobPostings /></ProtectedRoute>} />
-                    <Route path="/search-results" element={<SearchResults />} />
-                </Routes>
-            </Router>
-        </AuthProvider>
-    );
+  return (
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/alumni-login" element={<AlumniLogin />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route 
+              path="/profile-setup" 
+              element={
+                <ProtectedRoute>
+                  <ProfileSetup />
+                </ProtectedRoute>
+              } 
+            />
+            {/* Redirect authenticated users to profile-setup, unauthenticated to login */}
+            <Route 
+              path="*" 
+              element={
+                <ProtectedRoute>
+                  <Navigate to="/profile-setup" replace />
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
+  );
 }
 
 export default App;

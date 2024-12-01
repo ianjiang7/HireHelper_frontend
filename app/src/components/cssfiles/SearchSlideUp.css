@@ -1,0 +1,153 @@
+.search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.search-slide-up {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    padding: 2rem;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-out;
+    z-index: 1001;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-slide-up.active {
+    transform: translateY(0);
+}
+
+.slide-handle {
+    width: 40px;
+    height: 4px;
+    background-color: #CBD5E0;
+    border-radius: 2px;
+    margin: 0 auto 1.5rem;
+    cursor: pointer;
+}
+
+.search-content {
+    text-align: center;
+    padding: 2rem;
+}
+
+.search-title {
+    font-size: 1.5rem;
+    color: #2D3748;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.search-description {
+    color: #4A5568;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.begin-search-btn {
+    padding: 1rem 2rem;
+    background-color: #6b46c1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0 auto;
+}
+
+.begin-search-btn:hover:not(:disabled) {
+    background-color: #553c9a;
+    transform: translateY(-2px);
+}
+
+.begin-search-btn:disabled {
+    background-color: #A0AEC0;
+    cursor: not-allowed;
+}
+
+.login-prompt {
+    margin-top: 1rem;
+    color: #4A5568;
+}
+
+.login-btn {
+    padding: 0.5rem 1rem;
+    background: none;
+    border: 2px solid #6b46c1;
+    color: #6b46c1;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 0.5rem;
+}
+
+.login-btn:hover {
+    background-color: #6b46c1;
+    color: white;
+}
+
+/* Animation for slide up */
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.slide-up-enter {
+    transform: translateY(100%);
+}
+
+.slide-up-enter-active {
+    transform: translateY(0);
+    transition: transform 300ms ease-in;
+}
+
+.slide-up-exit {
+    transform: translateY(0);
+}
+
+.slide-up-exit-active {
+    transform: translateY(100%);
+    transition: transform 300ms ease-in;
+}
+
+/* Touch handling styles */
+.search-slide-up.dragging {
+    transition: none;
+}
+
+.search-results-container {
+    padding-top: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.search-results-container.visible {
+    opacity: 1;
+    transform: translateY(0);
+}

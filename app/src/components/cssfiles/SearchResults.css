@@ -143,6 +143,88 @@ body, html {
   padding: 0;
 }
 
+.search-page {
+    min-height: 100vh;
+    background-color: #f7fafc;
+    padding: 2rem;
+}
+
+.search-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.results-container {
+    position: relative;
+    min-height: 400px;
+}
+
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: #4A5568;
+}
+
+.error-message {
+    text-align: center;
+    color: #E53E3E;
+    padding: 1rem;
+    background-color: #FFF5F5;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.results-table {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-top: 2rem;
+}
+
+.results-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.results-table th {
+    background-color: #F7FAFC;
+    padding: 1rem;
+    text-align: left;
+    color: #4A5568;
+    font-weight: 600;
+    border-bottom: 2px solid #E2E8F0;
+}
+
+.results-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #E2E8F0;
+    color: #2D3748;
+}
+
+.results-table tr:hover {
+    background-color: #F7FAFC;
+}
+
+.results-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Animation for search results */
+.search-results-container {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.search-results-container.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .navbar {
