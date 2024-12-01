@@ -14,14 +14,14 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const [currentVersionIndex, setCurrentVersionIndex] = useState(0);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showAnalysis, setShowAnalysis] = useState(false);
+    const [versionsLoaded, setVersionsLoaded] = useState(false);
 
     // Function to list all analysis versions
     const listAnalysisVersions = useCallback(async () => {
-        if (!userSub || !resumeName) {
-            return;
+        if (!resumeName || !userSub) {
+            return [];
         }
         
-        setIsLoading(true);
         try {
             const { credentials } = await fetchAuthSession();
             const s3Client = new S3Client({
@@ -47,17 +47,41 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             versions.sort((a, b) => b.LastModified - a.LastModified);
             
             setAnalysisVersions(versions);
-            if (versions.length > 0) {
-                await loadAnalysisVersion(0);
-            }
+            setVersionsLoaded(true);
+            return versions;
         } catch (error) {
             console.error('Error listing analysis versions:', error);
-        } finally {
-            setIsLoading(false);
+            setVersionsLoaded(true);
+            return [];
         }
     }, [userSub, resumeName]);
 
-    // Function to load a specific version
+    // Load versions and latest analysis when component mounts
+    useEffect(() => {
+        const loadInitialAnalysis = async () => {
+            if (!resumeName || !userSub) {
+                setIsLoading(false);
+                return;
+            }
+            
+            try {
+                setIsLoading(true);
+                const versions = await listAnalysisVersions();
+                
+                if (versions.length > 0) {
+                    await loadAnalysisVersion(0);
+                    setShowAnalysis(true);
+                }
+            } catch (error) {
+                console.error('Error loading initial analysis:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadInitialAnalysis();
+    }, [resumeName, userSub, listAnalysisVersions]);
+
     const loadAnalysisVersion = async (versionIndex) => {
         try {
             const version = analysisVersions[versionIndex];
@@ -82,7 +106,6 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
             const response = await s3Client.send(command);
             const analysisText = await response.Body.transformToString();
-            
             const parsedAnalysis = JSON.parse(analysisText);
             
             setAnalysisResult(parsedAnalysis);
@@ -90,6 +113,83 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         } catch (error) {
             console.error('Error loading analysis version:', error);
         }
+    };
+
+    const renderAnalysisContent = () => {
+        if (isLoading) {
+            return (
+                <div className="analysis-container">
+                    <div className="loading-spinner" />
+                    <p>Loading analysis...</p>
+                </div>
+            );
+        }
+
+        if (versionsLoaded && analysisVersions.length === 0) {
+            return (
+                <div className="analysis-container">
+                    <p>No analysis available yet. Click "Analyze Resume" to generate one.</p>
+                </div>
+            );
+        }
+
+        if (!analysisResult && !isAnalyzing) {
+            return (
+                <div className="analysis-container">
+                    <div className="loading-spinner" />
+                    <p>Loading analysis...</p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="analysis-container">
+                <button 
+                    className="analysis-button"
+                    onClick={() => setShowAnalysis(!showAnalysis)}
+                >
+                    {showAnalysis ? 'Hide Analysis' : 'View Analysis'}
+                </button>
+                
+                {showAnalysis && (
+                    <div className="analysis-dropdown">
+                        <div className="analysis-content">
+                            <ReactMarkdown>{analysisResult.analysis}</ReactMarkdown>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderVersionControls = () => {
+        if (!versionsLoaded || analysisVersions.length === 0) return null;
+
+        return (
+            <div className="version-controls">
+                <select 
+                    value={currentVersionIndex}
+                    onChange={(e) => loadAnalysisVersion(parseInt(e.target.value))}
+                    className="version-selector"
+                >
+                    {analysisVersions.map((version, index) => {
+                        const date = new Date(version.LastModified).toLocaleDateString();
+                        return (
+                            <option key={version.Key} value={index}>
+                                Version {analysisVersions.length - index} ({date})
+                            </option>
+                        );
+                    })}
+                </select>
+                <button 
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="delete-version-btn"
+                    disabled={analysisVersions.length <= 1}
+                >
+                    Delete Version
+                </button>
+            </div>
+        );
     };
 
     // Function to get the next version number
@@ -228,98 +328,6 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         } finally {
             setIsAnalyzing(false);
         }
-    };
-
-    // Load versions and latest analysis when component mounts
-    useEffect(() => {
-        const loadInitialAnalysis = async () => {
-            if (!resumeName || !userSub) return;
-            
-            try {
-                setIsLoading(true);
-                await listAnalysisVersions();
-                
-                // Check if there are any versions
-                if (analysisVersions.length > 0) {
-                    await loadAnalysisVersion(0);
-                    setShowAnalysis(true);
-                }
-            } catch (error) {
-                console.error('Error loading initial analysis:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        loadInitialAnalysis();
-    }, [resumeName, userSub]);
-
-    const renderAnalysisContent = () => {
-        if (isLoading) {
-            return (
-                <div className="analysis-container">
-                    <div className="loading-spinner" />
-                    <p>Loading analysis...</p>
-                </div>
-            );
-        }
-
-        if (!analysisResult && !isAnalyzing) {
-            return (
-                <div className="analysis-container">
-                    <p>No analysis available yet. Click "Analyze Resume" to generate one.</p>
-                </div>
-            );
-        }
-
-        return (
-            <div className="analysis-container">
-                <button 
-                    className="analysis-button"
-                    onClick={() => setShowAnalysis(!showAnalysis)}
-                >
-                    {showAnalysis ? 'Hide Analysis' : 'View Analysis'}
-                </button>
-                
-                {showAnalysis && (
-                    <div className="analysis-dropdown">
-                        <div className="analysis-content">
-                            <ReactMarkdown>{analysisResult.analysis}</ReactMarkdown>
-                        </div>
-                    </div>
-                )}
-            </div>
-        );
-    };
-
-    const renderVersionControls = () => {
-        if (analysisVersions.length === 0) return null;
-
-        return (
-            <div className="version-controls">
-                <select 
-                    value={currentVersionIndex}
-                    onChange={(e) => loadAnalysisVersion(parseInt(e.target.value))}
-                    className="version-selector"
-                >
-                    {analysisVersions.map((version, index) => {
-                        const date = new Date(version.LastModified).toLocaleDateString();
-                        return (
-                            <option key={version.Key} value={index}>
-                                Version {analysisVersions.length - index} ({date})
-                            </option>
-                        );
-                    })}
-                </select>
-                <button 
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="delete-version-btn"
-                    disabled={analysisVersions.length <= 1}
-                >
-                    Delete Version
-                </button>
-            </div>
-        );
     };
 
     return (
