@@ -3,6 +3,7 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, List
 import { fetchAuthSession } from "aws-amplify/auth";
 import ReactMarkdown from 'react-markdown';
 import awsmobile from "../../aws-exports";
+import { analyzeResume } from "../../graphql/mutations";
 import "../cssfiles/ResumeAnalysis.css";
 
 function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
@@ -161,6 +162,8 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             const { tokens } = await fetchAuthSession();
             const idToken = tokens.idToken.toString();
 
+            console.log("Analyzing resume with path:", `private/${userSub}/resumes/${resumeName}`);
+            
             const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
                 method: 'POST',
                 headers: {
@@ -168,13 +171,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                     'Authorization': idToken
                 },
                 body: JSON.stringify({
-                    query: `
-                        mutation AnalyzeResume($input: AnalyzeResumeInput!) {
-                            analyzeResume(input: $input) {
-                                analysis
-                            }
-                        }
-                    `,
+                    query: analyzeResume,
                     variables: {
                         input: {
                             userId: userSub,
@@ -184,17 +181,32 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                 })
             });
 
-            if (!response.ok) {
-                throw new Error('Analysis request failed');
-            }
-
             const data = await response.json();
+            console.log("Analysis response:", data);
+
             if (data.errors) {
                 throw new Error(data.errors[0].message);
             }
 
+            if (!data.data || !data.data.analyzeResume) {
+                throw new Error('No analysis data received');
+            }
+
             const result = data.data.analyzeResume;
-            setAnalysisResult(result);
+            console.log("Analysis result:", result);
+
+            if (!result.analysis) {
+                throw new Error('Analysis is empty');
+            }
+
+            // Create a formatted result object
+            const formattedResult = {
+                analysis: result.analysis,
+                success: result.success,
+                error: result.error
+            };
+
+            setAnalysisResult(formattedResult);
 
             // Save new version to S3
             const versionNumber = getNextVersionNumber();
@@ -209,14 +221,18 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             });
 
             const key = `private/${userSub}/analysis/${resumeName.replace(/\.[^/.]+$/, '')}_analysis_version_${versionNumber}.json`;
+            console.log("Saving analysis to S3:", key);
+
             const command = new PutObjectCommand({
                 Bucket: "alumnireachresumestorage74831-dev",
                 Key: key,
-                Body: JSON.stringify(result),
+                Body: JSON.stringify(formattedResult),
                 ContentType: 'application/json'
             });
 
             await s3Client.send(command);
+            console.log("Analysis saved to S3");
+            
             await listAnalysisVersions();
             setCurrentVersionIndex(0);
         } catch (error) {
