@@ -27,6 +27,8 @@ function ProfileSetup() {
     const [currentVersionIndex, setCurrentVersionIndex] = useState(0);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isAlumni, setIsAlumni] = useState(false);
+    const [resumeName, setResumeName] = useState("");
+    const [resumeUrl, setResumeUrl] = useState("");
 
     // Profile state
     const [profileData, setProfileData] = useState({
