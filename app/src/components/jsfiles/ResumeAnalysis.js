@@ -230,8 +230,47 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         }
     };
 
+    // Load versions and latest analysis when component mounts
+    useEffect(() => {
+        const loadInitialAnalysis = async () => {
+            if (!resumeName || !userSub) return;
+            
+            try {
+                setIsLoading(true);
+                await listAnalysisVersions();
+                
+                // Check if there are any versions
+                if (analysisVersions.length > 0) {
+                    await loadAnalysisVersion(0);
+                    setShowAnalysis(true);
+                }
+            } catch (error) {
+                console.error('Error loading initial analysis:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadInitialAnalysis();
+    }, [resumeName, userSub]);
+
     const renderAnalysisContent = () => {
-        if (!analysisResult) return null;
+        if (isLoading) {
+            return (
+                <div className="analysis-container">
+                    <div className="loading-spinner" />
+                    <p>Loading analysis...</p>
+                </div>
+            );
+        }
+
+        if (!analysisResult && !isAnalyzing) {
+            return (
+                <div className="analysis-container">
+                    <p>No analysis available yet. Click "Analyze Resume" to generate one.</p>
+                </div>
+            );
+        }
 
         return (
             <div className="analysis-container">
