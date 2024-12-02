@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartLine, faSearch, faUserGroup, faUser, faHome } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine, faSearch, faUserGroup, faUser, faHome, faChevronLeft, faBars } from '@fortawesome/free-solid-svg-icons';
 import SwipeableViews from './SwipeableViews';
 import ResumeAnalysis from "./ResumeAnalysis";
 import SearchOverview from './SearchOverview';
@@ -37,6 +37,7 @@ function ProfileSetup() {
     const [isAlumni, setIsAlumni] = useState(false);
     const [resumeName, setResumeName] = useState("");
     const [resumeUrl, setResumeUrl] = useState("");
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
 
     // Profile state
     const [profileData, setProfileData] = useState({
@@ -668,7 +669,21 @@ function ProfileSetup() {
         <>
             <Header navigate={navigate} isSignedIn={isSignedIn} />
             <div className="profile-setup-container">
-                <div className="left-sidebar">
+                <div 
+                    className={`left-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}
+                    onClick={() => !isSidebarOpen && setSidebarOpen(true)}
+                >
+                    {isSidebarOpen && (
+                        <button 
+                            className={`sidebar-toggle ${isSidebarOpen ? 'open' : ''}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSidebarOpen(false);
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faChevronLeft} />
+                        </button>
+                    )}
                     <div className="navigation-section">
                         <div 
                             className={`sidebar-item ${activeTab === 'welcome' ? 'active' : ''}`}
@@ -688,7 +703,7 @@ function ProfileSetup() {
                             }}
                         >
                             <FontAwesomeIcon icon={faSearch} />
-                            <span>Search</span>
+                            <span>Discover</span>
                         </div>
                         <div 
                             className={`sidebar-item ${activeTab === 'analytics' ? 'active' : ''}`}
@@ -738,7 +753,12 @@ function ProfileSetup() {
                                 />
                             </div>
                             <div className="tab-content">
-                                <SearchOverview isSignedIn={isSignedIn} navigate={navigate} />
+                                <SearchOverview 
+                                    isSignedIn={isSignedIn} 
+                                    navigate={navigate}
+                                    setActiveTab={setActiveTab}
+                                    setActiveIndex={setActiveIndex}
+                                />
                             </div>
                             <div className="tab-content">
                                 <ResumeAnalysis 

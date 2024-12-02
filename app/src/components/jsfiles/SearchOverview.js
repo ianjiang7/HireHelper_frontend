@@ -3,26 +3,37 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faUserGroup, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import '../cssfiles/SearchOverview.css';
 
-const SearchOverview = ({ isSignedIn, onLogin }) => {
+const SearchOverview = ({ isSignedIn, navigate, onLogin, setActiveTab, setActiveIndex }) => {
+    const handleFeatureClick = (tab, index) => {
+        setActiveTab(tab);
+        setActiveIndex(index);
+    };
+
     return (
         <div className="search-overview">
             <div className="search-overview-content">
                 <div className="search-overview-header">
                     <FontAwesomeIcon icon={faSearch} className="search-icon" />
-                    <h2>Discover Your Network</h2>
+                    <h2>Welcome to HireHelper</h2>
                 </div>
 
                 <div className="feature-cards">
-                    <div className="feature-card">
+                    <div 
+                        className="feature-card clickable" 
+                        onClick={() => handleFeatureClick('analytics', 2)}
+                    >
                         <FontAwesomeIcon icon={faChartLine} className="feature-icon" />
                         <h3>Resume Analytics</h3>
-                        <p>View detailed analysis of your resume and get insights for improvement</p>
+                        <p>Analyze resumes to gain insights into skills, experience, and qualifications.</p>
                     </div>
 
-                    <div className="feature-card">
+                    <div 
+                        className="feature-card clickable"
+                        onClick={() => handleFeatureClick('people', 3)}
+                    >
                         <FontAwesomeIcon icon={faUserGroup} className="feature-icon" />
                         <h3>Alumni Network</h3>
-                        <p>Connect with NYU alumni who share your career interests</p>
+                        <p>Connect with alumni and explore their career paths and experiences.</p>
                     </div>
                 </div>
 
