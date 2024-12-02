@@ -15,17 +15,15 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import awsmobile from "../../aws-exports";
 import ReactMarkdown from 'react-markdown';
 import "../cssfiles/ProfileSetup.css";
-import { useAuth } from './AuthContext';
 
 function ProfileSetup() {
     const navigate = useNavigate();
-    const { isAuthenticated, userRole, fullName } = useAuth();
     const [activeTab, setActiveTab] = useState('welcome');
     const [activeIndex, setActiveIndex] = useState(0);
     const [swipeIndex, setSwipeIndex] = useState(0);
     const [userSub, setUserSub] = useState("");
-    const [authSession, setAuthSession] = useState();
     const [isSignedIn, setIsSignedIn] = useState(true);
+    const [authSession, setAuthSession] = useState();
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -187,15 +185,15 @@ function ProfileSetup() {
     }, []);
 
     useEffect(() => {
-        if (!isAuthenticated && activeTab !== 'welcome') {
+        if (!isSignedIn && activeTab !== 'welcome') {
             setActiveTab('welcome');
             setActiveIndex(0);
             setSwipeIndex(0);
         }
-    }, [isAuthenticated, activeTab]);
+    }, [isSignedIn, activeTab]);
 
     const handleTabClick = (tab, index) => {
-        if (!isAuthenticated && tab !== 'welcome') {
+        if (!isSignedIn && tab !== 'welcome') {
             // Show message or redirect to login
             navigate('/alumni-login');
             return;
@@ -206,7 +204,7 @@ function ProfileSetup() {
     };
 
     const handleChangeIndex = (index) => {
-        if (!isAuthenticated && index !== 0) {
+        if (!isSignedIn && index !== 0) {
             // If not authenticated, only allow access to welcome tab
             setSwipeIndex(0);
             navigate('/alumni-login');
@@ -646,160 +644,211 @@ function ProfileSetup() {
         return formatted;
     };
 
+    const handleSwipeChange = (index) => {
+        setActiveIndex(index);
+        switch(index) {
+            case 0:
+                setActiveTab('welcome');
+                break;
+            case 1:
+                setActiveTab('search');
+                break;
+            case 2:
+                setActiveTab('analytics');
+                break;
+            case 3:
+                setActiveTab('people');
+                break;
+            default:
+                break;
+        }
+    };
+
     return (
-        <div className="profile-setup-container">
-            <Header navigate={navigate} />
-            <div className="tab-container">
-                <button
-                    className={`tab ${activeTab === 'welcome' ? 'active' : ''}`}
-                    onClick={() => handleTabClick('welcome', 0)}
-                >
-                    <FontAwesomeIcon icon={faHome} /> Welcome
-                </button>
-                <button
-                    className={`tab ${activeTab === 'search' ? 'active' : ''} ${!isAuthenticated ? 'disabled' : ''}`}
-                    onClick={() => handleTabClick('search', 1)}
-                >
-                    <FontAwesomeIcon icon={faSearch} /> Search
-                </button>
-                <button
-                    className={`tab ${activeTab === 'analytics' ? 'active' : ''} ${!isAuthenticated ? 'disabled' : ''}`}
-                    onClick={() => handleTabClick('analytics', 2)}
-                >
-                    <FontAwesomeIcon icon={faChartLine} /> Analytics
-                </button>
-                <button
-                    className={`tab ${activeTab === 'people' ? 'active' : ''} ${!isAuthenticated ? 'disabled' : ''}`}
-                    onClick={() => handleTabClick('people', 3)}
-                >
-                    <FontAwesomeIcon icon={faUserGroup} /> People
-                </button>
-            </div>
-            <div className="main-content">
-                {activeTab !== 'profile' ? (
-                    <SwipeableViews 
-                        activeIndex={activeIndex} 
-                        showNavigation={activeTab !== 'welcome'}
-                        onChangeIndex={(index) => handleChangeIndex(index)}
-                    >
-                        <div className="tab-content">
-                            <Home 
-                                isSignedIn={isSignedIn} 
-                                setActiveTab={setActiveTab}
-                                setActiveIndex={setActiveIndex}
-                            />
+        <>
+            <Header navigate={navigate} isSignedIn={isSignedIn} />
+            <div className="profile-setup-container">
+                <div className="left-sidebar">
+                    <div className="navigation-section">
+                        <div 
+                            className={`sidebar-item ${activeTab === 'welcome' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('welcome');
+                                setActiveIndex(0);
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faHome} />
+                            <span>Welcome</span>
                         </div>
-                        <div className="tab-content">
-                            <SearchOverview isSignedIn={isSignedIn} navigate={navigate} />
+                        <div 
+                            className={`sidebar-item ${activeTab === 'search' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('search');
+                                setActiveIndex(1);
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faSearch} />
+                            <span>Search</span>
                         </div>
-                        <div className="tab-content">
-                            <ResumeAnalysis 
-                                userSub={userSub}
-                                resumeName={resumeName}
-                                resumeUrl={resumeUrl}
-                                analysisResult={analysisResult}
-                                analysisVersions={analysisVersions}
-                                currentVersionIndex={currentVersionIndex}
-                                loadAnalysisVersion={loadAnalysisVersion}
-                                deleteAnalysisVersion={deleteAnalysisVersion}
-                                handleAnalyzeResume={handleAnalyzeResume}
-                                isAnalyzing={isAnalyzing}
-                                isAnalysisOpen={isAnalysisOpen}
-                                showDeleteConfirm={showDeleteConfirm}
-                                setShowDeleteConfirm={setShowDeleteConfirm}
-                            />
+                        <div 
+                            className={`sidebar-item ${activeTab === 'analytics' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('analytics');
+                                setActiveIndex(2);
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faChartLine} />
+                            <span>Analytics</span>
                         </div>
-                        <div className="tab-content">
-                            <SearchResults embedded={true} />
+                        <div 
+                            className={`sidebar-item ${activeTab === 'people' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('people');
+                                setActiveIndex(3);
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faUserGroup} />
+                            <span>People</span>
                         </div>
-                    </SwipeableViews>
-                ) : (
-                    <div className="tab-content profile-tab-content">
-                        {profileData ? (
-                            <div className="profile-form">
-                                <h2>Your Profile</h2>
-                                <div className="profile-field">
-                                    <label>Name:</label>
-                                    <input
-                                        type="text"
-                                        value={profileData.fullname || ''}
-                                        onChange={(e) => handleProfileChange('fullname', e.target.value)}
-                                    />
-                                </div>
-                                <div className="profile-field">
-                                    <label>Email:</label>
-                                    <input
-                                        type="email"
-                                        value={profileData.email || ''}
-                                        onChange={(e) => handleProfileChange('email', e.target.value)}
-                                    />
-                                </div>
-                                <div className="profile-field">
-                                    <label>Company:</label>
-                                    <input
-                                        type="text"
-                                        value={profileData.company || ''}
-                                        onChange={(e) => handleProfileChange('company', e.target.value)}
-                                    />
-                                </div>
-                                <div className="profile-field">
-                                    <label>Role:</label>
-                                    <input
-                                        type="text"
-                                        value={profileData.role || ''}
-                                        onChange={(e) => handleProfileChange('role', e.target.value)}
-                                    />
-                                </div>
-
-                                <div className="resume-section">
-                                    <h3>Resume</h3>
-                                    {profileData.resumeName ? (
-                                        <div className="resume-actions">
-                                            <p>Current Resume: {profileData.resumeName}</p>
-                                            <div className="resume-buttons">
-                                                <button 
-                                                    onClick={() => window.open(resumeUrl, '_blank')}
-                                                    className="view-button"
-                                                >
-                                                    View Resume
-                                                </button>
-                                                <button 
-                                                    onClick={handleDeleteResume} 
-                                                    className="delete-button"
-                                                >
-                                                    Delete Resume
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="resume-upload">
-                                            <input
-                                                type="file"
-                                                accept=".pdf,.doc,.docx"
-                                                onChange={handleFileUpload}
-                                                style={{ display: 'none' }}
-                                                id="resume-upload"
-                                            />
-                                            <label htmlFor="resume-upload" className="upload-button">
-                                                Upload Resume
-                                            </label>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="profile-actions">
-                                    <button onClick={handleSaveProfile} className="save-button">
-                                        Save Profile
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="profile-loading">Loading profile...</div>
-                        )}
                     </div>
-                )}
+                    
+                    <div className="profile-nav-section">
+                        <div 
+                            className={`sidebar-item ${activeTab === 'profile' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('profile')}
+                        >
+                            <FontAwesomeIcon icon={faUser} />
+                            <span>Profile</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="main-content">
+                    {activeTab !== 'profile' ? (
+                        <SwipeableViews 
+                            activeIndex={activeIndex} 
+                            showNavigation={activeTab !== 'welcome'}
+                            onChangeIndex={handleSwipeChange}
+                        >
+                            <div className="tab-content">
+                                <Home 
+                                    isSignedIn={isSignedIn} 
+                                    setActiveTab={setActiveTab}
+                                    setActiveIndex={setActiveIndex}
+                                />
+                            </div>
+                            <div className="tab-content">
+                                <SearchOverview isSignedIn={isSignedIn} navigate={navigate} />
+                            </div>
+                            <div className="tab-content">
+                                <ResumeAnalysis 
+                                    userSub={userSub}
+                                    resumeName={resumeName}
+                                    resumeUrl={resumeUrl}
+                                    analysisResult={analysisResult}
+                                    analysisVersions={analysisVersions}
+                                    currentVersionIndex={currentVersionIndex}
+                                    loadAnalysisVersion={loadAnalysisVersion}
+                                    deleteAnalysisVersion={deleteAnalysisVersion}
+                                    handleAnalyzeResume={handleAnalyzeResume}
+                                    isAnalyzing={isAnalyzing}
+                                    isAnalysisOpen={isAnalysisOpen}
+                                    showDeleteConfirm={showDeleteConfirm}
+                                    setShowDeleteConfirm={setShowDeleteConfirm}
+                                />
+                            </div>
+                            <div className="tab-content">
+                                <SearchResults embedded={true} />
+                            </div>
+                        </SwipeableViews>
+                    ) : (
+                        <div className="tab-content profile-tab-content">
+                            {profileData ? (
+                                <div className="profile-form">
+                                    <h2>Your Profile</h2>
+                                    <div className="profile-field">
+                                        <label>Name:</label>
+                                        <input
+                                            type="text"
+                                            value={profileData.fullname || ''}
+                                            onChange={(e) => handleProfileChange('fullname', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="profile-field">
+                                        <label>Email:</label>
+                                        <input
+                                            type="email"
+                                            value={profileData.email || ''}
+                                            onChange={(e) => handleProfileChange('email', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="profile-field">
+                                        <label>Company:</label>
+                                        <input
+                                            type="text"
+                                            value={profileData.company || ''}
+                                            onChange={(e) => handleProfileChange('company', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="profile-field">
+                                        <label>Role:</label>
+                                        <input
+                                            type="text"
+                                            value={profileData.role || ''}
+                                            onChange={(e) => handleProfileChange('role', e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="resume-section">
+                                        <h3>Resume</h3>
+                                        {profileData.resumeName ? (
+                                            <div className="resume-actions">
+                                                <p>Current Resume: {profileData.resumeName}</p>
+                                                <div className="resume-buttons">
+                                                    <button 
+                                                        onClick={() => window.open(resumeUrl, '_blank')}
+                                                        className="view-button"
+                                                    >
+                                                        View Resume
+                                                    </button>
+                                                    <button 
+                                                        onClick={handleDeleteResume} 
+                                                        className="delete-button"
+                                                    >
+                                                        Delete Resume
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="resume-upload">
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf,.doc,.docx"
+                                                    onChange={handleFileUpload}
+                                                    style={{ display: 'none' }}
+                                                    id="resume-upload"
+                                                />
+                                                <label htmlFor="resume-upload" className="upload-button">
+                                                    Upload Resume
+                                                </label>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="profile-actions">
+                                        <button onClick={handleSaveProfile} className="save-button">
+                                            Save Profile
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="profile-loading">Loading profile...</div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
+        </>
     );
 }
 
