@@ -230,6 +230,40 @@ function ProfileSetup() {
             setResumeName(s3Path);
             localStorage.setItem(`resumeName_${userSub}`, s3Path);
 
+            // Update user profile in DynamoDB with the resumeName
+            const { idToken } = (await fetchAuthSession()).tokens ?? {};
+            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                    query: `
+                    mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
+                        updateUserProfile(input: $input) {
+                            userId
+                            email
+                            fullname
+                            company
+                            role
+                            resumeName
+                        }
+                    }`,
+                    variables: {
+                        input: {
+                            userId: userSub,
+                            resumeName: file.name
+                        }
+                    }
+                }),
+            });
+
+            const data = await response.json();
+            if (data.errors) {
+                throw new Error(data.errors[0].message);
+            }
+
             // Generate URL for viewing
             try {
                 const command = new GetObjectCommand({
