@@ -1,165 +1,82 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import "../cssfiles/Login.css";
-import {
-  signIn,
-  fetchAuthSession,
-  signInWithRedirect,
-  signOut,
-  getCurrentUser
-} from "aws-amplify/auth";
-import awsmobile from "../../aws-exports"; // Ensure correct path to aws-exports.js
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { signIn } from 'aws-amplify/auth';
+import { useAuth } from './AuthContext';
+import '../cssfiles/Login.css';
 
-function AlumniLogin() {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+const AlumniLogin = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+    const { isAuthenticated, checkUser } = useAuth();
 
-  useEffect(() => {
-    
-    async function fetchUserRole() {
-    try {
-        // Check if the user is already signed in
-        const session = await fetchAuthSession();
-        if (session.tokens?.idToken) {
-            console.log("User already signed in. Redirecting...");
-            const userRole = localStorage.getItem("userRole");
-            navigate(userRole === "student" ? "/" : "/my-connections");
-            return;
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/profile-setup', { replace: true });
         }
-    } catch {
-            console.log("No active session found. Proceeding with login...");
-            // Ignored if no session exists
-    }
+    }, [isAuthenticated, navigate]);
 
-    }
-    fetchUserRole();
-  }, []);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        
+        try {
+            await signIn({ username: email, password });
+            await checkUser(); // Update auth context after successful sign in
+            navigate('/profile-setup', { replace: true });
+        } catch (error) {
+            if (error.message?.includes('already a signed in user')) {
+                await checkUser(); // Refresh auth state
+                navigate('/profile-setup', { replace: true });
+            } else {
+                setError(error.message || 'Failed to sign in');
+            }
+        }
+    };
 
-  // GraphQL query to fetch user profile
-  const getUserProfileQuery = `
-    query GetUserProfile($userId: ID!) {
-      getUserProfile(userId: $userId) {
-        fullname
-        email
-        role
-      }
-    }
-  `;
+    return (
+        <div className="login-container">
+            <div className="brand-header">
+                <h1>AlumniReach</h1>
+                <p>Connect with your alumni network</p>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="login-form">
+                <div className="form-group">
+                    <label htmlFor="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                </div>
+                
+                <div className="form-group">
+                    <label htmlFor="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                </div>
 
-  const handleLogin = async () => {
-    setLoading(true);
-    setError("");
+                {error && <div className="error">{error}</div>}
+                
+                <button type="submit" className="login-button">
+                    Sign In
+                </button>
+            </form>
 
-    try {
-      // Authenticate the user with Cognito
-      await signIn({ username: email, password: password });
-
-      // Get userId
-      const { userId } = await getCurrentUser();
-
-      // Fetch the authentication session
-      const session = await fetchAuthSession();
-      const { idToken } = session.tokens ?? {};
-
-      if (!idToken) {
-        throw new Error("Unable to retrieve session token.");
-      }
-
-      // Call GraphQL API to fetch user profile
-      const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`, // Use token from the session
-        },
-        body: JSON.stringify({
-          query: getUserProfileQuery, // GraphQL query
-          variables: { userId }, // Pass the userId variable
-        }),
-      });
-
-      const responseData = await response.json();
-      const userProfile = responseData.data?.getUserProfile;
-
-      if (!userProfile) {
-        // If no profile is found, redirect to signup page
-        setError("Account not found. Please sign up.");
-        navigate("/signup");
-        return;
-      }
-
-      // Store the user's role in localStorage
-      const userRole = userProfile.role;
-      localStorage.setItem("userRole", userRole);
-
-      // Navigate to appropriate page based on role
-      navigate(userRole === "student" ? "/" : "/my-connections");
-    } catch (err) {
-      console.error("Login error:", err);
-
-      // Handle specific errors from Cognito
-      if (err.code === "UserNotFoundException") {
-        setError("Account does not exist. Please sign up.");
-      } else if (err.code === "NotAuthorizedException") {
-        setError("Incorrect email or password.");
-      } else {
-        setError(err.message || "An error occurred during login.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      // Initiate the Google Sign-In flow
-      await signInWithRedirect({ provider: "Google" });
-      // Cognito will redirect back to the callback URL and issue tokens
-    } catch (err) {
-      console.error("Google Sign-In Error:", err);
-      setError("An error occurred during Google Sign-In.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="login-container">
-      <h2>Login</h2>
-      {error && <p className="error">{error}</p>}
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button onClick={handleLogin} disabled={loading}>
-        {loading ? "Logging In..." : "Login"}
-      </button>
-      <button
-        onClick={handleGoogleSignIn}
-        className="google-login"
-        disabled
-      >
-        {loading ? "Signing In with Google..." : "Sign In with Google"}
-      </button>
-      <p onClick={() => navigate("/signup")} className="signup-link">
-        I don't have an account
-      </p>
-    </div>
-  );
-}
+            <div className="signup-link">
+                Don't have an account? <a href="/signup">Sign up</a>
+            </div>
+        </div>
+    );
+};
 
 export default AlumniLogin;

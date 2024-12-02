@@ -138,9 +138,16 @@
 
 .main-content {
     flex: 1;
-    background-color: white;
+    background-color: #f8f9fa;
     position: relative;
     overflow: hidden;
+}
+
+.tab-content {
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+    background-color: #f8f9fa;
 }
 
 .profile-loading {

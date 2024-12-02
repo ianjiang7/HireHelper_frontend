@@ -3,14 +3,26 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
-  if (!user) {
-    // If the user is not authenticated, redirect to login
-    return <Navigate to="/alumni-login" />;
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        backgroundColor: '#f8f9fa'
+      }}>
+        <div className="loading-spinner"></div>
+      </div>
+    );
   }
 
-  // If authenticated, render the child components (protected page)
+  if (!isAuthenticated) {
+    return <Navigate to="/alumni-login" replace />;
+  }
+
   return children;
 };
 
