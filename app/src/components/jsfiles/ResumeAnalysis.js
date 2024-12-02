@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import awsmobile from "../../aws-exports";
 import { analyzeResume } from "../../graphql/mutations";
 import "../cssfiles/ResumeAnalysis.css";
+import { useNavigate } from 'react-router-dom';
 
 function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const [analysisResult, setAnalysisResult] = useState(null);
@@ -17,6 +18,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const [versionsLoaded, setVersionsLoaded] = useState(false);
     const [selectedVersion, setSelectedVersion] = useState(null);
     const [showAnalyzeConfirm, setShowAnalyzeConfirm] = useState(false);
+    const navigate = useNavigate();
 
     // Function to list all analysis versions
     const listAnalysisVersions = useCallback(async () => {
@@ -65,6 +67,66 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         }
     }, [resumeName, userSub, listAnalysisVersions]);
 
+    // Function to parse recommendations from analysis
+    const parseRecommendations = (analysisText) => {
+        try {
+            // Find the section 8 content
+            const section8Match = analysisText.match(/8\. Career Path and Industry Analysis([\s\S]*?)(?=\d+\.|$)/);
+            if (!section8Match) return null;
+
+            const section8Content = section8Match[1];
+
+            // Extract recommendations
+            const recommendations = {
+                industries: [],
+                roles: [],
+                jobTitles: [],
+                companies: []
+            };
+
+            // Extract industries
+            const industriesMatch = section8Content.match(/Recommended Industries:([\s\S]*?)(?=Recommended|$)/);
+            if (industriesMatch) {
+                recommendations.industries = industriesMatch[1]
+                    .split('\n')
+                    .filter(line => line.trim().startsWith('-'))
+                    .map(line => line.trim().replace('-', '').trim());
+            }
+
+            // Extract roles
+            const rolesMatch = section8Content.match(/Recommended Roles:([\s\S]*?)(?=Recommended|$)/);
+            if (rolesMatch) {
+                recommendations.roles = rolesMatch[1]
+                    .split('\n')
+                    .filter(line => line.trim().startsWith('-'))
+                    .map(line => line.trim().replace('-', '').trim());
+            }
+
+            // Extract job titles
+            const jobTitlesMatch = section8Content.match(/Recommended Job Titles:([\s\S]*?)(?=Recommended|$)/);
+            if (jobTitlesMatch) {
+                recommendations.jobTitles = jobTitlesMatch[1]
+                    .split('\n')
+                    .filter(line => line.trim().startsWith('-'))
+                    .map(line => line.trim().replace('-', '').trim());
+            }
+
+            // Extract companies
+            const companiesMatch = section8Content.match(/Recommended Companies:([\s\S]*?)(?=\d+\.|$)/);
+            if (companiesMatch) {
+                recommendations.companies = companiesMatch[1]
+                    .split('\n')
+                    .filter(line => line.trim().startsWith('-'))
+                    .map(line => line.trim().replace('-', '').trim());
+            }
+
+            return recommendations;
+        } catch (error) {
+            console.error('Error parsing recommendations:', error);
+            return null;
+        }
+    };
+
     const loadAnalysisVersion = async (versionIndex) => {
         setIsLoading(true);
         try {
@@ -102,6 +164,15 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         }
     };
 
+    const handleConnectionSearch = () => {
+        const recommendations = parseRecommendations(analysisResult.analysis);
+        if (recommendations) {
+            localStorage.setItem('personalizedRecommendations', JSON.stringify(recommendations));
+            navigate('/people');
+        }
+    };
+
+    // Function to handle connection search
     const renderAnalysisContent = () => {
         if (!versionsLoaded) {
             return (
@@ -132,11 +203,19 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         return (
             <div className="analysis-container">
                 {analysisResult && showAnalysis && (
-                    <div className="analysis-dropdown">
-                        <div className="analysis-content">
-                            <ReactMarkdown>{analysisResult.analysis}</ReactMarkdown>
+                    <>
+                        <div className="analysis-dropdown">
+                            <div className="analysis-content">
+                                <ReactMarkdown>{analysisResult.analysis}</ReactMarkdown>
+                            </div>
                         </div>
-                    </div>
+                        <button 
+                            className="connection-search-button"
+                            onClick={handleConnectionSearch}
+                        >
+                            Search for Personalized Connections
+                        </button>
+                    </>
                 )}
             </div>
         );

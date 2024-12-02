@@ -573,3 +573,14 @@
 .delete-button:hover {
     background-color: #c53030;
 }
+
+.tab.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f0f0f0;
+}
+
+.tab.disabled:hover {
+    background-color: #f0f0f0;
+    transform: none;
+}

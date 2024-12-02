@@ -7,6 +7,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState(null);
+  const [fullName, setFullName] = useState(null);
 
   useEffect(() => {
     checkUser();
@@ -17,37 +19,68 @@ export const AuthProvider = ({ children }) => {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
       setIsAuthenticated(true);
+      
+      // Restore user data from localStorage
+      const storedRole = localStorage.getItem('userRole');
+      const storedName = localStorage.getItem('fullname');
+      if (storedRole && storedName) {
+        setUserRole(storedRole);
+        setFullName(storedName);
+      }
     } catch (err) {
       setUser(null);
       setIsAuthenticated(false);
+      setUserRole(null);
+      setFullName(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSignOut = async () => {
+  const login = (role, name) => {
+    setIsAuthenticated(true);
+    setUserRole(role);
+    setFullName(name);
+    localStorage.setItem('userRole', role);
+    localStorage.setItem('fullname', name);
+  };
+
+  const logout = async () => {
     try {
-      await signOut();
       setUser(null);
       setIsAuthenticated(false);
+      setUserRole(null);
+      setFullName(null);
+      // Clear all authentication-related items from localStorage
+      localStorage.removeItem('fullname');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('FullName');
+      localStorage.removeItem('role');
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Error during logout:', error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      setUser, 
-      isAuthenticated, 
-      setIsAuthenticated,
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
       loading,
-      signOut: handleSignOut,
+      userRole,
+      fullName,
+      login,
+      logout,
       checkUser
     }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

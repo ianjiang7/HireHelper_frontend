@@ -2,24 +2,21 @@ import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faRightFromBracket, faSignInAlt, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import { signOut } from "aws-amplify/auth";
+import { useAuth } from './AuthContext';
 
-function Header({ navigate, isAlumni, isSignedIn }) {
+function Header({ navigate }) {
+    const { isAuthenticated, logout } = useAuth();
+
     const handleSignOut = async () => {
         try {
             await signOut({ global: true });
-            // Clear all authentication-related items from localStorage
-            localStorage.removeItem('fullname');
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('FullName');
-            localStorage.removeItem('role');
-            // Navigate to login page
-            navigate("/alumni-login", { replace: true });
+            logout();
         } catch (error) {
             console.error("Error signing out: ", error);
         }
     };
 
-    const signOutIcon = isSignedIn ? (
+    const signOutIcon = isAuthenticated ? (
         <button
             onClick={handleSignOut}
             style={{

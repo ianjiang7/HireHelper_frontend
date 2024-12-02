@@ -9,7 +9,7 @@ const AlumniLogin = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const { isAuthenticated, checkUser } = useAuth();
+    const { isAuthenticated, login, checkUser } = useAuth();
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -20,18 +20,14 @@ const AlumniLogin = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        
         try {
             await signIn({ username: email, password });
-            await checkUser(); // Update auth context after successful sign in
+            await checkUser();
+            login('alumni', email); // Set role and email as fullname for now
             navigate('/profile-setup', { replace: true });
         } catch (error) {
-            if (error.message?.includes('already a signed in user')) {
-                await checkUser(); // Refresh auth state
-                navigate('/profile-setup', { replace: true });
-            } else {
-                setError(error.message || 'Failed to sign in');
-            }
+            console.error('Error signing in:', error);
+            setError('Failed to sign in. Please check your credentials.');
         }
     };
 
