@@ -1,0 +1,14 @@
+type Mutation {
+  analyzeResume(input: AnalyzeResumeInput!): AnalyzeResumeResponse @function(name: "analyzeResume")
+}
+
+input AnalyzeResumeInput {
+  userId: String!
+  s3Path: String!
+}
+
+type AnalyzeResumeResponse {
+  success: Boolean!
+  analysis: String
+  error: String
+}
