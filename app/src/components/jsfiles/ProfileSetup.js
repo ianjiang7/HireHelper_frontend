@@ -227,8 +227,9 @@ function ProfileSetup() {
                 resumeS3Path: s3Path
             }));
 
-            setResumeName(s3Path);
-            localStorage.setItem(`resumeName_${userSub}`, s3Path);
+            // Set resumeName to the file name, not the S3 path
+            setResumeName(file.name);
+            localStorage.setItem(`resumeName_${userSub}`, file.name);
 
             // Update user profile in DynamoDB with the resumeName
             const { idToken } = (await fetchAuthSession()).tokens ?? {};
@@ -277,9 +278,6 @@ function ProfileSetup() {
             } catch (error) {
                 console.error('Error generating resume URL:', error);
             }
-
-            // Analyze the resume after upload
-            await handleAnalyzeResume();
         } catch (error) {
             console.error('Error uploading file:', error);
         }
@@ -434,7 +432,7 @@ function ProfileSetup() {
                     variables: {
                         input: {
                             userId: userSub,
-                            s3Path: `private/${userSub}/resumes/${resumeName}`
+                            s3Path: getResumeS3Path(resumeName)  // Use the same path function
                         }
                     }
                 })
