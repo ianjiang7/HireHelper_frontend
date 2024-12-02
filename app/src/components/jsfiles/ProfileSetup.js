@@ -102,6 +102,12 @@ function ProfileSetup() {
                     resumeS3Path: userData.resumeName ? getResumeS3Path(userData.resumeName) : ""
                 });
 
+                // Store user data in localStorage
+                localStorage.setItem('fullname', userData.fullname || "");
+                localStorage.setItem('userRole', userData.role || "");
+                localStorage.setItem('FullName', userData.fullname || "");
+                localStorage.setItem('role', userData.role || "");
+
                 if (userData.resumeName) {
                     const fileName = userData.resumeName;
                     setResumeName(fileName);

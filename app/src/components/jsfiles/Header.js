@@ -6,8 +6,14 @@ import { signOut } from "aws-amplify/auth";
 function Header({ navigate, isAlumni, isSignedIn }) {
     const handleSignOut = async () => {
         try {
-            await signOut();
-            navigate("/alumni-login");
+            await signOut({ global: true });
+            // Clear all authentication-related items from localStorage
+            localStorage.removeItem('fullname');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('FullName');
+            localStorage.removeItem('role');
+            // Navigate to login page
+            navigate("/alumni-login", { replace: true });
         } catch (error) {
             console.error("Error signing out: ", error);
         }
@@ -15,32 +21,32 @@ function Header({ navigate, isAlumni, isSignedIn }) {
 
     const signOutIcon = isSignedIn ? (
         <button
-                    onClick={handleSignOut}
-                    style={{
-                        fontSize: "1rem",
-                        padding: "0.5rem",
-                        color: "purple",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                    }}
-                >
-                    <FontAwesomeIcon icon={faSignOutAlt} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
-                    </button>
+            onClick={handleSignOut}
+            style={{
+                fontSize: "1rem",
+                padding: "0.5rem",
+                color: "purple",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+            }}
+        >
+            <FontAwesomeIcon icon={faSignOutAlt} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
+        </button>
     ) : (
         <button
-                    onClick={() => navigate("/alumni-login")}
-                    style={{
-                        fontSize: "1rem",
-                        padding: "0.5rem",
-                        color: "purple",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                    }}
-                >
-                    <FontAwesomeIcon icon={faSignInAlt} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
-                    </button>
+            onClick={() => navigate("/alumni-login")}
+            style={{
+                fontSize: "1rem",
+                padding: "0.5rem",
+                color: "purple",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+            }}
+        >
+            <FontAwesomeIcon icon={faSignInAlt} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
+        </button>
     );
 
     return (
