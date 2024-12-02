@@ -159,11 +159,11 @@ function ProfileSetup() {
             } catch (err) {
                 console.error("Authentication error:", err);
                 setIsSignedIn(false);
-                alert("Please sign in to access your profile and resume.");
+                navigate("/alumni-login", { replace: true });
             }
         };
         checkUserName();
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         if (userSub && authSession) {
