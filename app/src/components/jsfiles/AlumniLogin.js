@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signIn, getCurrentUser } from 'aws-amplify/auth';
+import { generateClient } from 'aws-amplify/api';
 import { useAuth } from './AuthContext';
 import '../cssfiles/Login.css';
+
+const client = generateClient();
 
 const AlumniLogin = () => {
     const [email, setEmail] = useState('');
