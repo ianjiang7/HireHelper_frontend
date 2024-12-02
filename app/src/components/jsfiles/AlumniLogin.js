@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signIn } from 'aws-amplify/auth';
+import { signIn, getCurrentUser } from 'aws-amplify/auth';
 import { useAuth } from './AuthContext';
 import '../cssfiles/Login.css';
 
@@ -23,7 +23,26 @@ const AlumniLogin = () => {
         try {
             await signIn({ username: email, password });
             await checkUser();
-            login('alumni', email); // Set role and email as fullname for now
+            const { userId } = await getCurrentUser();
+            const query = `
+                    query GetUserProfile($userId: ID!) {
+                        getUserProfile(userId: $userId) {
+                            fullname
+                            role
+                        }
+                    }
+                `;
+
+                const response = await client.graphql({
+                    query: query,
+                    variables: { userId },
+                    authMode: 'userPool'
+                });
+
+            const fullname = response.data.getUserProfile?.fullname;
+            const role = response.data.getUserProfile?.role;
+
+            login(role, fullname);
             navigate('/profile-setup', { replace: true });
         } catch (error) {
             console.error('Error signing in:', error);
