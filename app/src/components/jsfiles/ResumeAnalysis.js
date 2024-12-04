@@ -6,6 +6,7 @@ import awsmobile from "../../aws-exports";
 import { analyzeResume } from "../../graphql/mutations";
 import "../cssfiles/ResumeAnalysis.css";
 import { useNavigate } from 'react-router-dom';
+import RecommendedAlumni from './RecommendedAlumni';
 
 function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const [analysisResult, setAnalysisResult] = useState(null);
@@ -18,6 +19,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const [versionsLoaded, setVersionsLoaded] = useState(false);
     const [selectedVersion, setSelectedVersion] = useState(null);
     const [showAnalyzeConfirm, setShowAnalyzeConfirm] = useState(false);
+    const [activeTab, setActiveTab] = useState('analysis');
     const navigate = useNavigate();
 
     // Function to list all analysis versions
@@ -67,62 +69,65 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         }
     }, [resumeName, userSub, listAnalysisVersions]);
 
-    // Function to parse recommendations from analysis
-    const parseRecommendations = (analysisText) => {
-        try {
-            // Find the section 8 content
-            const section8Match = analysisText.match(/8\. Career Path and Industry Analysis([\s\S]*?)(?=\d+\.|$)/);
-            if (!section8Match) return null;
 
-            const section8Content = section8Match[1];
+
+    // Function to parse job fit recommendations from analysis
+    const parseJobFitRecommendations = (analysisText) => {
+        try {
+            // Find section 4 content
+            const section4Match = analysisText.match(/4\. Job Fit Recommendations([\s\S]*?)(?=\d+\.|$)/);
+            if (!section4Match) return null;
+
+            const section4Content = section4Match[1];
 
             // Extract recommendations
             const recommendations = {
                 industries: [],
-                roles: [],
+                role: '',
                 jobTitles: [],
                 companies: []
             };
 
             // Extract industries
-            const industriesMatch = section8Content.match(/Recommended Industries:([\s\S]*?)(?=Recommended|$)/);
-            if (industriesMatch) {
-                recommendations.industries = industriesMatch[1]
+            const industryMatch = section4Content.match(/Industry\s*([\s\S]*?)(?=Role|$)/i);
+            if (industryMatch) {
+                recommendations.industries = industryMatch[1]
                     .split('\n')
-                    .filter(line => line.trim().startsWith('-'))
-                    .map(line => line.trim().replace('-', '').trim());
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
             }
 
-            // Extract roles
-            const rolesMatch = section8Content.match(/Recommended Roles:([\s\S]*?)(?=Recommended|$)/);
-            if (rolesMatch) {
-                recommendations.roles = rolesMatch[1]
-                    .split('\n')
-                    .filter(line => line.trim().startsWith('-'))
-                    .map(line => line.trim().replace('-', '').trim());
+            // Extract role
+            const roleMatch = section4Content.match(/Role\s*([\s\S]*?)(?=Job Title|$)/i);
+            if (roleMatch) {
+                recommendations.role = roleMatch[1].trim();
+                // Convert 'Intern' to 'Employee' for search purposes
+                if (recommendations.role.toLowerCase().includes('intern')) {
+                    recommendations.role = 'Employee';
+                }
             }
 
             // Extract job titles
-            const jobTitlesMatch = section8Content.match(/Recommended Job Titles:([\s\S]*?)(?=Recommended|$)/);
-            if (jobTitlesMatch) {
-                recommendations.jobTitles = jobTitlesMatch[1]
+            const jobTitleMatch = section4Content.match(/Job Title\s*([\s\S]*?)(?=Companies|$)/i);
+            if (jobTitleMatch) {
+                recommendations.jobTitles = jobTitleMatch[1]
                     .split('\n')
-                    .filter(line => line.trim().startsWith('-'))
-                    .map(line => line.trim().replace('-', '').trim());
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
             }
 
             // Extract companies
-            const companiesMatch = section8Content.match(/Recommended Companies:([\s\S]*?)(?=\d+\.|$)/);
+            const companiesMatch = section4Content.match(/Companies\s*([\s\S]*?)(?=\d+\.|$)/i);
             if (companiesMatch) {
                 recommendations.companies = companiesMatch[1]
                     .split('\n')
-                    .filter(line => line.trim().startsWith('-'))
-                    .map(line => line.trim().replace('-', '').trim());
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
             }
 
             return recommendations;
         } catch (error) {
-            console.error('Error parsing recommendations:', error);
+            console.error('Error parsing job fit recommendations:', error);
             return null;
         }
     };
@@ -164,152 +169,54 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         }
     };
 
-    const handleConnectionSearch = () => {
-        const recommendations = parseRecommendations(analysisResult.analysis);
-        if (recommendations) {
-            localStorage.setItem('personalizedRecommendations', JSON.stringify(recommendations));
-            navigate('/people');
-        }
-    };
-
-    // Function to handle connection search
-    const renderAnalysisContent = () => {
-        if (!versionsLoaded) {
-            return (
-                <div className="analysis-container">
-                    <div className="loading-spinner" />
-                    <p>Loading versions...</p>
-                </div>
-            );
-        }
-
-        if (versionsLoaded && analysisVersions.length === 0) {
-            return (
-                <div className="analysis-container">
-                    <p>No analysis available yet. Click "New Analysis" to generate one.</p>
-                </div>
-            );
-        }
-
-        if (isLoading) {
-            return (
-                <div className="analysis-container">
-                    <div className="loading-spinner" />
-                    <p>Loading analysis...</p>
-                </div>
-            );
-        }
-
-        return (
-            <div className="analysis-container">
-                {analysisResult && showAnalysis && (
-                    <>
-                        <div className="analysis-dropdown">
-                            <div className="analysis-content">
-                                <ReactMarkdown>{analysisResult.analysis}</ReactMarkdown>
-                            </div>
-                        </div>
-                        <button 
-                            className="connection-search-button"
-                            onClick={handleConnectionSearch}
-                        >
-                            Search for Personalized Connections
-                        </button>
-                    </>
-                )}
-            </div>
-        );
-    };
-
-    const renderVersionControls = () => {
-        if (!versionsLoaded || analysisVersions.length === 0) return null;
-
-        return (
-            <div className="version-controls">
-                <select 
-                    value={selectedVersion === null ? "" : selectedVersion}
-                    onChange={(e) => setSelectedVersion(parseInt(e.target.value))}
-                    className="version-selector"
-                >
-                    <option value="">Select a version...</option>
-                    {analysisVersions.map((version, index) => {
-                        const date = new Date(version.LastModified).toLocaleDateString();
-                        return (
-                            <option key={version.Key} value={index}>
-                                Version {analysisVersions.length - index} ({date})
-                            </option>
-                        );
-                    })}
-                </select>
-                <button
-                    onClick={() => loadAnalysisVersion(selectedVersion)}
-                    className="view-button"
-                    disabled={selectedVersion === null}
-                >
-                    View Analysis
-                </button>
-                <button 
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="delete-version-btn"
-                    disabled={analysisVersions.length <= 1 || selectedVersion === null}
-                >
-                    Delete Version
-                </button>
-            </div>
-        );
-    };
-
-    // Function to get the next version number
-    const getNextVersionNumber = () => {
-        if (analysisVersions.length === 0) return 1;
+    const generateSearchCombinations = (recommendations) => {
+        if (!recommendations) return [];
         
-        const versionNumbers = analysisVersions.map(version => {
-            const match = version.Key.match(/_version_(\d+)\.json$/);
-            return match ? parseInt(match[1]) : 0;
+        const combinations = [];
+        const { industries, role, jobTitles, companies } = recommendations;
+
+        // Generate all possible combinations
+        industries.forEach(industry => {
+            // Base combination with just industry and role
+            combinations.push({
+                industry,
+                role,
+                title: '',
+                company: ''
+            });
+
+            // Add combinations with job titles
+            jobTitles.forEach(title => {
+                combinations.push({
+                    industry,
+                    role,
+                    title,
+                    company: ''
+                });
+
+                // Add combinations with companies
+                companies.forEach(company => {
+                    combinations.push({
+                        industry,
+                        role,
+                        title,
+                        company
+                    });
+                });
+            });
+
+            // Add combinations with just companies
+            companies.forEach(company => {
+                combinations.push({
+                    industry,
+                    role,
+                    title: '',
+                    company
+                });
+            });
         });
-        
-        return Math.max(...versionNumbers) + 1;
-    };
 
-    // Function to delete a version
-    const deleteAnalysisVersion = async () => {
-        try {
-            if (analysisVersions.length <= 1) {
-                alert("Cannot delete the last remaining version.");
-                return;
-            }
-
-            const versionToDelete = analysisVersions[selectedVersion];
-            const { credentials } = await fetchAuthSession();
-            const s3Client = new S3Client({
-                region: "us-east-1",
-                credentials: {
-                    accessKeyId: credentials.accessKeyId,
-                    secretAccessKey: credentials.secretAccessKey,
-                    sessionToken: credentials.sessionToken
-                }
-            });
-
-            const command = new DeleteObjectCommand({
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: versionToDelete.Key
-            });
-
-            await s3Client.send(command);
-            await listAnalysisVersions();
-            
-            if (analysisVersions.length > 0) {
-                setSelectedVersion(0);
-                loadAnalysisVersion(0);
-            } else {
-                setAnalysisResult(null);
-            }
-            
-            setShowDeleteConfirm(false);
-        } catch (error) {
-            console.error('Error deleting analysis version:', error);
-            alert('Failed to delete version. Please try again.');
-        }
+        return combinations;
     };
 
     // Function to analyze resume
@@ -407,6 +314,139 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         await handleAnalyzeResume();
     };
 
+    const renderAnalysisContent = () => {
+        if (!versionsLoaded) {
+            return (
+                <div className="analysis-container">
+                    <div className="loading-spinner" />
+                    <p>Loading versions...</p>
+                </div>
+            );
+        }
+
+        if (versionsLoaded && analysisVersions.length === 0) {
+            return (
+                <div className="analysis-container">
+                    <p>No analysis available yet. Click "New Analysis" to generate one.</p>
+                </div>
+            );
+        }
+
+        if (isLoading) {
+            return (
+                <div className="analysis-container">
+                    <div className="loading-spinner" />
+                    <p>Loading analysis...</p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="analysis-container">
+                {analysisResult && showAnalysis && (
+                    <>
+                        <div className="analysis-dropdown">
+                            <div className="analysis-content">
+                                <ReactMarkdown>{analysisResult.analysis}</ReactMarkdown>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    };
+
+    const renderVersionControls = () => {
+        if (!versionsLoaded || analysisVersions.length === 0) return null;
+
+        return (
+            <div className="version-controls">
+                <select 
+                    value={selectedVersion === null ? "" : selectedVersion}
+                    onChange={(e) => setSelectedVersion(parseInt(e.target.value))}
+                    className="version-selector"
+                >
+                    <option value="">Select a version...</option>
+                    {analysisVersions.map((version, index) => {
+                        const date = new Date(version.LastModified).toLocaleDateString();
+                        return (
+                            <option key={version.Key} value={index}>
+                                Version {analysisVersions.length - index} ({date})
+                            </option>
+                        );
+                    })}
+                </select>
+                <button
+                    onClick={() => loadAnalysisVersion(selectedVersion)}
+                    className="view-button"
+                    disabled={selectedVersion === null}
+                >
+                    View Analysis
+                </button>
+                <button 
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="delete-version-btn"
+                    disabled={analysisVersions.length <= 1 || selectedVersion === null}
+                >
+                    Delete Version
+                </button>
+            </div>
+        );
+    };
+
+    // Function to get the next version number
+    const getNextVersionNumber = () => {
+        if (analysisVersions.length === 0) return 1;
+        
+        const versionNumbers = analysisVersions.map(version => {
+            const match = version.Key.match(/_version_(\d+)\.json$/);
+            return match ? parseInt(match[1]) : 0;
+        });
+        
+        return Math.max(...versionNumbers) + 1;
+    };
+
+    // Function to delete a version
+    const deleteAnalysisVersion = async () => {
+        try {
+            if (analysisVersions.length <= 1) {
+                alert("Cannot delete the last remaining version.");
+                return;
+            }
+
+            const versionToDelete = analysisVersions[selectedVersion];
+            const { credentials } = await fetchAuthSession();
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: {
+                    accessKeyId: credentials.accessKeyId,
+                    secretAccessKey: credentials.secretAccessKey,
+                    sessionToken: credentials.sessionToken
+                }
+            });
+
+            const command = new DeleteObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: versionToDelete.Key
+            });
+
+            await s3Client.send(command);
+            await listAnalysisVersions();
+            
+            if (analysisVersions.length > 0) {
+                setSelectedVersion(0);
+                loadAnalysisVersion(0);
+            } else {
+                setAnalysisResult(null);
+            }
+            
+            setShowDeleteConfirm(false);
+        } catch (error) {
+            console.error('Error deleting analysis version:', error);
+            alert('Failed to delete version. Please try again.');
+        }
+    };
+
     return (
         <div className="resume-analysis">
             {showAnalyzeConfirm && (
@@ -453,7 +493,32 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                 </div>
             )}
 
-            {renderAnalysisContent()}
+            <div className="tabs">
+                <button 
+                    className={`tab ${activeTab === 'analysis' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('analysis')}
+                >
+                    Analysis
+                </button>
+                <button 
+                    className={`tab ${activeTab === 'recommendations' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('recommendations')}
+                >
+                    Connection Recommendations
+                </button>
+            </div>
+
+            {activeTab === 'analysis' ? (
+                renderAnalysisContent()
+            ) : (
+                <div className="recommendations-content">
+                    {analysisResult && analysisResult.analysis && (
+                        <RecommendedAlumni 
+                            searchCombinations={generateSearchCombinations(parseJobFitRecommendations(analysisResult.analysis))}
+                        />
+                    )}
+                </div>
+            )}
         </div>
     );
 }
