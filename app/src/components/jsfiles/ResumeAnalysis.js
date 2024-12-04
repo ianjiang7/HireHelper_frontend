@@ -69,7 +69,15 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         }
     }, [resumeName, userSub, listAnalysisVersions]);
 
+    const FILTERED_WORDS = [
+    ];
 
+    const cleanText = (text) => {
+        return text
+            .replace(/\*\*/g, '') // Remove **
+            .replace(/-/g, '') // Remove -
+            .trim(); // Remove leading/trailing spaces
+    };
 
     // Function to parse job fit recommendations from analysis
     const parseJobFitRecommendations = (analysisText) => {
@@ -82,20 +90,10 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
             // Extract recommendations
             const recommendations = {
-                industries: [],
                 role: '',
                 jobTitles: [],
                 companies: []
             };
-
-            // Extract industries
-            const industryMatch = section4Content.match(/Industry\s*([\s\S]*?)(?=Role|$)/i);
-            if (industryMatch) {
-                recommendations.industries = industryMatch[1]
-                    .split('\n')
-                    .map(line => line.trim())
-                    .filter(line => line.length > 0);
-            }
 
             // Extract role
             const roleMatch = section4Content.match(/Role\s*([\s\S]*?)(?=Job Title|$)/i);
@@ -110,18 +108,30 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             // Extract job titles
             const jobTitleMatch = section4Content.match(/Job Title\s*([\s\S]*?)(?=Companies|$)/i);
             if (jobTitleMatch) {
-                recommendations.jobTitles = jobTitleMatch[1]
+                const titles = jobTitleMatch[1]
                     .split('\n')
-                    .map(line => line.trim())
+                    .map(line => cleanText(line))
                     .filter(line => line.length > 0);
+
+                // Get meaningful words from titles
+                const titleWords = new Set();
+                titles.forEach(title => {
+                    const words = title.toLowerCase().split(/\s+/);
+                    words.forEach(word => {
+                        if (!FILTERED_WORDS.includes(word) && word.length > 0) {
+                            titleWords.add(word);
+                        }
+                    });
+                });
+                recommendations.jobTitles = Array.from(titleWords);
             }
 
-            // Extract companies
+            // Extract and clean companies
             const companiesMatch = section4Content.match(/Companies\s*([\s\S]*?)(?=\d+\.|$)/i);
             if (companiesMatch) {
                 recommendations.companies = companiesMatch[1]
                     .split('\n')
-                    .map(line => line.trim())
+                    .map(line => cleanText(line))
                     .filter(line => line.length > 0);
             }
 
@@ -173,48 +183,21 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         if (!recommendations) return [];
         
         const combinations = [];
-        const { industries, role, jobTitles, companies } = recommendations;
+        const { role, jobTitles, companies } = recommendations;
 
-        // Generate all possible combinations
-        industries.forEach(industry => {
-            // Base combination with just industry and role
-            combinations.push({
-                industry,
-                role,
-                title: '',
-                company: ''
-            });
-
-            // Add combinations with job titles
-            jobTitles.forEach(title => {
-                combinations.push({
-                    industry,
-                    role,
-                    title,
-                    company: ''
-                });
-
-                // Add combinations with companies
+        // Only generate combinations if we have both titles and companies
+        if (jobTitles.length > 0 && companies.length > 0) {
+            // Generate combinations for each job title word and company
+            jobTitles.forEach(titleWord => {
                 companies.forEach(company => {
                     combinations.push({
-                        industry,
-                        role,
-                        title,
+                        title: titleWord,
+                        role: role || 'Employee',
                         company
                     });
                 });
             });
-
-            // Add combinations with just companies
-            companies.forEach(company => {
-                combinations.push({
-                    industry,
-                    role,
-                    title: '',
-                    company
-                });
-            });
-        });
+        }
 
         return combinations;
     };
@@ -513,9 +496,13 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             ) : (
                 <div className="recommendations-content">
                     {analysisResult && analysisResult.analysis && (
-                        <RecommendedAlumni 
-                            searchCombinations={generateSearchCombinations(parseJobFitRecommendations(analysisResult.analysis))}
-                        />
+                        <>
+                            {console.log("Analysis Result:", analysisResult)}
+                            {console.log("Parsed Recommendations:", parseJobFitRecommendations(analysisResult.analysis))}
+                            <RecommendedAlumni 
+                                searchCombinations={generateSearchCombinations(parseJobFitRecommendations(analysisResult.analysis))}
+                            />
+                        </>
                     )}
                 </div>
             )}

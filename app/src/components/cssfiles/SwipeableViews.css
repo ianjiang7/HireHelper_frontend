@@ -6,6 +6,26 @@
     background-color: #f8f9fa;
 }
 
+.hover-zone {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 60px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+}
+
+.hover-zone.left {
+    left: 0;
+}
+
+.hover-zone.right {
+    right: 0;
+}
+
 .view-container {
     position: relative;
     width: 100%;
@@ -29,20 +49,9 @@
     background-color: #f8f9fa;
 }
 
-.navigation-arrows {
-    position: absolute;
-    top: 50%;
-    width: 100%;
-    transform: translateY(-50%);
-    display: flex;
-    justify-content: space-between;
-    padding: 0 2rem;
-    pointer-events: none;
-    z-index: 10;
-}
-
 .prev-view-button,
 .next-view-button {
+    opacity: 0;
     background: linear-gradient(135deg, #6b46c1, #9f7aea);
     color: white;
     border: none;
@@ -53,15 +62,37 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
-    pointer-events: all;
+    transition: opacity 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.hover-zone:hover .prev-view-button,
+.hover-zone:hover .next-view-button {
+    opacity: 1;
 }
 
 .prev-view-button:hover,
 .next-view-button:hover {
     transform: scale(1.1);
     background: linear-gradient(135deg, #553c9a, #805ad5);
+}
+
+.navigation-arrows {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2rem;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.swipeable-container:hover .navigation-arrows {
+    opacity: 1;
 }
 
 .pagination-dots {
