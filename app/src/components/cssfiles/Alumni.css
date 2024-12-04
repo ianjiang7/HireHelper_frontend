@@ -3,83 +3,97 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-  }
-  
-  .table-wrapper {
+    padding: 1rem;
+}
+
+.table-wrapper {
     flex-grow: 1;
     overflow-y: auto;
     position: relative;
-  }
-  
-  /* Table styling */
-  .alumni-table {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Table styling */
+.alumni-table {
     width: 100%;
     background-color: #fff;
     border-collapse: separate;
     border-spacing: 0;
-  }
-  
-  /* Sticky table header */
-  .alumni-table thead {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Sticky table header */
+.alumni-table thead {
     position: sticky;
     top: 0;
     z-index: 10;
-  }
-  
-  .alumni-table th {
-    background-color: #8a2be2; /* Purple */
+}
+
+.alumni-table th {
+    background-color: #6b46c1; /* Updated to match purple theme */
     color: #fff;
     padding: 12px;
     text-align: left;
-    font-weight: bold;
-  }
-  
-  .alumni-table td {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.alumni-table th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.alumni-table th:last-child {
+    border-top-right-radius: 8px;
+}
+
+.alumni-table td {
     padding: 12px;
-    border-bottom: 1px solid #e6e6fa; /* Light Lavender */
-    color: #333;
+    border-bottom: 1px solid rgba(107, 70, 193, 0.1); /* Light purple border */
+    color: #4a5568;
     word-wrap: break-word;
-  }
-  
-  /* Hover effect for rows */
-  .alumni-table tbody tr:hover {
-    background-color: #ffe6f2; /* Light Pink */
-  }
-  
-  /* Empty state */
-  .alumni-empty {
+}
+
+/* Hover effect for rows */
+.alumni-table tbody tr:hover {
+    background-color: rgba(107, 70, 193, 0.05); /* Very light purple hover */
+}
+
+/* Empty state */
+.alumni-empty {
     text-align: center;
-    color: #888;
+    color: #4a5568;
     padding: 20px;
     font-size: 1rem;
-  }
-  
-  /* Pagination container */
-  .pagination-container {
+}
+
+/* Pagination container */
+.pagination-container {
     display: flex;
     justify-content: center;
     gap: 16px;
     padding: 16px 0;
     background-color: #fff;
-  }
-  
-  /* Pagination buttons */
-  .pagination-button {
+}
+
+/* Pagination buttons */
+.pagination-button {
     padding: 10px 20px;
-    background-color: #8a2be2; /* Pink */
+    background-color: #6b46c1; /* Updated to match purple theme */
     color: #fff;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.2s;
-  }
-  
-  .pagination-button:hover:not(:disabled) {
-    background-color: #ff85c2;
-  }
-  
-  .pagination-button:disabled {
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: #805ad5;
+}
+
+.pagination-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-  }
+}

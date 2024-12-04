@@ -256,19 +256,25 @@ function RecommendedAlumni({ searchCombinations }) {
 
   return (
     <div className="alumni-container">
-      {loading && <div className="loading">{loadingMessage}</div>}
       {!isSearchStarted ? (
         <div className="text-center my-4">
           <button 
+            className="start-search-btn"
             onClick={handleStartSearch}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-            disabled={loading}
           >
-            Start Loading Recommendations
+            Find Alumni Connections
           </button>
         </div>
       ) : (
         <>
+          {loading && <div className="loading">{loadingMessage}</div>}
+          
+          {!loading && alumni.length > 0 && (
+            <div className="recommendation-count">
+              Found {alumni.length} People you may want to connect with
+            </div>
+          )}
+          
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
