@@ -182,24 +182,23 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const generateSearchCombinations = (recommendations) => {
         if (!recommendations) return [];
         
-        const combinations = [];
+        const combinationsByTitle = new Map();
         const { role, jobTitles, companies } = recommendations;
 
         // Only generate combinations if we have both titles and companies
         if (jobTitles.length > 0 && companies.length > 0) {
-            // Generate combinations for each job title word and company
+            // Generate combinations for each job title word
             jobTitles.forEach(titleWord => {
-                companies.forEach(company => {
-                    combinations.push({
-                        title: titleWord,
-                        role: role || 'Employee',
-                        company
-                    });
-                });
+                const titleCombinations = companies.map(company => ({
+                    title: titleWord,
+                    role: role || 'Employee',
+                    company
+                }));
+                combinationsByTitle.set(titleWord, titleCombinations);
             });
         }
 
-        return combinations;
+        return combinationsByTitle;
     };
 
     // Function to analyze resume
