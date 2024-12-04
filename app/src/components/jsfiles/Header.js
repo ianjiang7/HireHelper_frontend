@@ -78,19 +78,24 @@ function Header({ navigate }) {
                 AlumniReach for NYU
             </h1>
             <div style={{ display: "flex", gap: "1.5rem" }}>
-                <button
-                    onClick={() => navigate("/profile-setup")}
-                    style={{
-                        fontSize: "1rem",
-                        padding: "0.5rem",
-                        color: "purple",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                    }}
-                >
-                    <FontAwesomeIcon icon={faUser} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
-                </button>
+                {isAuthenticated && (
+                    <button
+                        onClick={() => navigate("/profile-setup", { 
+                            state: { tempProfileView: true },
+                            replace: true  // Replace current history entry to avoid state persistence
+                        })}
+                        style={{
+                            fontSize: "1rem",
+                            padding: "0.5rem",
+                            color: "purple",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faUser} style={{ color: "#8a2be2", fontSize: "1.5rem" }} />
+                    </button>
+                )}
                 {signOutIcon}
             </div>
         </nav>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine, faSearch, faUserGroup, faUser, faHome, faChevronLeft, faBars } from '@fortawesome/free-solid-svg-icons';
 import SwipeableViews from './SwipeableViews';
@@ -18,7 +18,8 @@ import "../cssfiles/ProfileSetup.css";
 
 function ProfileSetup() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('welcome');
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState('welcome');  // Always start with welcome
     const [activeIndex, setActiveIndex] = useState(0);
     const [swipeIndex, setSwipeIndex] = useState(0);
     const [userSub, setUserSub] = useState("");
@@ -186,6 +187,14 @@ function ProfileSetup() {
     }, []);
 
     useEffect(() => {
+        if (location.state?.tempProfileView) {
+            setActiveTab('profile');
+            // Clear the location state immediately to prevent persistence
+            navigate(".", { replace: true });
+        }
+    }, [location.state, navigate]);
+
+    useEffect(() => {
         if (!isSignedIn && activeTab !== 'welcome') {
             setActiveTab('welcome');
             setActiveIndex(0);
@@ -199,6 +208,8 @@ function ProfileSetup() {
             navigate('/alumni-login');
             return;
         }
+        // Replace the current history entry with one without state
+        navigate(".", { replace: true });
         setActiveTab(tab);
         setActiveIndex(index);
         setSwipeIndex(index);
@@ -280,6 +291,7 @@ function ProfileSetup() {
 
             // Update user profile in DynamoDB with the resumeName
             const { idToken } = (await fetchAuthSession()).tokens ?? {};
+
             const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
                 method: "POST",
                 headers: {

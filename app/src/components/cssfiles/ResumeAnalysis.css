@@ -437,3 +437,101 @@ pre {
     padding: 1rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
+.analysis-page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: #ffffff;
+    color: #6b46c1;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(107, 70, 193, 0.2);
+}
+
+.analysis-page-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #6b46c1;
+}
+
+.analysis-page-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    color: #805ad5;
+}
+
+.loading-bar-container {
+    margin: 2rem auto;
+    max-width: 600px;
+    text-align: center;
+}
+
+.loading-bar {
+    height: 4px;
+    background-color: #e2e8f0;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.loading-progress {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(90deg, #6b46c1 0%, #805ad5 50%, #6b46c1 100%);
+    background-size: 200% 100%;
+    animation: loading-animation 2s linear infinite;
+    width: 100%;
+}
+
+.loading-message {
+    margin-top: 1rem;
+    color: #4a5568;
+    font-size: 1rem;
+}
+
+@keyframes loading-animation {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.no-resume-message {
+    text-align: center;
+    padding: 3rem;
+    margin: 2rem auto;
+    max-width: 600px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.no-resume-message .message-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.no-resume-message i {
+    font-size: 3rem;
+    color: #6b46c1;
+    margin-bottom: 1rem;
+}
+
+.no-resume-message h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+}
+
+.no-resume-message p {
+    font-size: 1.1rem;
+    color: #4a5568;
+    margin: 0;
+}

@@ -1,0 +1,41 @@
+.presets-container {
+    padding: 16px;
+    margin-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.save-preset-btn, .load-preset-btn {
+    padding: 8px 16px;
+    margin: 4px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.save-preset-btn:hover, .load-preset-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #ccc;
+}
+
+.save-preset-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.saved-presets {
+    margin-top: 16px;
+}
+
+.saved-presets h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: #666;
+}
+
+.preset-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}

@@ -8,8 +8,8 @@ function RoleBasedRedirect() {
     useEffect(() => {
         const userRole = localStorage.getItem("role");
 
-        // Do not redirect on login, signup, or home routes
-        const publicRoutes = ["/", "/alumni-login", "/student-login", "/signup"];
+        // Do not redirect on login, signup, home, or profile-setup routes
+        const publicRoutes = ["/", "/alumni-login", "/student-login", "/signup", "/profile-setup"];
         if (publicRoutes.includes(location.pathname)) {
             return;
         }

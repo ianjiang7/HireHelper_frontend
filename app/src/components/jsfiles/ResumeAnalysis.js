@@ -8,6 +8,17 @@ import "../cssfiles/ResumeAnalysis.css";
 import { useNavigate } from 'react-router-dom';
 import RecommendedAlumni from './RecommendedAlumni';
 
+function LoadingBar({ message }) {
+    return (
+        <div className="loading-bar-container">
+            <div className="loading-bar">
+                <div className="loading-progress"></div>
+            </div>
+            <p className="loading-message">{message}</p>
+        </div>
+    );
+}
+
 function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const [analysisResult, setAnalysisResult] = useState(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -20,6 +31,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const [selectedVersion, setSelectedVersion] = useState(null);
     const [showAnalyzeConfirm, setShowAnalyzeConfirm] = useState(false);
     const [activeTab, setActiveTab] = useState('analysis');
+    const [loadingMessage, setLoadingMessage] = useState('');
     const navigate = useNavigate();
 
     // Function to list all analysis versions
@@ -211,80 +223,25 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
         setIsAnalyzing(true);
         try {
-            const { tokens } = await fetchAuthSession();
-            const idToken = tokens.idToken.toString();
+            setLoadingMessage('Sending to AI Algorithm...');
+            // Initial delay for sending
+            await new Promise(resolve => setTimeout(resolve, 1500));
             
-            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': idToken
-                },
-                body: JSON.stringify({
-                    query: analyzeResume,
-                    variables: {
-                        input: {
-                            userId: userSub,
-                            s3Path: `private/${userSub}/${resumeName}`
-                        }
-                    }
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.errors) {
-                throw new Error(data.errors[0].message);
-            }
-
-            if (!data.data || !data.data.analyzeResume) {
-                throw new Error('No analysis data received');
-            }
-
-            const result = data.data.analyzeResume;
-
-            if (!result.analysis) {
-                throw new Error('Analysis is empty');
-            }
-
-            const formattedResult = {
-                analysis: result.analysis,
-                success: result.success,
-                error: result.error
-            };
-
-            setAnalysisResult(formattedResult);
-            setShowAnalysis(true);
-
-            // Save new version to S3
-            const versionNumber = getNextVersionNumber();
-            const { credentials } = await fetchAuthSession();
-            const s3Client = new S3Client({
-                region: "us-east-1",
-                credentials: {
-                    accessKeyId: credentials.accessKeyId,
-                    secretAccessKey: credentials.secretAccessKey,
-                    sessionToken: credentials.sessionToken
-                }
-            });
-
-            const key = `private/${userSub}/analysis/${resumeName.replace(/\.[^/.]+$/, '')}_analysis_version_${versionNumber}.json`;
-
-            const command = new PutObjectCommand({
-                Bucket: "alumnireachresumestorage74831-dev",
-                Key: key,
-                Body: JSON.stringify(formattedResult),
-                ContentType: 'application/json'
-            });
-
-            await s3Client.send(command);
+            // Start analysis
+            const result = await analyzeResume({ resumeUrl });
+            
+            setLoadingMessage('Retrieving Personalized Insights...');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Process result and update versions
             await listAnalysisVersions();
-            setSelectedVersion(0);
+            setShowAnalysis(true);
+            setCurrentVersionIndex(0);
         } catch (error) {
             console.error('Error analyzing resume:', error);
-            alert('Failed to analyze resume. Please try again.');
         } finally {
             setIsAnalyzing(false);
+            setLoadingMessage('');
         }
     };
 
@@ -431,7 +388,24 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     };
 
     return (
-        <div className="resume-analysis">
+        <div className="analysis-section">
+            <div className="analysis-page-header">
+                <h1>Analyze Your Resume and Receive Personalized Recommendations</h1>
+                <p>Get AI-powered insights and connect with relevant NYU alumni</p>
+            </div>
+            
+            {!resumeName && (
+                <div className="no-resume-message">
+                    <div className="message-content">
+                        <i className="fas fa-file-upload"></i>
+                        <h2>No Resume Found</h2>
+                        <p>Please Attach a Resume to your Profile</p>
+                    </div>
+                </div>
+            )}
+            
+            {isAnalyzing && <LoadingBar message={loadingMessage} />}
+            
             {showAnalyzeConfirm && (
                 <div className="confirm-dialog">
                     <div className="confirm-content">
