@@ -545,6 +545,18 @@ function ProfileSetup() {
     };
 
     const handleSaveProfile = async () => {
+        // Check if there are any changes by comparing with the original data
+        const hasChanges = Object.keys(profileData).some(key => {
+            // Skip resumeName and resumeS3Path as they're handled separately
+            if (key === 'resumeName' || key === 'resumeS3Path') return false;
+            return profileData[key] !== localStorage.getItem(key === 'fullname' ? 'FullName' : key);
+        });
+
+        if (!hasChanges) {
+            alert("Your profile is already saved!");
+            return;
+        }
+
         setIsSaving(true);
         try {
             const session = await fetchAuthSession();
