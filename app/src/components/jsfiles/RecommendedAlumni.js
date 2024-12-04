@@ -9,7 +9,6 @@ function RecommendedAlumni({ searchCombinations }) {
   const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearchStarted, setIsSearchStarted] = useState(false);
-  const [selectedTitle, setSelectedTitle] = useState(null);
 
   useEffect(() => {
     // Reset pagination when search parameters change
@@ -84,17 +83,6 @@ function RecommendedAlumni({ searchCombinations }) {
     getAlumni();
   };
 
-  const handleTitleSelect = (titleWord) => {
-    setSelectedTitle(titleWord);
-    const combinations = searchCombinations.filter(combo => combo.title === titleWord);
-    if (combinations.length > 0) {
-      setAlumni([]);
-      setCurrentPage(1);
-      setHasMore(true);
-      getAlumni();
-    }
-  };
-
   const filteredAlumni = alumni.filter((alumnus) =>
     Object.values(alumnus).some((value) =>
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
@@ -103,18 +91,6 @@ function RecommendedAlumni({ searchCombinations }) {
 
   return (
     <div className="alumni-container">
-      <div className="title-buttons-container">
-        {Array.from(new Set(searchCombinations.map(combo => combo.title))).map((titleWord) => (
-          <button
-            key={titleWord}
-            className={`title-button ${selectedTitle === titleWord ? 'selected' : ''}`}
-            onClick={() => handleTitleSelect(titleWord)}
-          >
-            Load recommendations for "{titleWord}"
-          </button>
-        ))}
-      </div>
-
       {!isSearchStarted ? (
         <div className="text-center my-4">
           <button 
