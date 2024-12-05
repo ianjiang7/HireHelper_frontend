@@ -53,7 +53,25 @@ function Signup() {
     checkStudentStatus();
 
   }, [form]);
-        
+
+  /* linkedin verification for alumni - need to fix later, for now only use nyu emails
+  {!isStudent ? (
+          <div>
+                {!isVerified ? (
+                    <>
+                    <button onClick={() => toggleLinkedInPopup(true)}>Verify with LinkedIn</button> 
+                    </>
+                    
+                ) : (
+                    <p>Your LinkedIn profile is verified!</p>
+                )}
+            <LinkedInPopup
+                isOpen={isPopupOpen}
+                onClose={() => toggleLinkedInPopup(false)}
+                onVerificationComplete={handleVerificationComplete}
+            />
+    </div> ) : null}
+    */
 
 
   function hasMatchingWords(string1, string2) {
@@ -108,7 +126,7 @@ function Signup() {
       setLoading(false);
     }
   };
-
+  //Linkedin Verification not working right now
   const handleVerificationComplete = async (authCode) => {
     try {
       // Replace '/api/verify-linkedin' with your Lambda function's API Gateway endpoint
@@ -221,7 +239,7 @@ function Signup() {
           <input
             type="email"
             name="email"
-            placeholder="Email*"
+            placeholder="NYU Email*"
             value={form.email}
             onChange={handleChange}
           />
@@ -264,22 +282,6 @@ function Signup() {
             value={form.phone_number}
             onChange={handleChange}
           />
-          {!isStudent ? (
-          <div>
-                {!isVerified ? (
-                    <>
-                    <button onClick={() => toggleLinkedInPopup(true)}>Verify with LinkedIn</button> 
-                    </>
-                    
-                ) : (
-                    <p>Your LinkedIn profile is verified!</p>
-                )}
-            <LinkedInPopup
-                isOpen={isPopupOpen}
-                onClose={() => toggleLinkedInPopup(false)}
-                onVerificationComplete={handleVerificationComplete}
-            />
-          </div> ) : null}
           <div>
             {(isVerified || isStudent) && <button onClick={handleSignup} disabled={loading}>
               {loading ? "Signing Up..." : "Complete Sign Up"}
