@@ -38,7 +38,7 @@ function ProfileSetup() {
     const [isAlumni, setIsAlumni] = useState(false);
     const [resumeName, setResumeName] = useState("");
     const [resumeUrl, setResumeUrl] = useState("");
-    const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const [isSidebarOpen, setSidebarOpen] = useState(true);
 
     // Profile state
     const [profileData, setProfileData] = useState({
