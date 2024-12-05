@@ -214,7 +214,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         return combinations;
     };
 
-    // Function to analyze resume
+     // Function to analyze resume
     const handleAnalyzeResume = async () => {
         if (!resumeUrl || !userSub || !resumeName) {
             alert("Please upload a resume first.");
@@ -226,19 +226,79 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             setLoadingMessage('Sending to AI Algorithm...');
             // Initial delay for sending
             await new Promise(resolve => setTimeout(resolve, 1500));
+            const { tokens } = await fetchAuthSession();
+            const idToken = tokens.idToken.toString();
             
-            // Start analysis
-            const result = await analyzeResume({ resumeUrl });
-            
-            setLoadingMessage('Retrieving Personalized Insights...');
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Process result and update versions
-            await listAnalysisVersions();
+            const response = await fetch(awsmobile.aws_appsync_graphqlEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': idToken
+                },
+                body: JSON.stringify({
+                    query: analyzeResume,
+                    variables: {
+                        input: {
+                            userId: userSub,
+                            s3Path: `private/${userSub}/${resumeName}`
+                        }
+                    }
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.errors) {
+                throw new Error(data.errors[0].message);
+            }
+
+            if (!data.data || !data.data.analyzeResume) {
+                throw new Error('No analysis data received');
+            }
+
+            const result = data.data.analyzeResume;
+
+            if (!result.analysis) {
+                throw new Error('Analysis is empty');
+            }
+
+            const formattedResult = {
+                analysis: result.analysis,
+                success: result.success,
+                error: result.error
+            };
+
+            setAnalysisResult(formattedResult);
             setShowAnalysis(true);
+
+            // Save new version to S3
+            const versionNumber = getNextVersionNumber();
+            const { credentials } = await fetchAuthSession();
+            const s3Client = new S3Client({
+                region: "us-east-1",
+                credentials: {
+                    accessKeyId: credentials.accessKeyId,
+                    secretAccessKey: credentials.secretAccessKey,
+                    sessionToken: credentials.sessionToken
+                }
+            });
+
+            const key = `private/${userSub}/analysis/${resumeName.replace(/\.[^/.]+$/, '')}_analysis_version_${versionNumber}.json`;
+
+            const command = new PutObjectCommand({
+                Bucket: "alumnireachresumestorage74831-dev",
+                Key: key,
+                Body: JSON.stringify(formattedResult),
+                ContentType: 'application/json'
+            });
+
+            await s3Client.send(command);
+            await listAnalysisVersions();
+            setSelectedVersion(0);
             setCurrentVersionIndex(0);
         } catch (error) {
             console.error('Error analyzing resume:', error);
+            alert('Failed to analyze resume. Please try again.');
         } finally {
             setIsAnalyzing(false);
             setLoadingMessage('');
