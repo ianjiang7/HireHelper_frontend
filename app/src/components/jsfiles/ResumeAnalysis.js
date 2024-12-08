@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import awsmobile from "../../aws-exports";
 import { analyzeResume } from "../../graphql/mutations";
 import "../cssfiles/ResumeAnalysis.css";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import RecommendedAlumni from './RecommendedAlumni';
 
 function LoadingBar({ message }) {
@@ -33,6 +33,31 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
     const [activeTab, setActiveTab] = useState('analysis');
     const [loadingMessage, setLoadingMessage] = useState('');
     const navigate = useNavigate();
+
+    // UI Components
+    const NoResumeMessage = () => (
+        <div className="no-resume-container">
+            <h3 className="message-header">No Resume Found</h3>
+            <p className="message-text">Please add a resume to your profile to begin analysis</p>
+            <Link to="/profile" className="profile-link-button">
+                Go to Profile
+            </Link>
+        </div>
+    );
+
+    const NoAnalysisSelected = () => (
+        <div className="no-analysis-container">
+            <h3 className="message-header">No Analysis Version Selected</h3>
+            <p className="message-text">Please select and open an analysis version to view results</p>
+        </div>
+    );
+
+    const NoRecommendations = () => (
+        <div className="no-recommendations-container">
+            <h3 className="message-header">Please Open an Analysis to View Recommendations</h3>
+            <p className="message-text">Select and open an analysis version to see alumni recommendations</p>
+        </div>
+    );
 
     // Function to list all analysis versions
     const listAnalysisVersions = useCallback(async () => {
@@ -88,6 +113,8 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         return text
             .replace(/\*\*/g, '') // Remove **
             .replace(/-/g, '') // Remove -
+            .replace(/[\r\n]+/g, ' ') // Replace newlines with single space
+            .replace(/\s+/g, ' ') // Replace multiple spaces with single space
             .trim(); // Remove leading/trailing spaces
     };
 
@@ -110,7 +137,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             // Extract role
             const roleMatch = section4Content.match(/Role\s*([\s\S]*?)(?=Job Title|$)/i);
             if (roleMatch) {
-                recommendations.role = roleMatch[1].trim();
+                recommendations.role = cleanText(roleMatch[1]);
                 // Convert 'Intern' to 'Employee' for search purposes
                 if (recommendations.role.toLowerCase().includes('intern')) {
                     recommendations.role = 'Employee';
@@ -123,7 +150,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                 const titles = jobTitleMatch[1]
                     .split('\n')
                     .map(line => cleanText(line))
-                    .filter(line => line.length > 0);
+                    .filter(line => line.length > 0 && !FILTERED_WORDS.includes(line.toLowerCase()));
 
                 // Get meaningful words from titles
                 const titleWords = new Set();
@@ -131,7 +158,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                     const words = title.toLowerCase().split(/\s+/);
                     words.forEach(word => {
                         if (!FILTERED_WORDS.includes(word) && word.length > 0) {
-                            titleWords.add(word);
+                            titleWords.add(cleanText(word));
                         }
                     });
                 });
@@ -203,9 +230,9 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             jobTitles.forEach(titleWord => {
                 companies.forEach(company => {
                     combinations.push({
-                        title: titleWord,
-                        role: role || 'Employee',
-                        company
+                        title: cleanText(titleWord),
+                        role: cleanText(role || 'Employee'),
+                        company: cleanText(company)
                     });
                 });
             });
@@ -341,6 +368,14 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             );
         }
 
+        if (!showAnalysis) {
+            return (
+                <div className="analysis-container">
+                    <NoAnalysisSelected />
+                </div>
+            );
+        }
+
         return (
             <div className="analysis-container">
                 {analysisResult && showAnalysis && (
@@ -455,13 +490,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             </div>
             
             {!resumeName && (
-                <div className="no-resume-message">
-                    <div className="message-content">
-                        <i className="fas fa-file-upload"></i>
-                        <h2>No Resume Found</h2>
-                        <p>Please Attach a Resume to your Profile</p>
-                    </div>
-                </div>
+                <NoResumeMessage />
             )}
             
             {isAnalyzing && <LoadingBar message={loadingMessage} />}
@@ -529,14 +558,18 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                 renderAnalysisContent()
             ) : (
                 <div className="recommendations-content">
-                    {analysisResult && analysisResult.analysis && (
-                        <>
-                            {console.log("Analysis Result:", analysisResult)}
-                            {console.log("Parsed Recommendations:", parseJobFitRecommendations(analysisResult.analysis))}
-                            <RecommendedAlumni 
-                                searchCombinations={generateSearchCombinations(parseJobFitRecommendations(analysisResult.analysis))}
-                            />
-                        </>
+                    {!resumeName ? (
+                        <NoResumeMessage />
+                    ) : !showAnalysis ? (
+                        <NoRecommendations />
+                    ) : (
+                        analysisResult && analysisResult.analysis && (
+                            <>
+                                <RecommendedAlumni 
+                                    searchCombinations={generateSearchCombinations(parseJobFitRecommendations(analysisResult.analysis))}
+                                />
+                            </>
+                        )
                     )}
                 </div>
             )}
