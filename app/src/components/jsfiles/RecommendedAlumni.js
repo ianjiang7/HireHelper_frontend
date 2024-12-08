@@ -5,6 +5,17 @@ import "../cssfiles/RecommendedAlumni.css";
 import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 
+function LoadingBar({ message }) {
+    return (
+        <div className="loading-bar-container">
+            <div className="loading-bar">
+                <div className="loading-progress"></div>
+            </div>
+            <p className="loading-message">{message}</p>
+        </div>
+    );
+}
+
 function RecommendedAlumni({ searchCombinations }) {
   const [alumni, setAlumni] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -267,7 +278,7 @@ function RecommendedAlumni({ searchCombinations }) {
         </div>
       ) : (
         <>
-          {loading && <div className="loading">{loadingMessage}</div>}
+          {loading && <LoadingBar message={loadingMessage} />}
           
           {!loading && alumni.length > 0 && (
             <div className="recommendation-count">
@@ -303,7 +314,7 @@ function RecommendedAlumni({ searchCombinations }) {
               </button>
             </div>
           )}
-        </>
+        </> 
       )}
       {/* Save and Load Presets */}
       <div className="presets-container">
