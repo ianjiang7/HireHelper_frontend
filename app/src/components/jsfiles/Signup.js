@@ -220,7 +220,7 @@ function Signup() {
       localStorage.setItem("userRole", signupData.role);
 
       // Navigate to appropriate page
-      navigate(signupData.role === "student" ? "/profile-setup" : "/profile-setup");
+      navigate('/profile-setup');
     } catch (err) {
       console.error("Confirmation error:", err);
       setError(err.message || "An error occurred during confirmation.");
