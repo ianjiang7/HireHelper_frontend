@@ -219,7 +219,7 @@ function Signup() {
       // Save role in localStorage
       localStorage.setItem("userRole", signupData.role);
       await new Promise((resolve) => setTimeout(resolve, 3000));
-      navigate('/profile-setup', { replace: true, state: { skipAuth: true } });
+      navigate('/profile-setup');
       // Navigate to appropriate page
     } catch (err) {
       console.error("Confirmation error:", err);
