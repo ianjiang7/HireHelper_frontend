@@ -1,13 +1,9 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  const location = useLocation();
-
-  // Check if the route state has skipAuth set to true
-  const skipAuth = location.state?.skipAuth;
 
   if (loading) {
     return (
@@ -23,7 +19,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated && !skipAuth) {
+  if (!isAuthenticated) {
     return <Navigate to="/alumni-login" replace />;
   }
 
