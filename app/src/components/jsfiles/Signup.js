@@ -218,9 +218,9 @@ function Signup() {
       
       // Save role in localStorage
       localStorage.setItem("userRole", signupData.role);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       window.location.reload();
       // Navigate to appropriate page
-      navigate('/profile-setup');
     } catch (err) {
       console.error("Confirmation error:", err);
       setError(err.message || "An error occurred during confirmation.");
