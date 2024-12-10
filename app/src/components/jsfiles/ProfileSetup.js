@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartLine, faSearch, faUserGroup, faUser, faHome, faChevronLeft, faBars } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine, faSearch, faUserGroup, faUser, faHome, faChevronLeft, faBars, faBriefcase } from '@fortawesome/free-solid-svg-icons';
 import SwipeableViews from './SwipeableViews';
 import ResumeAnalysis from "./ResumeAnalysis";
 import SearchOverview from './SearchOverview';
 import SearchResults from './SearchResults';
 import Header from './Header';
 import Home from './Home';
+import Jobs from './Jobs';
 import { Auth, API, Storage } from 'aws-amplify';
 import { signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
@@ -236,6 +237,9 @@ function ProfileSetup() {
                 break;
             case 3:
                 setActiveTab('people');
+                break;
+            case 4:
+                setActiveTab('jobs');
                 break;
             default:
                 setActiveTab('welcome');
@@ -684,6 +688,9 @@ function ProfileSetup() {
             case 3:
                 setActiveTab('people');
                 break;
+            case 4:
+                setActiveTab('jobs');
+                break;
             default:
                 break;
         }
@@ -749,6 +756,16 @@ function ProfileSetup() {
                             <FontAwesomeIcon icon={faUserGroup} />
                             <span>People</span>
                         </div>
+                        <div 
+                            className={`sidebar-item ${activeTab === 'jobs' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('jobs');
+                                setActiveIndex(4);
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faBriefcase} />
+                            <span>Jobs</span>
+                        </div>
                     </div>
                     
                     <div className="profile-nav-section">
@@ -803,6 +820,9 @@ function ProfileSetup() {
                             </div>
                             <div className="tab-content">
                                 <SearchResults embedded={true} />
+                            </div>
+                            <div className="tab-content">
+                                <Jobs />
                             </div>
                         </SwipeableViews>
                     ) : (
