@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getCurrentUser, signOut } from 'aws-amplify/auth';
-import { Hub } from 'aws-amplify/utils';
 
 const AuthContext = createContext();
 
@@ -13,16 +12,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkUser();
-
-    // Listen for auth events
-    const listener = Hub.listen('auth', ({ payload: { event } }) => {
-      if (event === 'signIn' || event === 'signOut' || event === 'sessionExpired') {
-        checkUser(); // Re-check user state on auth events
-      }
-    });
-
-    // Cleanup listener on unmount
-    return () => Hub.remove('auth', listener);
   }, []);
 
   const checkUser = async () => {
