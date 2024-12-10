@@ -111,8 +111,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
     const cleanText = (text) => {
         return text
-            .replace(/\*\*/g, '') // Remove **
-            .replace(/-/g, '') // Remove -
+            .replace(/[^a-zA-Z0-9\s]/g, '') // Remove all special characters
             .replace(/[\r\n]+/g, ' ') // Replace newlines with single space
             .replace(/\s+/g, ' ') // Replace multiple spaces with single space
             .trim(); // Remove leading/trailing spaces
