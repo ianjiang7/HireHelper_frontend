@@ -215,10 +215,10 @@ function Signup() {
         setError("Failed to create user profile in database.");
         return;
       }
-
+      
       // Save role in localStorage
       localStorage.setItem("userRole", signupData.role);
-
+      window.location.reload();
       // Navigate to appropriate page
       navigate('/profile-setup');
     } catch (err) {
