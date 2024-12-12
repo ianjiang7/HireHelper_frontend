@@ -115,7 +115,8 @@ function ProfileSetup() {
                     const fileName = userData.resumeName;
                     setResumeName(fileName);
                     localStorage.setItem(`resumeName_${userSub}`, fileName);
-
+                    
+                    // Generate new signed URL
                     const s3Client = new S3Client({
                         region: "us-east-1",
                         credentials: {
@@ -127,7 +128,7 @@ function ProfileSetup() {
 
                     const command = new GetObjectCommand({
                         Bucket: "alumnireachresumestorage74831-dev",
-                        Key: fileName
+                        Key: getResumeS3Path(fileName)
                     });
 
                     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
@@ -495,7 +496,7 @@ function ProfileSetup() {
                     variables: {
                         input: {
                             userId: userSub,
-                            s3Path: getResumeS3Path(resumeName)  // Use the same path function
+                            s3Path: getResumeS3Path(profileData.resumeName)  // Use the same path function
                         }
                     }
                 })
@@ -870,7 +871,40 @@ function ProfileSetup() {
                                                 <p>Current Resume: {profileData.resumeName}</p>
                                                 <div className="resume-buttons">
                                                     <button 
-                                                        onClick={() => window.open(resumeUrl, '_blank')}
+                                                        onClick={() => {
+                                                            if (profileData.resumeS3Path) {
+                                                                window.open(resumeUrl, '_blank');
+                                                            } else {
+                                                                // Re-generate URL if not available
+                                                                const getResumeUrl = async () => {
+                                                                    try {
+                                                                        const s3Client = new S3Client({
+                                                                            region: "us-east-1",
+                                                                            credentials: {
+                                                                                accessKeyId: authSession.credentials.accessKeyId,
+                                                                                secretAccessKey: authSession.credentials.secretAccessKey,
+                                                                                sessionToken: authSession.credentials.sessionToken
+                                                                            }
+                                                                        });
+
+                                                                        const s3Path = getResumeS3Path(profileData.resumeName);
+                                                                        const command = new GetObjectCommand({
+                                                                            Bucket: "alumnireachresumestorage74831-dev",
+                                                                            Key: s3Path
+                                                                        });
+
+                                                                        const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+                                                                        setResumeUrl(url);
+                                                                        localStorage.setItem(`resumeUrl_${userSub}`, url);
+                                                                        window.open(url, '_blank');
+                                                                    } catch (error) {
+                                                                        console.error('Error generating resume URL:', error);
+                                                                        alert('Error viewing resume. Please try again.');
+                                                                    }
+                                                                };
+                                                                getResumeUrl();
+                                                            }
+                                                        }}
                                                         className="view-button"
                                                     >
                                                         View Resume

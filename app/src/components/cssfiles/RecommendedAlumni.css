@@ -40,23 +40,35 @@
     gap: 8px;
 }
 
-.start-search-btn {
-    background-color: #2196F3;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 4px;
-    font-size: 1.1rem;
-    cursor: pointer;
+.recommendations-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.recommendations-header h1 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.start-search-container {
+    text-align: center;
     margin: 20px 0;
-    transition: background-color 0.3s;
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.start-search-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    outline: none;
+    background-color: #1976D2;
+    color: white;
+    border-radius: 4px;
 }
 
 .start-search-btn:hover {
-    background-color: #1976D2;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    background-color: #1565C0;
 }
 
 .loading-bar-container {
@@ -101,4 +113,31 @@
   100% {
     left: 100%;
   }
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.3s ease-in-out;
+}
+
+.loading-container {
+    text-align: center;
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.loading-container p {
+    margin-top: 10px;
+    color: #666;
 }

@@ -4,7 +4,7 @@
 }
 
 .jobs-hero {
-    background: linear-gradient(135deg, #8a2be2 0%, #9b4deb 100%);
+    background: linear-gradient(135deg, #6b46c1 0%, #6b46c1 100%);
     padding: 4rem 0 6rem;
     margin-bottom: -4rem;
     color: white;
@@ -44,59 +44,77 @@
 .filters-row {
     display: flex;
     gap: 1rem;
+    margin-bottom: 1rem;
     flex-wrap: wrap;
+}
+
+.title-filter,
+.company-filter,
+.industry-filter,
+.days-filter {
+    flex: 1;
+    min-width: 200px;
+}
+
+.title-input,
+.company-input,
+.industry-select,
+.days-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #333;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.title-input:focus,
+.company-input:focus,
+.industry-select:focus,
+.days-input:focus {
+    outline: none;
+    border-color: #8a2be2;
+    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.1);
 }
 
 .company-filter {
     position: relative;
-    flex: 2;
-}
-
-.company-input {
-    padding: 0.875rem 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 1rem;
-    background: white;
-    color: #333;
-    transition: all 0.2s ease;
-    min-width: 250px;
+    flex: 1;
+    min-width: 200px;
 }
 
 .company-dropdown {
     position: absolute;
-    top: calc(100% + 4px);
+    top: 100%;
     left: 0;
     right: 0;
     background: white;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 4px;
     max-height: 200px;
     overflow-y: auto;
     z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.company-option {
+.company-dropdown div {
     padding: 0.75rem 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
     color: #333;
-    border-bottom: 1px solid #f0f0f0;
 }
 
-.company-option:last-child {
-    border-bottom: none;
-}
-
-.company-option:hover {
-    background-color: rgba(138, 43, 226, 0.1);
+.company-dropdown div:hover {
+    background: rgba(138, 43, 226, 0.1);
     color: #8a2be2;
 }
 
-.industry-select {
-    flex: 2;
-    min-width: 250px;
+.industry-select,
+.days-select,
+.sort-select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a2be2' d='M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -111,29 +129,18 @@
     transition: all 0.2s ease;
 }
 
-.days-select {
-    flex: 1;
-    min-width: 150px;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a2be2' d='M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    padding-right: 2.5rem;
-    padding: 0.875rem 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 1rem;
-    background: white;
-    color: #333;
-    transition: all 0.2s ease;
-}
-
-.company-input:focus,
-.industry-select:focus,
-.days-select:focus {
+.industry-select:hover,
+.days-select:hover,
+.sort-select:hover {
     border-color: #8a2be2;
-    box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1);
+}
+
+.industry-select:focus,
+.days-select:focus,
+.sort-select:focus {
     outline: none;
+    border-color: #8a2be2;
+    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.1);
 }
 
 .search-button {
@@ -259,6 +266,61 @@
     border: 1px solid #e0e0e0;
 }
 
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1rem 0;
+}
+
+.pagination-button {
+    padding: 0.5rem 1rem;
+    background: #8a2be2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pagination-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.pagination-button:not(:disabled):hover {
+    background: #7126b5;
+    transform: translateY(-1px);
+}
+
+.page-info {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.recommendation-toggle {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.toggle-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-button:hover {
+    background-color: #0056b3;
+}
+
 @media (max-width: 768px) {
     .jobs-hero {
         padding: 3rem 0 5rem;
@@ -280,9 +342,10 @@
         flex-direction: column;
     }
 
+    .title-filter,
     .company-filter,
-    .industry-select,
-    .days-select {
+    .industry-filter,
+    .days-filter {
         width: 100%;
     }
 }

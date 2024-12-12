@@ -7,6 +7,7 @@ import { analyzeResume } from "../../graphql/mutations";
 import "../cssfiles/ResumeAnalysis.css";
 import { useNavigate, Link } from 'react-router-dom';
 import RecommendedAlumni from './RecommendedAlumni';
+import JobRecommendations from './JobRecommendations';
 
 function LoadingBar({ message }) {
     return (
@@ -130,6 +131,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
             const recommendations = {
                 role: '',
                 jobTitles: [],
+                fullJobTitles: [],
                 companies: []
             };
 
@@ -151,7 +153,12 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                     .map(line => cleanText(line))
                     .filter(line => line.length > 0 && !FILTERED_WORDS.includes(line.toLowerCase()));
 
-                // Get meaningful words from titles
+                // Store full titles after removing 'intern'/'internship'
+                recommendations.fullJobTitles = titles.map(title => 
+                    title.replace(/\s*(intern|internship)\s*/gi, '').trim()
+                ).filter(title => title.length > 0);
+
+                // Get meaningful words from titles (existing functionality)
                 const titleWords = new Set();
                 titles.forEach(title => {
                     const words = title.toLowerCase().split(/\s+/);
@@ -415,14 +422,14 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                     className="view-button"
                     disabled={selectedVersion === null}
                 >
-                    View Analysis
+                    View
                 </button>
                 <button 
                     onClick={() => setShowDeleteConfirm(true)}
                     className="delete-version-btn"
                     disabled={analysisVersions.length <= 1 || selectedVersion === null}
                 >
-                    Delete Version
+                    Delete
                 </button>
             </div>
         );
@@ -551,11 +558,17 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                 >
                     Connection Recommendations
                 </button>
+                <button 
+                    className={`tab ${activeTab === 'jobs' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('jobs')}
+                >
+                    Job Recommendations
+                </button>
             </div>
 
             {activeTab === 'analysis' ? (
                 renderAnalysisContent()
-            ) : (
+            ) : activeTab === 'recommendations' ? (
                 <div className="recommendations-content">
                     {!resumeName ? (
                         <NoResumeMessage />
@@ -568,6 +581,20 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                                     searchCombinations={generateSearchCombinations(parseJobFitRecommendations(analysisResult.analysis))}
                                 />
                             </>
+                        )
+                    )}
+                </div>
+            ) : (
+                <div className="recommendations-content">
+                    {!resumeName ? (
+                        <NoResumeMessage />
+                    ) : !showAnalysis ? (
+                        <NoRecommendations />
+                    ) : (
+                        analysisResult && analysisResult.analysis && (
+                            <JobRecommendations 
+                                recommendations={parseJobFitRecommendations(analysisResult.analysis)}
+                            />
                         )
                     )}
                 </div>

@@ -26,6 +26,7 @@ function RecommendedAlumni({ searchCombinations }) {
   const [savedPresets, setSavedPresets] = useState([]);
   const [userSub, setUserSub] = useState("");
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const initUser = async () => {
@@ -140,6 +141,7 @@ function RecommendedAlumni({ searchCombinations }) {
     setHasMore(true);
     setAlumni([]);
     setIsSearchStarted(false);
+    setProgress(0);
   }, [searchCombinations]);
 
   const getAlumni = async () => {
@@ -152,11 +154,13 @@ function RecommendedAlumni({ searchCombinations }) {
     }
 
     setLoading(true);
+    setProgress(0);
     try {
       const allResults = new Map(); // Use Map to deduplicate by some unique identifier
 
       // Process each search combination
-      for (const combo of searchCombinations) {
+      for (let i = 0; i < searchCombinations.length; i++) {
+        const combo = searchCombinations[i];
         const response = await fetch(
           `https://api.alumnireach.org/person/search/?industry=&job=${combo.role || ''}&page=${currentPage}&title=${combo.title || ''}&company=${combo.company || ''}&role-${combo.role || ''}`
         );
@@ -174,6 +178,14 @@ function RecommendedAlumni({ searchCombinations }) {
             allResults.set(person.linkedin, person);
           }
         });
+
+        // Update progress
+        setProgress(((i + 1) / searchCombinations.length) * 100);
+
+        // Add delay between searches to handle throughput
+        if (i < searchCombinations.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 4000)); // 4 second delay
+        }
       }
       
       // Convert Map values back to array
@@ -191,6 +203,7 @@ function RecommendedAlumni({ searchCombinations }) {
       alert("Error loading recommendations. Please try again.");
     } finally {
       setLoading(false);
+      setProgress(100);
     }
   };
 
@@ -268,17 +281,31 @@ function RecommendedAlumni({ searchCombinations }) {
   return (
     <div className="alumni-container">
       {!isSearchStarted ? (
-        <div className="text-center my-4">
+        <div className="start-search-container">
+          <div className="recommendations-header">
+            <h1>Alumni for You</h1>
+            <p></p>
+          </div>
           <button 
             className="start-search-btn"
             onClick={handleStartSearch}
           >
-            Find Alumni Connections
+            Search
           </button>
         </div>
       ) : (
         <>
-          {loading && <LoadingBar message={loadingMessage} />}
+          {loading && (
+            <div className="loading-container">
+              <div className="progress-bar">
+                <div 
+                  className="progress-bar-fill" 
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <p>Searching for alumni... {Math.round(progress)}%</p>
+            </div>
+          )}
           
           {!loading && alumni.length > 0 && (
             <div className="recommendation-count">

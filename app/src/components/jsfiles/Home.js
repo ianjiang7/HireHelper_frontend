@@ -76,10 +76,6 @@ const Home = ({ isSignedIn, setActiveTab, setActiveIndex }) => {
             </div>
             <div className="welcome-user">
                 <h2 className="greeting">Hi {userName || ''}!</h2>
-                <button className="get-started-btn" onClick={handleGetStarted}>
-                    Get Started
-                    <FontAwesomeIcon icon={faArrowRight} className="arrow-icon" />
-                </button>
             </div>
         </div>
     );
