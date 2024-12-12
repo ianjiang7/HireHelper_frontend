@@ -215,12 +215,12 @@ function Signup() {
         setError("Failed to create user profile in database.");
         return;
       }
-
+      
       // Save role in localStorage
       localStorage.setItem("userRole", signupData.role);
-
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      navigate('/profile-setup', { replace: true, state: { skipAuth: true } });
       // Navigate to appropriate page
-      navigate(signupData.role === "student" ? "/profile-setup" : "/profile-setup");
     } catch (err) {
       console.error("Confirmation error:", err);
       setError(err.message || "An error occurred during confirmation.");

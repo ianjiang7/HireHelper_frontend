@@ -144,6 +144,19 @@ function ProfileSetup() {
     useEffect(() => {
         const checkUserName = async () => {
             try {
+                let user = null;
+                for (let attempts = 0; attempts < 5; attempts++) {
+                    user = await getCurrentUser();
+                    if (user) break;
+                    await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second delay
+                }
+
+                if (!user) {
+                    console.error("User not signed in.");
+                    setIsSignedIn(false);
+                    navigate("/alumni-login", { replace: true });
+                    return;
+                }
                 const { username, userId } = await getCurrentUser();
                 setUserSub(userId);
                 const auth = await fetchAuthSession();

@@ -14,7 +14,7 @@ const SearchOverview = ({ isSignedIn, navigate, onLogin, setActiveTab, setActive
             <div className="search-overview-content">
                 <div className="search-overview-header">
                     <FontAwesomeIcon icon={faSearch} className="search-icon" />
-                    <h2>Welcome to HireHelper</h2>
+                    <h2>How it Works</h2>
                 </div>
 
                 <div className="feature-cards">

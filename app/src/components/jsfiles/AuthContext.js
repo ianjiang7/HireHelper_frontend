@@ -15,8 +15,19 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkUser = async () => {
+    setLoading(true); // Ensure loading state is active during checks
     try {
-      const currentUser = await getCurrentUser();
+      let currentUser = null;
+      for (let attempts = 0; attempts < 5; attempts++) {
+        currentUser = await getCurrentUser();
+        if (currentUser) break;
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
+      }
+
+      if (!currentUser) {
+        throw new Error('User session not found');
+      }
+
       setUser(currentUser);
       setIsAuthenticated(true);
       
