@@ -3,7 +3,7 @@
 /* General Page Styles */
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #e0f7fa, #80d8ff);
+    background: white;
     margin: 0;
     padding: 0;
     display: flex;
@@ -18,7 +18,7 @@ body {
 
 /* Scoped container for the login page */
 .login-container {
-    background: rgba(255, 255, 255, 0.3);
+    background: #e8e0ff;
     backdrop-filter: blur(10px) saturate(150%);
     padding: 2.5rem;
     border-radius: 12px;
