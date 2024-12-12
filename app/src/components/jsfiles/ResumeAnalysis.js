@@ -20,7 +20,7 @@ function LoadingBar({ message }) {
     );
 }
 
-function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
+function ResumeAnalysis({ userSub, resumeName, resumeUrl, setActiveTab1, setActiveIndex1 }) {
     const [analysisResult, setAnalysisResult] = useState(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -40,9 +40,12 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
         <div className="no-resume-container">
             <h3 className="message-header">No Resume Found</h3>
             <p className="message-text">Please add a resume to your profile to begin analysis</p>
-            <Link to="/profile" className="profile-link-button">
+            <button 
+                className="profile-link-button"
+                onClick={() => [setActiveTab1('profile'), setActiveIndex1(5)]}
+            >
                 Go to Profile
-            </Link>
+            </button>
         </div>
     );
 
@@ -156,7 +159,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                 // Store full titles after removing 'intern'/'internship'
                 recommendations.fullJobTitles = titles.map(title => 
                     title.replace(/\s*(intern|internship)\s*/gi, '').trim()
-                ).filter(title => title.length > 0);
+                ).filter(title => title.length > 5);
 
                 // Get meaningful words from titles (existing functionality)
                 const titleWords = new Set();
@@ -256,7 +259,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
 
         setIsAnalyzing(true);
         try {
-            setLoadingMessage('Sending to AI Algorithm...');
+            setLoadingMessage('Sending to AI Algorithm... this will take a minute');
             // Initial delay for sending
             await new Promise(resolve => setTimeout(resolve, 1500));
             const { tokens } = await fetchAuthSession();
@@ -522,8 +525,7 @@ function ResumeAnalysis({ userSub, resumeName, resumeUrl }) {
                 >
                     {isAnalyzing ? (
                         <>
-                            <div className="loading-spinner" />
-                            Analyzing...
+
                         </>
                     ) : (
                         "New Analysis"

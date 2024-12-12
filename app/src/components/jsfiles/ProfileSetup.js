@@ -9,6 +9,8 @@ import SearchResults from './SearchResults';
 import Header from './Header';
 import Home from './Home';
 import Jobs from './Jobs';
+import { ToastContainer, toast} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Auth, API, Storage } from 'aws-amplify';
 import { signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
@@ -295,6 +297,14 @@ function ProfileSetup() {
 
             await s3Client.send(command);
             console.log("File uploaded successfully");
+            toast.success('Resume uploaded successfully!', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
 
             // Update state with both resumeName and full S3 path
             setProfileData(prev => ({
@@ -714,6 +724,7 @@ function ProfileSetup() {
         <>
             <Header navigate={navigate} isSignedIn={isSignedIn} />
             <div className="profile-setup-container">
+                <ToastContainer />
                 <div 
                     className={`left-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}
                     onClick={() => !isSidebarOpen && setSidebarOpen(true)}
@@ -830,6 +841,8 @@ function ProfileSetup() {
                                     isAnalysisOpen={isAnalysisOpen}
                                     showDeleteConfirm={showDeleteConfirm}
                                     setShowDeleteConfirm={setShowDeleteConfirm}
+                                    setActiveTab1={setActiveTab}
+                                    setActiveIndex1={setActiveIndex}
                                 />
                             </div>
                             <div className="tab-content">

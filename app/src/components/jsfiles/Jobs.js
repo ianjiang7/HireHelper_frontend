@@ -118,7 +118,7 @@ function Jobs({ recommendations, autoSearch, initialFilters, hideHeader, hideSea
     }, [recommendations, autoSearch]);
 
     useEffect(() => {
-        if (initialFilters) {
+        if (initialFilters && !propJobs) {  
             const newFilters = {
                 ...filters,
                 company: initialFilters.company || '',
