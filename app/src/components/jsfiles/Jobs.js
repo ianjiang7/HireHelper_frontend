@@ -94,6 +94,8 @@ function Jobs({ recommendations, autoSearch, initialFilters, hideHeader, hideSea
     });
     const [filteredCompanies, setFilteredCompanies] = useState([]);
     const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+    const [filteredIndustries, setFilteredIndustries] = useState([]);
+    const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
 
     // Update jobs when propJobs changes
     useEffect(() => {
@@ -143,6 +145,14 @@ function Jobs({ recommendations, autoSearch, initialFilters, hideHeader, hideSea
             setFilteredCompanies(filtered);
             setShowCompanyDropdown(!!value);
         }
+
+        if (name === 'industry') {
+            const filtered = INDUSTRIES.filter(industry => 
+                industry.toLowerCase().includes(value.toLowerCase())
+            ).slice(0, 10); // Limit to 10 suggestions
+            setFilteredIndustries(filtered);
+            setShowIndustryDropdown(!!value);
+        }
     };
 
     const handleCompanySelect = (company) => {
@@ -153,10 +163,21 @@ function Jobs({ recommendations, autoSearch, initialFilters, hideHeader, hideSea
         setShowCompanyDropdown(false);
     };
 
+    const handleIndustrySelect = (industry) => {
+        setFilters(prev => ({
+            ...prev,
+            industry
+        }));
+        setShowIndustryDropdown(false);
+    };
+
     // Close dropdown when clicking outside
     const handleClickOutside = (e) => {
         if (!e.target.closest('.company-filter')) {
             setShowCompanyDropdown(false);
+        }
+        if (!e.target.closest('.industry-filter')) {
+            setShowIndustryDropdown(false);
         }
     };
 
@@ -307,19 +328,29 @@ function Jobs({ recommendations, autoSearch, initialFilters, hideHeader, hideSea
                                         </div>
                                     )}
                                 </div>
-                                <select
-                                    name="industry"
-                                    value={filters.industry}
-                                    onChange={handleFilterChange}
-                                    className="industry-select"
-                                >
-                                    <option value="">All Industries</option>
-                                    {INDUSTRIES.map(industry => (
-                                        <option key={industry} value={industry}>
-                                            {industry}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="industry-filter">
+                                    <input
+                                        type="text"
+                                        name="industry"
+                                        value={filters.industry}
+                                        onChange={handleFilterChange}
+                                        placeholder="Filter by industry..."
+                                        className="industry-input"
+                                        onFocus={() => filters.industry && setShowIndustryDropdown(true)}
+                                    />
+                                    {showIndustryDropdown && filteredIndustries.length > 0 && (
+                                        <div className="industry-dropdown">
+                                            {filteredIndustries.map((industry, index) => (
+                                                <div
+                                                    key={index}
+                                                    onClick={() => handleIndustrySelect(industry)}
+                                                >
+                                                    {industry}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                                 <select
                                     name="daysAgo"
                                     value={filters.daysAgo}
