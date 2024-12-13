@@ -181,11 +181,6 @@ function RecommendedAlumni({ searchCombinations }) {
 
         // Update progress
         setProgress(((i + 1) / searchCombinations.length) * 100);
-
-        // Add delay between searches to handle throughput
-        if (i < searchCombinations.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 4000)); // 4 second delay
-        }
       }
       
       // Convert Map values back to array

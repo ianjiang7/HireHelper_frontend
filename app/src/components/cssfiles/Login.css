@@ -10,17 +10,36 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+    overflow: hidden;
 }
 
 /* Scoped container for the login page */
 .login-container {
-    background: white;
+    background: #e8e0ff;
+    backdrop-filter: blur(10px) saturate(150%);
     padding: 2.5rem;
     border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     width: 100%;
     max-width: 400px;
     text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* Add a subtle animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Brand Header */
@@ -63,17 +82,20 @@ body {
 .form-group input[type="password"] {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #E2E8F0;
+    border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 8px;
     font-size: 1rem;
-    transition: border-color 0.2s;
+    background: rgba(255, 255, 255, 0.8);
+    color: #2D3748;
+    transition: border-color 0.2s, background 0.2s;
 }
 
 .form-group input[type="email"]:focus,
 .form-group input[type="password"]:focus {
     outline: none;
-    border-color: #6B46C1;
-    box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.1);
+    border-color: #80d8ff;
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(128, 216, 255, 0.3);
 }
 
 /* Button styles */
@@ -86,11 +108,12 @@ body {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.2s;
 }
 
 .login-button:hover {
     background-color: #553C9A;
+    transform: scale(1.05);
 }
 
 /* Link to sign up */
@@ -116,10 +139,16 @@ body {
     color: #fff;
     font-size: 1rem;
     margin-top: 10px; /* Space above the Google login button */
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
 }
 
 .login-container .google-login:hover {
     background: #c13325;
+    transform: scale(1.05);
 }
 
 /* Error message styles */

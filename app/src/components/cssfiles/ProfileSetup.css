@@ -29,36 +29,57 @@
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     position: relative;
-    margin-left: 40px;
     height: 100%;
     cursor: pointer;
 }
 
+
+/* Sidebar when closed */
 .left-sidebar.closed {
-    width: 0;
+    width: 40px; /* Increased width for better visibility */
     padding: 0;
     margin: 0;
-    overflow: visible;
-    cursor: pointer;
+    overflow: hidden;
+    background: white; /* Subtle background to indicate it's a sidebar */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Keep shadow for depth */
     position: relative;
-    background: transparent;
-    box-shadow: none;
+    transition: all 0.3s ease;
 }
 
+/* Add a toggle bar or indicator for the closed sidebar */
 .left-sidebar.closed::after {
-    content: '';
-    position: absolute;
-    top: 20px;
-    right: -20px;
-    width: 20px;
-    height: 25px;
-    background-color: #666;
-    border-radius: 4px;
+    content: '>'; /* Right arrow */
+    position: relative;
+    top: 50%;
+    right: -6px;
+    z-index: 1001;
+    transform: translateY(-50%);
+    font-size: 1.5rem;
+    color: #6b46c1;
+    background-color: #dadada;
+    border: 1px solid #e2e8f0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
     cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 9999;
+}
+
+
+
+.left-sidebar.closed:hover::after {
+    color: white;
+    background-color: #8a2be2;
+    transform: translateY(-50%) scale(1.1);
 }
 
 .left-sidebar.closed:hover::after {
-    background-color: #8a2be2;
+    background-color: #8a2be2; /* Slightly brighter hover color */
+    transform: translateY(-50%) scale(1.1); /* Subtle hover effect */
 }
 
 .left-sidebar.closed .navigation-section,
@@ -70,8 +91,8 @@
 /* Toggle button */
 .sidebar-toggle {
     position: absolute;
+    top: 50%;
     right: -15px;
-    bottom: 20px;
     z-index: 1001;
     background: white;
     border: 1px solid #e2e8f0;
@@ -695,5 +716,5 @@
 }
 
 .left-sidebar.closed + .main-content {
-    margin-left: 0;
+    margin-left: 5px;
 }
