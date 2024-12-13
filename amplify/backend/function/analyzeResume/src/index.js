@@ -163,7 +163,8 @@ Job Fit Recommendations (Recommendations to help with job search)
         Wholesale Trade
         that fit the candidate)
     - Role (Choose one of these roles: Intern, Employee, Manager, Director that fit the candidate (college students in their sophomore or junior years should be matched with Intern, calculate what standing they are by accessing the current year and comparing to their graduation date))
-    - Job Title (Choose up to 3 real job titles for each of the matched i
+    - Job Title (Choose up to 3 real job titles for each of the matched industries that fit the candidate)
+    - Companies (Choose up to 20 companies that fit the candidate)
 
 Please format the response in a clear, bulleted structure.
 `;
