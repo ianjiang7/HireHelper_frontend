@@ -44,7 +44,7 @@ Please analyze this resume and extract the following information in a clear, str
         - Problem-solving abilities
         - Other interpersonal skills
 
-6. Big Red Flags (Only list if found)
+2. Big Red Flags (Only list if found)
     - Gaps in Employment
     - Quick Changes in Employment
     - Education is not the same work industry experience
@@ -53,13 +53,13 @@ Please analyze this resume and extract the following information in a clear, str
         b. is below a 3.2 (bad)
         c. is below a 3.0 (unacceptable)
 
-7. Small Red Flags (Only list if found)
+3. Small Red Flags (Only list if found)
     - Weasel Words (word or phrase used to create the impression that something specific and meaningful has been said, when in fact the claim is vague, ambiguous, or irrelevant)
     - References are missing
     - Address is not in the same country as job
     - Grammatical errors
 
-8. Job Fit Recommendations (Recommendations to help with job search)
+4. Job Fit Recommendations (Recommendations to help with job search)
     - Industry (Choose up to 3 industries from this list: Accounting
         Advertising, PR & Marketing
         Aerospace
@@ -134,8 +134,8 @@ Please analyze this resume and extract the following information in a clear, str
         Veterinary
         Wholesale Trade
         that fit the candidate)
+    - Role (Choose one of these roles: Intern, Employee, Manager, Director that fit the candidate (college students in their sophomore or junior years should be matched with Intern, calculate what standing they are by accessing the current year and comparing to their graduation date))
     - Job Title (Choose up to 3 real job titles for each of the matched industries that fit the candidate)
-    - Role (Choose one of these roles: Intern, Employee, Manager, Director that fit the candidate (college students in their sophomore or junior years should be matched with Intern))
     - Companies (Choose up to 20 companies that fit the candidate)
 
 Please format the response in a clear, bulleted structure.
@@ -248,11 +248,11 @@ export const handler = async (event) => {
             // Analyze with OpenAI
             console.log('Calling OpenAI...');
             const completion = await openai.chat.completions.create({
-                model: "gpt-4",
+                model: "gpt-4o",
                 messages: [
                     {
                         role: "system",
-                        content: "You are a professional resume analyzer. Analyze the resume text and provide detailed insights."
+                        content: "You are a recruiter for college students in their junior or senior years and recent graduates. Analyze the resume text carefully and provide detailed insights."
                     },
                     {
                         role: "user",
