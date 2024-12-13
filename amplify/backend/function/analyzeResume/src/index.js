@@ -20,74 +20,46 @@ const s3Client = new S3Client({
     useFipsEndpoint: false
 });
 
-// GPT Prompt
-const ANALYSIS_PROMPT = `You are a professional resume reviewer. Provide a comprehensive, professional, and constructive analysis of the submitted resume, focusing on improving its effectiveness for job applications.
-Analyze the resume across the following critical dimensions:
-1. Overall Structure and Formatting
+const ANALYSIS_PROMPT = `
+Please analyze this resume and extract the following information in a clear, structured format:
 
-Assess visual hierarchy and readability
-Evaluate consistency in formatting
-Check for appropriate use of white space
-Identify any design or layout issues that may distract from content
+1. Big Green Flags (Only list if found)
+    - Industry specific skills
+    - Industry experience (highlight notable companies)
+    - Complexity of work described in resume
+    - References and proof of work (publications, notable people mentioned) 
+    - High levels of influence within work
 
-2. Content Evaluation
-Professional Summary/Objective
+    a. Hard Skills (Only list if found)
+        - Technical skills
+        - Tools & technologies
+        - Certifications
+        - Programming languages
+        - Software proficiency
 
-Assess clarity and impact
-Verify alignment with target career goals
-Check for specificity and unique value proposition
+    b. Soft Skills (Only list if found)
+        - Leadership abilities
+        - Communication skills
+        - Team collaboration
+        - Problem-solving abilities
+        - Other interpersonal skills
 
-Work Experience
+2. Big Red Flags (Only list if found)
+    - Gaps in Employment
+    - Quick Changes in Employment
+    - Education is not the same work industry experience
+    - College GPA is not included or
+        a. is below a 3.5 (ok)
+        b. is below a 3.2 (bad)
+        c. is below a 3.0 (unacceptable)
 
-Evaluate description of roles and responsibilities
-Assess quantification of achievements
-Check for action verbs and results-oriented language
-Identify potential areas for more impactful descriptions
+3. Small Red Flags (Only list if found)
+    - Weasel Words (word or phrase used to create the impression that something specific and meaningful has been said, when in fact the claim is vague, ambiguous, or irrelevant)
+    - References are missing
+    - Address is not in the same country as job
+    - Grammatical errors
 
-Skills Section
-
-Review relevance to target industry/role
-Check for both hard and soft skills
-Assess depth and breadth of skill representation
-
-
-3. Keyword and ATS Optimization
-
-Analyze alignment with potential job descriptions
-Check for industry-specific keywords
-Assess compatibility with Applicant Tracking Systems (ATS)
-
-4. Potential Red Flags
-
-Identify potential gaps or inconsistencies
-Check for unexplained employment periods
-Assess potential areas of concern for recruiters
-
-Output Requirements
-Provide feedback in a clear, concise format:
-
-Maximum 500 words
-Use a structured feedback approach
-Prioritize most critical improvement areas
-Offer specific, actionable recommendations
-Use a professional and constructive tone
-
-Scoring System (Add at the top)
-Provide a brief scoring in these key areas:
-
-Overall Effectiveness: /10
-Content Quality: /10
-Formatting: /10
-ATS Compatibility: /10
-
-Final Resume Review Recommendation
-Conclude with:
-Top 3 recommended improvements
-Potential impact on job application success
-
-Additionally add
-
-Job Fit Recommendations (Recommendations to help with job search)
+4. Job Fit Recommendations (Recommendations to help with job search)
     - Industry (Choose up to 3 industries from this list: Accounting
         Advertising, PR & Marketing
         Aerospace
@@ -163,7 +135,8 @@ Job Fit Recommendations (Recommendations to help with job search)
         Wholesale Trade
         that fit the candidate)
     - Role (Choose one of these roles: Intern, Employee, Manager, Director that fit the candidate (college students in their sophomore or junior years should be matched with Intern, calculate what standing they are by accessing the current year and comparing to their graduation date))
-    - Job Title (Choose up to 3 real job titles for each of the matched i
+    - Job Title (Choose up to 3 real job titles for each of the matched industries that fit the candidate)
+    - Companies (Choose up to 20 companies that fit the candidate)
 
 Please format the response in a clear, bulleted structure.
 `;
@@ -275,11 +248,11 @@ export const handler = async (event) => {
             // Analyze with OpenAI
             console.log('Calling OpenAI...');
             const completion = await openai.chat.completions.create({
-                model: "gpt-4",
+                model: "gpt-4o",
                 messages: [
                     {
                         role: "system",
-                        content: "You are a professional resume analyzer. Analyze the resume text and provide detailed insights."
+                        content: "You are a recruiter for college students in their junior or senior years and recent graduates. Analyze the resume text carefully and provide detailed insights."
                     },
                     {
                         role: "user",
